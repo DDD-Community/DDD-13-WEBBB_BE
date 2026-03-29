@@ -1,0 +1,12 @@
+${AnsiColor.BRIGHT_CYAN}
+ ██████╗ ███╗   ██╗██████╗      ██╗██████╗
+ ██╔══██╗████╗  ██║██╔══██╗    ███║╚════██╗
+ ██║  ██║██╔██╗ ██║██║  ██║    ╚██║ █████╔╝
+ ██║  ██║██║╚██╗██║██║  ██║     ██║ ╚═══██╗
+ ██████╔╝██║ ╚████║██████╔╝     ██║██████╔╝
+ ╚═════╝ ╚═╝  ╚═══╝╚═════╝      ╚═╝╚═════╝
+${AnsiColor.DEFAULT}
+ ${AnsiColor.BRIGHT_WHITE}:: Spring Boot ::${AnsiColor.DEFAULT}  ${AnsiColor.YELLOW}(v${spring-boot.version})${AnsiColor.DEFAULT}
+ ${AnsiColor.BRIGHT_WHITE}:: Group       ::${AnsiColor.DEFAULT}  com.dnd
+ ${AnsiColor.BRIGHT_WHITE}:: Profile     ::${AnsiColor.DEFAULT}  ${spring.profiles.active:-default}
+ ${AnsiColor.BRIGHT_WHITE}:: Java        ::${AnsiColor.DEFAULT}  21
