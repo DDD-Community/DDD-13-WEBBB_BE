@@ -45,3 +45,51 @@ docker-compose down
 ```bash
 docker-compose down -v
 ```
+
+---
+
+## 패키지 구조
+
+> 레이어 의존 방향 및 각 패키지별 파일 목록은 [docs/architecture.md](docs/architecture.md)를 참고하세요.
+
+DDD 스타일 레이어드 아키텍처를 적용합니다. 도메인(Feature) 기반으로 모듈을 분리하고, 각 모듈 내부에 `domain / application / infrastructure / interfaces` 4-레이어를 적용합니다.
+
+```
+com.dnd.webbb/
+├── global/                          # 전역 공통 설정
+│   ├── config/                      # JPA, Security, Swagger 설정
+│   ├── common/
+│   │   ├── response/                # 공통 응답 래퍼 (ApiResponse)
+│   │   ├── exception/               # AppException, ErrorCode, GlobalExceptionHandler
+│   │   └── entity/                  # BaseEntity (createdAt, updatedAt 등)
+│   └── auth/                        # JWT 필터 및 유틸 (JwtProvider, JwtAuthFilter)
+│
+├── user/
+│   ├── domain/                      # User 엔티티, UserRepository 인터페이스, enum
+│   ├── application/                 # UserService, 서비스 내부 DTO
+│   ├── infrastructure/              # QueryDSL 등 복잡한 쿼리 구현체 (단순하면 생략)
+│   └── interfaces/
+│       ├── UserController.java
+│       └── dto/                     # UserRequest, UserResponse
+│
+├── auth/                            # Google OAuth + JWT 로그인 흐름
+│   ├── domain/
+│   ├── application/                 # AuthService
+│   ├── infrastructure/              # GoogleOAuthClient
+│   └── interfaces/
+│       └── dto/
+│
+└── cohort/
+    ├── domain/
+    ├── application/
+    ├── infrastructure/
+    └── interfaces/
+        └── dto/
+```
+
+### 핵심 설계 원칙
+
+1. **도메인 엔티티와 인터페이스 DTO 분리** — `User.java` ≠ `UserResponse.java`
+2. **Repository 인터페이스는 domain 레이어에** — 인프라 의존 방향 역전
+3. **Service는 application 레이어에만** — 컨트롤러에서 직접 레포지토리 접근 금지
+4. **단순한 쿼리는 infrastructure/ 생략 가능** — Spring Data JPA 인터페이스만으로 충분할 때
