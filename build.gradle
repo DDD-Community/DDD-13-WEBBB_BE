@@ -2,6 +2,7 @@ plugins {
     id 'java'
     id 'org.springframework.boot' version '3.4.5'
     id 'io.spring.dependency-management' version '1.1.7'
+    id 'com.diffplug.spotless' version '7.0.2'
 }
 
 group = 'com.dnd'
@@ -67,4 +68,26 @@ sourceSets {
 
 tasks.withType(JavaCompile).configureEach {
     options.getGeneratedSourceOutputDirectory().set(querydslDir)
+}
+
+// Spotless 코드 포맷팅
+spotless {
+    java {
+        target 'src/*/java/**/*.java'
+
+        // 불필요한 import 제거
+        removeUnusedImports()
+
+        // import 순서: java → javax → jakarta → org → com → 나머지
+        importOrder('java', 'javax', 'jakarta', 'org', 'com', '')
+
+        // Google Java Format 적용
+        googleJavaFormat('1.25.2').aosp()
+
+        // 줄 끝 공백 제거
+        trimTrailingWhitespace()
+
+        // 파일 끝 개행 보장
+        endWithNewline()
+    }
 }
