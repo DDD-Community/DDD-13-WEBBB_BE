@@ -18,6 +18,7 @@ build/
 logs/
 
 # Application config (secrets)
+application-local.yml
 application-secret.yml
 **/secret*.yml
 *.env
