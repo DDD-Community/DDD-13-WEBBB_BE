@@ -102,12 +102,12 @@ jobs:
                   {
                     name: "🙋 작성자",
                     value: ("`" + $author + "`"),
-                    inline: true
+                    inline: false
                   },
                   {
                     name: "👀 리뷰어",
                     value: ("`" + $reviewers + "`"),
-                    inline: true
+                    inline: false
                   },
                   {
                     name: "🌿 브랜치",
