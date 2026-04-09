@@ -7,14 +7,20 @@ on:
 jobs:
   notify-discord:
     runs-on: ubuntu-latest
+    # 1. 포크된 레포지토리에서 올라온 PR일 경우 잡(job)을 스킵하여 시크릿 접근 에러 방지
+    if: github.event.pull_request.head.repo.fork == false
     steps:
       - name: Send Discord Notification
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
         run: |
+          # 2. 파싱 및 할당 중 에러 발생 시 즉각 종료하여 빈 알림 전송 방지
+          set -euo pipefail
+          
           if [ -z "$DISCORD_WEBHOOK_URL" ]; then
-            echo "DISCORD_WEBHOOK_URL secret is not set!"
-            exit 1
+            echo "DISCORD_WEBHOOK_URL secret is not set! Skipping notification."
+            # 시크릿이 없을 때 빌드가 실패(빨간색)하지 않고 자연스럽게 스킵되도록 exit 0 처리
+            exit 0
           fi
 
           # 1. PR 상태(State) 및 색상(Color) 설정
@@ -56,9 +62,16 @@ jobs:
           
           REVIEWERS=$(jq -r 'if .pull_request.requested_reviewers | length > 0 then [.pull_request.requested_reviewers[].login] | join(", ") else "없음" end' "$GITHUB_EVENT_PATH")
           
-          PR_BODY=$(jq -r '.pull_request.body // "내용이 없습니다."' "$GITHUB_EVENT_PATH")
+          # 3. PR 본문 스마트 파싱 (변경 내용 & 이유 까지만 추출, 주석 제거)
+          RAW_BODY=$(jq -r '.pull_request.body // "내용이 없습니다."' "$GITHUB_EVENT_PATH")
+          PR_BODY=$(echo "$RAW_BODY" | awk '/(📸 스크린샷|테스트 방법|논의하고 싶은 내용)/{exit} /<!--.*-->/{next} {print}')
           
-          # 3. 디스코드 Webhook Payload 구성 (본문 300자 자르기 포함)
+          # 파싱 후 본문이 비어있을 경우 방지
+          if [ -z "$(echo "$PR_BODY" | tr -d ' \n\r')" ]; then
+            PR_BODY="작성된 요약 내용이 없습니다."
+          fi
+
+          # 4. 디스코드 Webhook Payload 구성
           jq -n \
             --arg title_prefix "$TITLE_PREFIX" \
             --arg pr_title "$PR_TITLE" \
@@ -75,7 +88,7 @@ jobs:
             '{
               embeds: [{
                 title: $title_prefix,
-                description: ("**[" + $pr_title + "](" + $url + ")**\n\n📝 **본문 요약**\n\n" + (if ($pr_body | length) > 300 then ($pr_body[0:300] + "\n\n...(중략)...") else $pr_body end) + "\n\n---\n[👉 **여기를 클릭하여 PR 확인하기**](" + $url + ")"),
+                description: ("**[" + $pr_title + "](" + $url + ")**\n\n" + (if ($pr_body | length) > 800 then ($pr_body[0:800] + "\n\n...(중략)...") else $pr_body end) + "\n\n---\n[👉 **여기를 클릭하여 PR 확인하기**](" + $url + ")"),
                 url: $url,
                 color: $color,
                 fields: [
@@ -91,7 +104,7 @@ jobs:
                   },
                   {
                     name: "🌿 브랜치",
-                    value: ("`" + $head + "` ➡️ `" + $base + "`"),
+                    value: ("`" + $head + "` -> `" + $base + "`"),
                     inline: false
                   },
                   {
@@ -103,5 +116,5 @@ jobs:
               }]
             }' > payload.json
           
-          # 4. Webhook 전송
-          curl -X POST -H "Content-Type: application/json" -d @payload.json "$DISCORD_WEBHOOK_URL"
+          # 3. Webhook 전송 (실패 시 에러 코드 명확화 및 재시도)
+          curl -fSsl --retry 3 -X POST -H "Content-Type: application/json" -d @payload.json "$DISCORD_WEBHOOK_URL"
