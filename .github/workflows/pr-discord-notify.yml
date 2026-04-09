@@ -1,0 +1,127 @@
+name: PR Discord Notification
+
+on:
+  pull_request:
+    types: [opened, reopened, ready_for_review, closed]
+
+jobs:
+  notify-discord:
+    runs-on: ubuntu-latest
+    # 1. 포크된 레포지토리에서 올라온 PR일 경우 잡(job)을 스킵하여 시크릿 접근 에러 방지
+    if: github.event.pull_request.head.repo.fork == false
+    steps:
+      - name: Send Discord Notification
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          # 2. 파싱 및 할당 중 에러 발생 시 즉각 종료하여 빈 알림 전송 방지
+          set -euo pipefail
+          
+          if [ -z "$DISCORD_WEBHOOK_URL" ]; then
+            echo "DISCORD_WEBHOOK_URL secret is not set! Skipping notification."
+            # 시크릿이 없을 때 빌드가 실패(빨간색)하지 않고 자연스럽게 스킵되도록 exit 0 처리
+            exit 0
+          fi
+
+          # 1. PR 상태(State), 색상(Color) 및 멘션 설정
+          ACTION="${{ github.event.action }}"
+          IS_MERGED="${{ github.event.pull_request.merged }}"
+          
+          MENTION_TEXT="PR이 도착하였어요. 확인 부탁드려요!"
+          
+          if [ "$ACTION" = "opened" ]; then
+            TITLE_PREFIX="🟢 새 Pull Request 생성됨"
+            COLOR=5763719 # Green
+            # 생성(Opened) 시 지정된 사용자들에게 멘션하여 푸시 알림 발송
+            MENTION_TEXT="<@849191122064637952> <@875280485465587713> <@813790059244814408> 새 PR 리뷰 부탁드립니다! 👀"
+          elif [ "$ACTION" = "reopened" ]; then
+            TITLE_PREFIX="🔄 Pull Request 다시 열림"
+            COLOR=3447003 # Blue
+          elif [ "$ACTION" = "ready_for_review" ]; then
+            TITLE_PREFIX="👀 Pull Request 리뷰 요청 (Draft 해제됨)"
+            COLOR=15844367 # Gold/Yellow
+          elif [ "$ACTION" = "closed" ]; then
+            if [ "$IS_MERGED" = "true" ]; then
+              TITLE_PREFIX="🟣 Pull Request 병합(Merge) 완료!"
+              COLOR=10181046 # Purple
+            else
+              TITLE_PREFIX="🔴 Pull Request 닫힘 (반려/취소)"
+              COLOR=15158332 # Red
+            fi
+          else
+            TITLE_PREFIX="🔔 Pull Request 상태 업데이트: $ACTION"
+            COLOR=8421504 # Gray
+          fi
+
+          # 2. GITHUB_EVENT_PATH에서 안전하게 데이터 추출 (jq 활용)
+          PR_TITLE=$(jq -r '.pull_request.title' "$GITHUB_EVENT_PATH")
+          PR_URL=$(jq -r '.pull_request.html_url' "$GITHUB_EVENT_PATH")
+          AUTHOR=$(jq -r '.pull_request.user.login' "$GITHUB_EVENT_PATH")
+          HEAD_REF=$(jq -r '.pull_request.head.ref' "$GITHUB_EVENT_PATH")
+          BASE_REF=$(jq -r '.pull_request.base.ref' "$GITHUB_EVENT_PATH")
+          
+          ADDITIONS=$(jq -r '.pull_request.additions' "$GITHUB_EVENT_PATH")
+          DELETIONS=$(jq -r '.pull_request.deletions' "$GITHUB_EVENT_PATH")
+          CHANGED_FILES=$(jq -r '.pull_request.changed_files' "$GITHUB_EVENT_PATH")
+          
+          REVIEWERS=$(jq -r 'if .pull_request.requested_reviewers | length > 0 then [.pull_request.requested_reviewers[].login] | join(", ") else "없음" end' "$GITHUB_EVENT_PATH")
+          
+          # 3. PR 본문 스마트 파싱 (변경 내용 & 이유 까지만 추출, 주석 제거, 거대한 헤더 폰트 축소)
+          RAW_BODY=$(jq -r '.pull_request.body // "내용이 없습니다."' "$GITHUB_EVENT_PATH")
+          # 너무 큰 H1(#), H2(##) 마크다운 헤더를 적당히 보기 좋은 H3(###) 수준으로 강제 치환합니다.
+          PR_BODY=$(echo "$RAW_BODY" | awk '/(📸 스크린샷|테스트 방법|논의하고 싶은 내용)/{exit} /<!--.*-->/{next} {print}' | sed -E 's/^#+[[:space:]]+/### /g')
+          
+          # 파싱 후 본문이 비어있을 경우 방지
+          if [ -z "$(echo "$PR_BODY" | tr -d ' \n\r')" ]; then
+            PR_BODY="작성된 요약 내용이 없습니다."
+          fi
+
+          # 4. 디스코드 Webhook Payload 구성
+          jq -n \
+            --arg mention_text "$MENTION_TEXT" \
+            --arg title_prefix "$TITLE_PREFIX" \
+            --arg pr_title "$PR_TITLE" \
+            --arg url "$PR_URL" \
+            --arg author "$AUTHOR" \
+            --arg head "$HEAD_REF" \
+            --arg base "$BASE_REF" \
+            --arg additions "$ADDITIONS" \
+            --arg deletions "$DELETIONS" \
+            --arg changed "$CHANGED_FILES" \
+            --arg reviewers "$REVIEWERS" \
+            --arg pr_body "$PR_BODY" \
+            --argjson color "$COLOR" \
+            '{
+              content: (if $mention_text == "" then null else $mention_text end),
+              embeds: [{
+                title: $title_prefix,
+                description: ("**[" + $pr_title + "](" + $url + ")**\n\n" + (if ($pr_body | length) > 800 then ($pr_body[0:800] + "\n\n...(중략)...") else $pr_body end) + "\n\n---\n[👉 **여기를 클릭하여 PR 확인하기**](" + $url + ")"),
+                url: $url,
+                color: $color,
+                fields: [
+                  {
+                    name: "🙋 작성자",
+                    value: ("`" + $author + "`"),
+                    inline: false
+                  },
+                  {
+                    name: "👀 리뷰어",
+                    value: ("`" + $reviewers + "`"),
+                    inline: false
+                  },
+                  {
+                    name: "🌿 브랜치",
+                    value: ("`" + $head + "` -> `" + $base + "`"),
+                    inline: false
+                  },
+                  {
+                    name: "📊 변경 규모",
+                    value: ("`" + $changed + "` files (+`" + $additions + "` / -`" + $deletions + "`)"),
+                    inline: false
+                  }
+                ]
+              }]
+            }' > payload.json
+          
+          # 5. Webhook 전송 (실패 시 에러 코드 명확화 및 재시도)
+          curl -fSsl --retry 3 -X POST -H "Content-Type: application/json" -d @payload.json "$DISCORD_WEBHOOK_URL"
