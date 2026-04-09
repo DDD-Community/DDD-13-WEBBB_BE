@@ -17,11 +17,10 @@ build/
 logs/
 
 # Application config (secrets)
-application-local.yml
-application-prod.yml
 application-secret.yml
 **/secret*.yml
 *.env
+application-prod.yml
 
 # OS
 .DS_Store
