@@ -20,7 +20,6 @@ logs/
 application-secret.yml
 **/secret*.yml
 *.env
-application-prod.yml
 
 # OS
 .DS_Store
