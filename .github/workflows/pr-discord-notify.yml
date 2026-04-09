@@ -66,9 +66,10 @@ jobs:
           
           REVIEWERS=$(jq -r 'if .pull_request.requested_reviewers | length > 0 then [.pull_request.requested_reviewers[].login] | join(", ") else "없음" end' "$GITHUB_EVENT_PATH")
           
-          # 3. PR 본문 스마트 파싱 (변경 내용 & 이유 까지만 추출, 주석 제거)
+          # 3. PR 본문 스마트 파싱 (변경 내용 & 이유 까지만 추출, 주석 제거, 거대한 헤더 폰트 축소)
           RAW_BODY=$(jq -r '.pull_request.body // "내용이 없습니다."' "$GITHUB_EVENT_PATH")
-          PR_BODY=$(echo "$RAW_BODY" | awk '/(📸 스크린샷|테스트 방법|논의하고 싶은 내용)/{exit} /<!--.*-->/{next} {print}')
+          # 너무 큰 H1(#), H2(##) 마크다운 헤더를 적당히 보기 좋은 H3(###) 수준으로 강제 치환합니다.
+          PR_BODY=$(echo "$RAW_BODY" | awk '/(📸 스크린샷|테스트 방법|논의하고 싶은 내용)/{exit} /<!--.*-->/{next} {print}' | sed -E 's/^#+[[:space:]]+/### /g')
           
           # 파싱 후 본문이 비어있을 경우 방지
           if [ -z "$(echo "$PR_BODY" | tr -d ' \n\r')" ]; then
