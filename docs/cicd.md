@@ -131,6 +131,7 @@ Stage 2 (실행)    eclipse-temurin:21-jre  →  JAR만 복사해서 실행
 | `ddl-auto` | `validate` | 운영에서 스키마 자동 변경 방지 |
 | `show-sql` | `false` | 운영 로그 노이즈 제거 |
 | `actuator` | `health`만 노출 | CD health check용, 상세 정보 숨김 |
+| `DB_USE_SSL` | 기본값 `false` | Docker 내부 통신 기준. 추후 RDS 등 외부 DB 전환 시 `true` 적용 검토 |
 | DB/Redis 접속 | `${ENV_VAR}` | 환경변수로 주입 |
 
 ---
@@ -145,17 +146,23 @@ Stage 2 (실행)    eclipse-temurin:21-jre  →  JAR만 복사해서 실행
 | `EC2_USER` | SSH 유저 | `ec2-user` |
 | `EC2_SSH_KEY` | SSH 프라이빗 키 (PEM 전체 내용) | `-----BEGIN RSA...` |
 | `DB_PASSWORD` | MySQL 운영 비밀번호 | - |
-| `GHCR_TOKEN` | GHCR 접근용 PAT (`read:packages` 권한) | `ghp_xxxx` |
+| `GHCR_TOKEN` | GHCR 접근용 PAT (public 레포 기준 `read:packages` 권한) | `ghp_xxxx` |
+| `GHCR_USERNAME` | GHCR 로그인용 GitHub 계정명 (GHCR_TOKEN 발급 계정과 동일해야 함) | `my-github-id` |
 
-### GHCR_TOKEN 생성 방법
+### GHCR_TOKEN / GHCR_USERNAME 설정 방법
 
 1. GitHub Settings > Developer settings > Personal access tokens > Tokens (classic)
 2. Generate new token
-3. 권한: `read:packages` 체크
+3. 권한: `read:packages` 체크 (현재 레포가 public이므로 이 권한이면 충분)
 4. 생성된 토큰을 레포 Secrets에 `GHCR_TOKEN`으로 등록
+5. 해당 토큰을 발급한 GitHub 계정명을 `GHCR_USERNAME`으로 등록
 
 > `GITHUB_TOKEN`은 워크플로우 러너 안에서만 유효합니다.
 > EC2에서 GHCR 이미지를 pull하려면 별도 PAT가 필요합니다.
+
+> **운영 기준:** 현재는 개인 계정으로 임시 발급하여 사용 중입니다.
+> 추후 팀 공용 계정(또는 봇 계정)으로 이관하여 운영하는 것을 권장합니다.
+> 이관 시 `GHCR_TOKEN`과 `GHCR_USERNAME`을 동시에 교체해야 합니다.
 
 ---
 
@@ -191,3 +198,14 @@ mkdir -p ~/app
 | `.github/workflows/ci.yml` | PR 시 CI 워크플로우 |
 | `.github/workflows/cd.yml` | main push 시 CD 워크플로우 |
 | `.github/workflows/release-please.yml` | main push 시 릴리즈 자동화 |
+
+---
+
+## 후속 개선 과제
+
+| 과제 | 현재 상태 | 전환 시점 |
+|---|---|---|
+| GHCR 계정 이관 | 개인 계정 PAT 사용 중 | 팀 공용 계정 준비 시 `GHCR_TOKEN` + `GHCR_USERNAME` 동시 교체 |
+| OIDC + ECR + SSM 전환 | GHCR + SSH 기반 배포 | 운영 안정화 이후 별도 검토 (AWS 자격증명/SSH 키 관리 개선) |
+| DB SSL 적용 | `DB_USE_SSL=false` (Docker 내부 통신) | RDS 등 외부 DB 전환 시 `true` 적용 |
+| CI 검증 강화 | spotless + test + docker build | 도메인 로직/테스트가 늘어나면 점진적으로 강화 |
