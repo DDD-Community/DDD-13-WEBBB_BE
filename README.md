@@ -28,7 +28,18 @@ DB명: `webbb`
 
 또는 IntelliJ에서 `WebbbApplication.java` 실행
 
-### 3. 빌드
+### 3. Swagger UI 접속
+
+애플리케이션 실행 후 브라우저에서 접속합니다.
+
+| 항목 | URL |
+|------|-----|
+| Swagger UI | http://localhost:8080/swagger-ui/index.html |
+| OpenAPI JSON | http://localhost:8080/v3/api-docs |
+
+> JWT 인증이 필요한 API는 Swagger UI 우측 상단 **Authorize** 버튼에서 `Bearer <토큰>` 형식으로 입력하세요.
+
+### 4. 빌드
 
 ```bash
 ./gradlew build

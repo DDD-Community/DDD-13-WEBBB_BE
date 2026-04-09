@@ -34,8 +34,14 @@ dependencies {
     // Redis
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 
+    // Security
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+
     // Validation
     implementation 'org.springframework.boot:spring-boot-starter-validation'
+
+    // Swagger (Springdoc OpenAPI)
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.6'
 
     // MySQL
     runtimeOnly 'com.mysql:mysql-connector-j'
