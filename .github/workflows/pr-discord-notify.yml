@@ -1,0 +1,100 @@
+name: PR Discord Notification
+
+on:
+  pull_request:
+    types: [opened, reopened, ready_for_review, closed]
+
+jobs:
+  notify-discord:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Discord Notification
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          if [ -z "$DISCORD_WEBHOOK_URL" ]; then
+            echo "DISCORD_WEBHOOK_URL secret is not set!"
+            exit 1
+          fi
+
+          # 1. PR 상태(State) 및 색상(Color) 설정
+          ACTION="${{ github.event.action }}"
+          IS_MERGED="${{ github.event.pull_request.merged }}"
+          
+          TITLE_PREFIX="🟢 새 Pull Request (열림)"
+          COLOR=5763719 # Green
+          
+          if [ "$ACTION" = "closed" ]; then
+            if [ "$IS_MERGED" = "true" ]; then
+              TITLE_PREFIX="🟣 Pull Request 병합됨 (Merged)"
+              COLOR=10181046 # Purple
+            else
+              TITLE_PREFIX="🔴 Pull Request 닫힘 (Closed)"
+              COLOR=15158332 # Red
+            fi
+          fi
+
+          # 2. GITHUB_EVENT_PATH에서 안전하게 데이터 추출 (jq 활용)
+          PR_TITLE=$(jq -r '.pull_request.title' "$GITHUB_EVENT_PATH")
+          PR_URL=$(jq -r '.pull_request.html_url' "$GITHUB_EVENT_PATH")
+          AUTHOR=$(jq -r '.pull_request.user.login' "$GITHUB_EVENT_PATH")
+          HEAD_REF=$(jq -r '.pull_request.head.ref' "$GITHUB_EVENT_PATH")
+          BASE_REF=$(jq -r '.pull_request.base.ref' "$GITHUB_EVENT_PATH")
+          
+          ADDITIONS=$(jq -r '.pull_request.additions' "$GITHUB_EVENT_PATH")
+          DELETIONS=$(jq -r '.pull_request.deletions' "$GITHUB_EVENT_PATH")
+          CHANGED_FILES=$(jq -r '.pull_request.changed_files' "$GITHUB_EVENT_PATH")
+          
+          REVIEWERS=$(jq -r 'if .pull_request.requested_reviewers | length > 0 then [.pull_request.requested_reviewers[].login] | join(", ") else "없음" end' "$GITHUB_EVENT_PATH")
+          
+          PR_BODY=$(jq -r '.pull_request.body // "내용이 없습니다."' "$GITHUB_EVENT_PATH")
+          
+          # 3. 디스코드 Webhook Payload 구성 (본문 300자 자르기 포함)
+          jq -n \
+            --arg title_prefix "$TITLE_PREFIX" \
+            --arg pr_title "$PR_TITLE" \
+            --arg url "$PR_URL" \
+            --arg author "$AUTHOR" \
+            --arg head "$HEAD_REF" \
+            --arg base "$BASE_REF" \
+            --arg additions "$ADDITIONS" \
+            --arg deletions "$DELETIONS" \
+            --arg changed "$CHANGED_FILES" \
+            --arg reviewers "$REVIEWERS" \
+            --arg pr_body "$PR_BODY" \
+            --argjson color "$COLOR" \
+            '{
+              username: "GitHub Actions",
+              avatar_url: "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
+              embeds: [{
+                title: $title_prefix,
+                description: ("**[" + $pr_title + "](" + $url + ")**\n\n📝 **본문 요약**\n```\n" + (if ($pr_body | length) > 300 then ($pr_body[0:300] + "...") else $pr_body end) + "\n```\n\n[👉 **여기를 클릭하여 PR 확인하기**](" + $url + ")"),
+                url: $url,
+                color: $color,
+                fields: [
+                  {
+                    name: "🙋 작성자",
+                    value: ("`" + $author + "`"),
+                    inline: true
+                  },
+                  {
+                    name: "👀 리뷰어",
+                    value: ("`" + $reviewers + "`"),
+                    inline: true
+                  },
+                  {
+                    name: "🌿 브랜치",
+                    value: ("`" + $head + "` ➡️ `" + $base + "`"),
+                    inline: false
+                  },
+                  {
+                    name: "📊 변경 규모",
+                    value: ("`" + $changed + "` files (+`" + $additions + "` / -`" + $deletions + "`)"),
+                    inline: false
+                  }
+                ]
+              }]
+            }' > payload.json
+          
+          # 4. Webhook 전송
+          curl -X POST -H "Content-Type: application/json" -d @payload.json "$DISCORD_WEBHOOK_URL"
