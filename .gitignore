@@ -6,6 +6,7 @@
 # Local
 CLAUDE.local.md
 .claude/
+AGENTS.md
 
 # Gradle
 .gradle/
