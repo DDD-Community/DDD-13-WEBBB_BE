@@ -10,6 +10,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "users")
@@ -18,6 +19,9 @@ public class User extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(nullable = false, unique = true, updatable = false)
+    private UUID publicId;
 
     @Column(unique = true, nullable = false)
     private String email;
@@ -35,6 +39,7 @@ public class User extends BaseEntity {
 
     public static User create(String email, String nickname) {
         User user = new User();
+        user.publicId = UUID.randomUUID();
         user.email = email;
         user.nickname = nickname;
         user.status = UserStatus.ACTIVE;
@@ -51,11 +56,16 @@ public class User extends BaseEntity {
     }
 
     public void withdraw() {
+        this.status = UserStatus.INACTIVE;
         this.deletedAt = LocalDateTime.now();
     }
 
     public Long getId() {
         return id;
+    }
+
+    public UUID getPublicId() {
+        return publicId;
     }
 
     public String getEmail() {

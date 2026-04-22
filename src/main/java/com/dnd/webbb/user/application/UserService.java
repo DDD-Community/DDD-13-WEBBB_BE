@@ -10,6 +10,7 @@ import com.dnd.webbb.user.interfaces.dto.UserListResponse;
 import com.dnd.webbb.user.interfaces.dto.UserResponse;
 import com.dnd.webbb.user.interfaces.dto.UserUpdateRequest;
 import java.util.List;
+import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,14 +28,17 @@ public class UserService {
 
     @Transactional
     public UserResponse createUser(UserCreateRequest request) {
+        if (userRepository.existsByEmailAndDeletedAtIsNull(request.email())) {
+            throw new AppException(ErrorCode.DUPLICATED_EMAIL);
+        }
         User user = User.create(request.email(), request.nickname());
         return UserResponse.from(userRepository.save(user));
     }
 
-    public UserResponse getUser(Long id) {
+    public UserResponse getUser(UUID id) {
         User user =
                 userRepository
-                        .findByIdAndDeletedAtIsNull(id)
+                        .findByPublicIdAndDeletedAtIsNull(id)
                         .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
         return UserResponse.from(user);
     }
@@ -46,20 +50,20 @@ public class UserService {
     }
 
     @Transactional
-    public UserResponse updateUser(Long id, UserUpdateRequest request) {
+    public UserResponse updateUser(UUID id, UserUpdateRequest request) {
         User user =
                 userRepository
-                        .findByIdAndDeletedAtIsNull(id)
+                        .findByPublicIdAndDeletedAtIsNull(id)
                         .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
         user.update(request.nickname(), request.status());
         return UserResponse.from(user);
     }
 
     @Transactional
-    public void withdrawUser(Long id) {
+    public void withdrawUser(UUID id) {
         User user =
                 userRepository
-                        .findByIdAndDeletedAtIsNull(id)
+                        .findByPublicIdAndDeletedAtIsNull(id)
                         .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
         user.withdraw();
     }

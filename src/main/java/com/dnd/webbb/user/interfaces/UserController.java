@@ -14,8 +14,12 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -27,6 +31,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @Tag(name = "User", description = "회원 API")
+@Validated
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
@@ -53,7 +58,7 @@ public class UserController {
                           "success": true,
                           "message": "회원이 생성되었습니다.",
                           "data": {
-                            "id": 1,
+                            "id": "01939b10-7b0f-7c8f-9a2b-111111111111",
                             "email": "test@test.com",
                             "nickname": "ogu",
                             "status": "ACTIVE",
@@ -104,7 +109,7 @@ public class UserController {
                           "success": true,
                           "message": "요청이 성공했습니다.",
                           "data": {
-                            "id": 1,
+                            "id": "01939b10-7b0f-7c8f-9a2b-111111111111",
                             "email": "test@test.com",
                             "nickname": "ogu",
                             "status": "ACTIVE",
@@ -130,7 +135,7 @@ public class UserController {
                         """)))
     })
     @GetMapping("/{id}")
-    public ApiResponse<UserResponse> getUser(@PathVariable Long id) {
+    public ApiResponse<UserResponse> getUser(@PathVariable UUID id) {
         return ApiResponse.ok(userService.getUser(id));
     }
 
@@ -150,8 +155,8 @@ public class UserController {
                           "message": "요청이 성공했습니다.",
                           "data": {
                             "users": [
-                              { "id": 20, "email": "b@test.com", "nickname": "bbb", "status": "ACTIVE", "createdAt": "2026-04-09T11:00:00" },
-                              { "id": 19, "email": "a@test.com", "nickname": "aaa", "status": "ACTIVE", "createdAt": "2026-04-09T10:00:00" }
+                              { "id": "01939b10-7b0f-7c8f-9a2b-222222222222", "email": "b@test.com", "nickname": "bbb", "status": "ACTIVE", "createdAt": "2026-04-09T11:00:00" },
+                              { "id": "01939b10-7b0f-7c8f-9a2b-111111111111", "email": "a@test.com", "nickname": "aaa", "status": "ACTIVE", "createdAt": "2026-04-09T10:00:00" }
                             ],
                             "nextCursor": 19
                           },
@@ -163,7 +168,10 @@ public class UserController {
     public ApiResponse<UserListResponse> getUsers(
             @Parameter(description = "마지막으로 받은 회원 id (첫 요청 시 생략)") @RequestParam(required = false)
                     Long cursor,
-            @Parameter(description = "페이지 크기 (기본값: 20)") @RequestParam(defaultValue = "20")
+            @Parameter(description = "페이지 크기 (기본값: 20, 최대: 100)")
+                    @RequestParam(defaultValue = "20")
+                    @Min(value = 1, message = "페이지 크기는 1 이상이어야 합니다.")
+                    @Max(value = 100, message = "페이지 크기는 100 이하여야 합니다.")
                     int size) {
         return ApiResponse.ok(userService.getUsers(cursor, size));
     }
@@ -183,7 +191,7 @@ public class UserController {
                           "success": true,
                           "message": "요청이 성공했습니다.",
                           "data": {
-                            "id": 1,
+                            "id": "01939b10-7b0f-7c8f-9a2b-111111111111",
                             "email": "test@test.com",
                             "nickname": "newname",
                             "status": "ACTIVE",
@@ -228,7 +236,7 @@ public class UserController {
     })
     @PatchMapping("/{id}")
     public ApiResponse<UserResponse> updateUser(
-            @PathVariable Long id, @RequestBody @Valid UserUpdateRequest request) {
+            @PathVariable UUID id, @RequestBody @Valid UserUpdateRequest request) {
         return ApiResponse.ok(userService.updateUser(id, request));
     }
 
@@ -254,7 +262,7 @@ public class UserController {
                         """)))
     })
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> withdrawUser(@PathVariable Long id) {
+    public ResponseEntity<Void> withdrawUser(@PathVariable UUID id) {
         userService.withdrawUser(id);
         return ResponseEntity.noContent().build();
     }
