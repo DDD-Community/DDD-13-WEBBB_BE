@@ -6,6 +6,7 @@
 # Local
 CLAUDE.local.md
 .claude/
+AGENTS.md
 
 # Gradle
 .gradle/
@@ -17,8 +18,6 @@ build/
 logs/
 
 # Application config (secrets)
-application-local.yml
-application-prod.yml
 application-secret.yml
 **/secret*.yml
 *.env
