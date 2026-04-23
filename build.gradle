@@ -79,7 +79,7 @@ tasks.withType(JavaCompile).configureEach {
 // Spotless 코드 포맷팅
 spotless {
     java {
-        target 'src/*/java/**/*.java'
+        target 'src/*/java/**/*.java', 'poc/*/src/*/java/**/*.java'
 
         // 불필요한 import 제거
         removeUnusedImports()

@@ -1,0 +1,33 @@
+plugins {
+    id 'java'
+}
+
+group = 'com.dnd'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+repositories {
+    mavenCentral()
+    maven { url 'https://repo.spring.io/milestone' }
+}
+
+dependencies {
+    implementation platform('org.springframework.boot:spring-boot-dependencies:3.4.5')
+    implementation platform('org.springframework.ai:spring-ai-bom:1.0.0')
+
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework.ai:spring-ai-starter-model-anthropic'
+
+    testImplementation platform('org.springframework.boot:spring-boot-dependencies:3.4.5')
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
