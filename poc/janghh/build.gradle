@@ -1,0 +1,85 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.4.5'
+    id 'io.spring.dependency-management' version '1.1.7'
+    id 'com.diffplug.spotless' version '7.0.2'
+}
+
+group = 'com.dnd'
+version = '0.0.1-SNAPSHOT'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+}
+
+repositories {
+    mavenCentral()
+    maven { url 'https://repo.spring.io/milestone' }
+}
+
+dependencyManagement {
+    imports {
+        mavenBom 'org.springframework.ai:spring-ai-bom:1.0.4'
+    }
+}
+
+dependencies {
+    // Web
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+
+    // Validation
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+
+    // AOP (MDC 로깅)
+    implementation 'org.springframework.boot:spring-boot-starter-aop'
+
+    // Spring AI (ChatModel 인터페이스)
+    implementation 'org.springframework.ai:spring-ai-model'
+    // Spring AI (ChatClient)
+    implementation 'org.springframework.ai:spring-ai-client-chat'
+    // Spring AI OpenAI
+    implementation 'org.springframework.ai:spring-ai-starter-model-openai'
+
+    // Swagger (Springdoc OpenAPI)
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.6'
+
+    // .env 파일 로딩
+    implementation 'me.paulschwarz:spring-dotenv:4.0.0'
+
+    // Lombok
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+
+    // Test
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
+
+// Spotless 코드 포맷팅
+spotless {
+    java {
+        target 'src/*/java/**/*.java'
+
+        removeUnusedImports()
+
+        importOrder('java', 'javax', 'jakarta', 'org', 'com', '')
+
+        googleJavaFormat('1.25.2').aosp()
+
+        trimTrailingWhitespace()
+
+        endWithNewline()
+    }
+}

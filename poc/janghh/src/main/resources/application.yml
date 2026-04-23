@@ -1,0 +1,45 @@
+server:
+  port: 8080
+
+app:
+  ai:
+    provider: ${AI_PROVIDER:clova}
+  clova:
+    api-key: ${CLOVA_API_KEY:}
+    apigw-key: ${CLOVA_APIGW_KEY:}
+    endpoint: https://clovastudio.stream.naver.com/testapp/v1/chat-completions/HCX-003
+    temperature: 0.1
+    top-p: 0.8
+    max-tokens: 300
+    repeat-penalty: 5.0
+  logging:
+    log-text: ${LOG_TEXT:false}
+  prompt:
+    version: ${PROMPT_VERSION:v1}
+
+spring:
+  autoconfigure:
+    exclude:
+      - org.springframework.ai.model.openai.autoconfigure.OpenAiAudioSpeechAutoConfiguration
+      - org.springframework.ai.model.openai.autoconfigure.OpenAiAudioTranscriptionAutoConfiguration
+      - org.springframework.ai.model.openai.autoconfigure.OpenAiEmbeddingAutoConfiguration
+      - org.springframework.ai.model.openai.autoconfigure.OpenAiImageAutoConfiguration
+      - org.springframework.ai.model.openai.autoconfigure.OpenAiModerationAutoConfiguration
+  ai:
+    openai:
+      api-key: ${OPENAI_API_KEY:not-configured}
+      chat:
+        options:
+          model: gpt-4o-mini
+          temperature: 0.1
+          max-tokens: 300
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui/index.html
+  api-docs:
+    path: /v3/api-docs
+
+logging:
+  pattern:
+    console: "%d{HH:mm:ss} [%thread] [%X{requestId}] %-5level %logger{36} - %msg%n"
