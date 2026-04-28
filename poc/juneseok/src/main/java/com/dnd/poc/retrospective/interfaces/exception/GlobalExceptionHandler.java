@@ -55,6 +55,7 @@ public class GlobalExceptionHandler {
             case UPSTREAM_TIMEOUT -> HttpStatus.GATEWAY_TIMEOUT;
             case UPSTREAM_UNAVAILABLE -> HttpStatus.BAD_GATEWAY;
             case EMPTY_RESPONSE, INVALID_RESPONSE -> HttpStatus.UNPROCESSABLE_ENTITY;
+            case FALLBACK_TRIGGERED -> HttpStatus.OK;
         };
     }
 }

@@ -17,6 +17,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.MediaType;
 import org.springframework.http.ProblemDetail;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -54,19 +55,19 @@ public class RetrospectiveController {
                     content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
                             schema = @Schema(implementation = ProblemDetail.class)))
     })
-    @PostMapping(value = "/analyze",
-            consumes = MediaType.APPLICATION_JSON_VALUE,
-            produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/analyze", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> analyze(@Valid @RequestBody RetrospectiveRequest request) {
         RetrospectiveResult result = service.analyze(new RetrospectiveContext(request.context()));
 
         return switch (result) {
             case Success s -> ResponseEntity.ok(RetrospectiveResponse.from(s.analysis()));
-            case Failure f -> ResponseEntity
-                    .status(f.code().getHttpStatus())
-                    .body(ProblemDetail.forStatusAndDetail(
-                            org.springframework.http.HttpStatusCode.valueOf(f.code().getHttpStatus()),
-                            f.detail()));
+            case Failure f -> {
+                ProblemDetail pd = ProblemDetail.forStatusAndDetail(
+                        org.springframework.http.HttpStatusCode.valueOf(f.code().getHttpStatus()),
+                        "AI 회고 생성에 실패했습니다.");
+                pd.setProperty("errorCode", f.code().name());
+                yield ResponseEntity.status(f.code().getHttpStatus()).body(pd);
+            }
         };
     }
 }
