@@ -7,9 +7,10 @@ COPY gradlew settings.gradle build.gradle ./
 COPY gradle ./gradle
 RUN chmod +x gradlew && ./gradlew dependencies --no-daemon
 
-# 소스 복사 및 빌드
+# 소스 복사 및 빌드 (루트 프로젝트만)
 COPY src ./src
-RUN ./gradlew build -x test --no-daemon
+COPY poc ./poc
+RUN ./gradlew :build -x test --no-daemon
 
 # Stage 2: Runtime
 FROM eclipse-temurin:21-jre
