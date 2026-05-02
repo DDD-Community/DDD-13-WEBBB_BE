@@ -69,7 +69,9 @@ jobs:
             echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u ${{ secrets.GHCR_USERNAME }} --password-stdin
 
             export GITHUB_REPOSITORY=$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')
-            export DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+            export DB_URL="${{ secrets.DB_URL }}"
+            export DB_USERNAME="${{ secrets.DB_USERNAME }}"
+            export DB_PASSWORD="${{ secrets.DB_PASSWORD }}"
 
             cd ~/app
             docker compose -f docker-compose.prod.yml pull app

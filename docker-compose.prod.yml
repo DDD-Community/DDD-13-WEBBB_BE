@@ -6,35 +6,14 @@ services:
       - "8080:8080"
     environment:
       SPRING_PROFILES_ACTIVE: prod
-      DB_HOST: mysql
-      DB_PORT: 3306
-      DB_NAME: webbb
-      DB_USERNAME: webbb
+      DB_URL: ${DB_URL}
+      DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
       REDIS_HOST: redis
       REDIS_PORT: 6379
     depends_on:
-      mysql:
-        condition: service_healthy
       redis:
         condition: service_healthy
-    restart: unless-stopped
-
-  mysql:
-    image: mysql:8.0
-    container_name: webbb-mysql
-    environment:
-      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
-      MYSQL_DATABASE: webbb
-      MYSQL_USER: webbb
-      MYSQL_PASSWORD: ${DB_PASSWORD}
-    volumes:
-      - mysql-data:/var/lib/mysql
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_PASSWORD}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
     restart: unless-stopped
 
   redis:
@@ -50,5 +29,4 @@ services:
     restart: unless-stopped
 
 volumes:
-  mysql-data:
   redis-data:

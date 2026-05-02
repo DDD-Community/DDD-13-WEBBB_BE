@@ -117,11 +117,11 @@ Stage 2 (실행)    eclipse-temurin:21-jre  →  JAR만 복사해서 실행
 | 서비스 | 이미지 | 역할 | 외부 포트 |
 |---|---|---|---|
 | app | GHCR에서 pull | Spring Boot 애플리케이션 | 8080 |
-| mysql | mysql:8.0 | 데이터베이스 | 없음 (내부 전용) |
 | redis | redis:7.0 | 캐시/세션 저장소 | 없음 (내부 전용) |
 
-- app은 mysql, redis가 healthy 상태일 때만 시작 (`depends_on` + `healthcheck`)
-- mysql, redis는 호스트 포트를 노출하지 않음 (Docker 내부 네트워크로만 통신)
+- DB는 AWS RDS(MySQL)를 사용하며, `DB_URL` 환경변수로 JDBC URL 전체를 주입
+- app은 redis가 healthy 상태일 때만 시작 (`depends_on` + `healthcheck`)
+- redis는 호스트 포트를 노출하지 않음 (Docker 내부 네트워크로만 통신)
 - 모든 민감 정보는 환경변수로 주입 (하드코딩 금지)
 
 ### 운영 프로필 (application-prod.yml)
@@ -131,8 +131,8 @@ Stage 2 (실행)    eclipse-temurin:21-jre  →  JAR만 복사해서 실행
 | `ddl-auto` | `validate` | 운영에서 스키마 자동 변경 방지 |
 | `show-sql` | `false` | 운영 로그 노이즈 제거 |
 | `actuator` | `health`만 노출 | CD health check용, 상세 정보 숨김 |
-| `DB_USE_SSL` | 기본값 `false` | Docker 내부 통신 기준. 추후 RDS 등 외부 DB 전환 시 `true` 적용 검토 |
-| DB/Redis 접속 | `${ENV_VAR}` | 환경변수로 주입 |
+| DB 접속 | `${DB_URL}` | RDS JDBC URL 전체를 환경변수로 주입 (SSL 포함) |
+| Redis 접속 | `${REDIS_HOST}`, `${REDIS_PORT}` | 환경변수로 주입 |
 
 ---
 
@@ -145,7 +145,9 @@ Stage 2 (실행)    eclipse-temurin:21-jre  →  JAR만 복사해서 실행
 | `EC2_HOST` | EC2 퍼블릭 IP | `3.35.xxx.xxx` |
 | `EC2_USER` | SSH 유저 | `ec2-user` |
 | `EC2_SSH_KEY` | SSH 프라이빗 키 (PEM 전체 내용) | `-----BEGIN RSA...` |
-| `DB_PASSWORD` | MySQL 운영 비밀번호 | - |
+| `DB_URL` | RDS JDBC URL (SSL 포함) | `jdbc:mysql://xxx.rds.amazonaws.com:3306/webbb?useSSL=true&sslMode=REQUIRED...` |
+| `DB_USERNAME` | RDS 유저명 | `admin` |
+| `DB_PASSWORD` | RDS 비밀번호 | - |
 | `GHCR_TOKEN` | GHCR 접근용 PAT (public 레포 기준 `read:packages` 권한) | `ghp_xxxx` |
 | `GHCR_USERNAME` | GHCR 로그인용 GitHub 계정명 (GHCR_TOKEN 발급 계정과 동일해야 함) | `my-github-id` |
 
@@ -207,5 +209,5 @@ mkdir -p ~/app
 |---|---|---|
 | GHCR 계정 이관 | 개인 계정 PAT 사용 중 | 팀 공용 계정 준비 시 `GHCR_TOKEN` + `GHCR_USERNAME` 동시 교체 |
 | OIDC + ECR + SSM 전환 | GHCR + SSH 기반 배포 | 운영 안정화 이후 별도 검토 (AWS 자격증명/SSH 키 관리 개선) |
-| DB SSL 적용 | `DB_USE_SSL=false` (Docker 내부 통신) | RDS 등 외부 DB 전환 시 `true` 적용 |
+| DB SSL 적용 | RDS `sslMode=REQUIRED` 적용 완료 | - |
 | CI 검증 강화 | spotless + test + docker build | 도메인 로직/테스트가 늘어나면 점진적으로 강화 |
