@@ -12,5 +12,5 @@ public record UserCreateRequest(
                 String email,
         @Schema(example = "ogu")
                 @NotBlank(message = "닉네임은 필수입니다.")
-                @Size(max = 10, message = "닉네임은 10자 이하여야 합니다.")
+                @Size(max = 50, message = "닉네임은 50자 이하여야 합니다.")
                 String nickname) {}
