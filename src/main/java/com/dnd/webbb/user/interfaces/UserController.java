@@ -58,13 +58,15 @@ public class UserController {
                           "success": true,
                           "message": "회원이 생성되었습니다.",
                           "data": {
-                            "id": "01939b10-7b0f-7c8f-9a2b-111111111111",
+                            "id": 1,
                             "email": "test@test.com",
                             "nickname": "ogu",
-                            "status": "ACTIVE",
-                            "createdAt": "2026-04-09T12:00:00"
+                            "jobType": null,
+                            "careerLevel": null,
+                            "isActive": true,
+                            "createdAt": "2026-05-03T12:00:00"
                           },
-                          "timestamp": "2026-04-09T12:00:00"
+                          "timestamp": "2026-05-03T12:00:00"
                         }
                         """))),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -81,9 +83,9 @@ public class UserController {
                           "message": "유효하지 않은 요청입니다.",
                           "errors": [
                             { "field": "email", "reason": "이메일 형식이 올바르지 않습니다." },
-                            { "field": "nickname", "reason": "닉네임은 10자 이하여야 합니다." }
+                            { "field": "nickname", "reason": "닉네임은 50자 이하여야 합니다." }
                           ],
-                          "timestamp": "2026-04-09T12:00:00"
+                          "timestamp": "2026-05-03T12:00:00"
                         }
                         """)))
     })
@@ -109,13 +111,15 @@ public class UserController {
                           "success": true,
                           "message": "요청이 성공했습니다.",
                           "data": {
-                            "id": "01939b10-7b0f-7c8f-9a2b-111111111111",
+                            "id": 1,
                             "email": "test@test.com",
                             "nickname": "ogu",
-                            "status": "ACTIVE",
-                            "createdAt": "2026-04-09T12:00:00"
+                            "jobType": "BACKEND",
+                            "careerLevel": "3년차",
+                            "isActive": true,
+                            "createdAt": "2026-05-03T12:00:00"
                           },
-                          "timestamp": "2026-04-09T12:00:00"
+                          "timestamp": "2026-05-03T12:00:00"
                         }
                         """))),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -130,7 +134,7 @@ public class UserController {
                         {
                           "success": false,
                           "message": "존재하지 않는 회원입니다.",
-                          "timestamp": "2026-04-09T12:00:00"
+                          "timestamp": "2026-05-03T12:00:00"
                         }
                         """)))
     })
@@ -155,12 +159,12 @@ public class UserController {
                           "message": "요청이 성공했습니다.",
                           "data": {
                             "users": [
-                              { "id": "01939b10-7b0f-7c8f-9a2b-222222222222", "email": "b@test.com", "nickname": "bbb", "status": "ACTIVE", "createdAt": "2026-04-09T11:00:00" },
-                              { "id": "01939b10-7b0f-7c8f-9a2b-111111111111", "email": "a@test.com", "nickname": "aaa", "status": "ACTIVE", "createdAt": "2026-04-09T10:00:00" }
+                              { "id": 2, "email": "b@test.com", "nickname": "bbb", "jobType": null, "careerLevel": null, "isActive": true, "createdAt": "2026-05-03T11:00:00" },
+                              { "id": 1, "email": "a@test.com", "nickname": "aaa", "jobType": null, "careerLevel": null, "isActive": true, "createdAt": "2026-05-03T10:00:00" }
                             ],
-                            "nextCursor": 19
+                            "nextCursor": 1
                           },
-                          "timestamp": "2026-04-09T12:00:00"
+                          "timestamp": "2026-05-03T12:00:00"
                         }
                         """)))
     })
@@ -191,31 +195,15 @@ public class UserController {
                           "success": true,
                           "message": "요청이 성공했습니다.",
                           "data": {
-                            "id": "01939b10-7b0f-7c8f-9a2b-111111111111",
+                            "id": 1,
                             "email": "test@test.com",
                             "nickname": "newname",
-                            "status": "ACTIVE",
-                            "createdAt": "2026-04-09T12:00:00"
+                            "jobType": "BACKEND",
+                            "careerLevel": "3년차",
+                            "isActive": true,
+                            "createdAt": "2026-05-03T12:00:00"
                           },
-                          "timestamp": "2026-04-09T12:00:00"
-                        }
-                        """))),
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "400",
-                description = "유효성 검증 실패",
-                content =
-                        @Content(
-                                examples =
-                                        @ExampleObject(
-                                                value =
-                                                        """
-                        {
-                          "success": false,
-                          "message": "유효하지 않은 요청입니다.",
-                          "errors": [
-                            { "field": "nickname", "reason": "닉네임은 10자 이하여야 합니다." }
-                          ],
-                          "timestamp": "2026-04-09T12:00:00"
+                          "timestamp": "2026-05-03T12:00:00"
                         }
                         """))),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -230,7 +218,7 @@ public class UserController {
                         {
                           "success": false,
                           "message": "존재하지 않는 회원입니다.",
-                          "timestamp": "2026-04-09T12:00:00"
+                          "timestamp": "2026-05-03T12:00:00"
                         }
                         """)))
     })
@@ -257,7 +245,7 @@ public class UserController {
                         {
                           "success": false,
                           "message": "존재하지 않는 회원입니다.",
-                          "timestamp": "2026-04-09T12:00:00"
+                          "timestamp": "2026-05-03T12:00:00"
                         }
                         """)))
     })

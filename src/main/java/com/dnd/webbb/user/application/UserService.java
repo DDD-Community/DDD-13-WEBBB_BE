@@ -35,10 +35,10 @@ public class UserService {
         return UserResponse.from(userRepository.save(user));
     }
 
-    public UserResponse getUser(UUID id) {
+    public UserResponse getUser(UUID publicId) {
         User user =
                 userRepository
-                        .findByPublicIdAndDeletedAtIsNull(id)
+                        .findByPublicIdAndDeletedAtIsNull(publicId)
                         .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
         return UserResponse.from(user);
     }
@@ -50,20 +50,20 @@ public class UserService {
     }
 
     @Transactional
-    public UserResponse updateUser(UUID id, UserUpdateRequest request) {
+    public UserResponse updateUser(UUID publicId, UserUpdateRequest request) {
         User user =
                 userRepository
-                        .findByPublicIdAndDeletedAtIsNull(id)
+                        .findByPublicIdAndDeletedAtIsNull(publicId)
                         .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
-        user.update(request.nickname(), request.status());
+        user.update(request.nickname(), request.jobType(), request.careerLevel());
         return UserResponse.from(user);
     }
 
     @Transactional
-    public void withdrawUser(UUID id) {
+    public void withdrawUser(UUID publicId) {
         User user =
                 userRepository
-                        .findByPublicIdAndDeletedAtIsNull(id)
+                        .findByPublicIdAndDeletedAtIsNull(publicId)
                         .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
         user.withdraw();
     }

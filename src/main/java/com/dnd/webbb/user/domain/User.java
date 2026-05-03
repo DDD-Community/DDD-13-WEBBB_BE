@@ -3,8 +3,6 @@ package com.dnd.webbb.user.domain;
 import com.dnd.webbb.global.common.entity.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -23,15 +21,23 @@ public class User extends BaseEntity {
     @Column(nullable = false, unique = true, updatable = false)
     private UUID publicId;
 
-    @Column(unique = true, nullable = false)
+    @Column(unique = true, nullable = false, length = 100)
     private String email;
 
-    @Column(nullable = false)
+    @Column(length = 255)
+    private String passwordHash;
+
+    @Column(unique = true, nullable = false, length = 50)
     private String nickname;
 
-    @Enumerated(EnumType.STRING)
+    @Column(length = 50)
+    private String jobType;
+
+    @Column(length = 50)
+    private String careerLevel;
+
     @Column(nullable = false)
-    private UserStatus status;
+    private boolean isActive = true;
 
     private LocalDateTime deletedAt;
 
@@ -42,21 +48,24 @@ public class User extends BaseEntity {
         user.publicId = UUID.randomUUID();
         user.email = email;
         user.nickname = nickname;
-        user.status = UserStatus.ACTIVE;
+        user.isActive = true;
         return user;
     }
 
-    public void update(String nickname, UserStatus status) {
+    public void update(String nickname, String jobType, String careerLevel) {
         if (nickname != null) {
             this.nickname = nickname;
         }
-        if (status != null) {
-            this.status = status;
+        if (jobType != null) {
+            this.jobType = jobType;
+        }
+        if (careerLevel != null) {
+            this.careerLevel = careerLevel;
         }
     }
 
     public void withdraw() {
-        this.status = UserStatus.INACTIVE;
+        this.isActive = false;
         this.deletedAt = LocalDateTime.now();
     }
 
@@ -72,12 +81,24 @@ public class User extends BaseEntity {
         return email;
     }
 
+    public String getPasswordHash() {
+        return passwordHash;
+    }
+
     public String getNickname() {
         return nickname;
     }
 
-    public UserStatus getStatus() {
-        return status;
+    public String getJobType() {
+        return jobType;
+    }
+
+    public String getCareerLevel() {
+        return careerLevel;
+    }
+
+    public boolean isActive() {
+        return isActive;
     }
 
     public LocalDateTime getDeletedAt() {

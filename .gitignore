@@ -3,6 +3,9 @@
 *.iml
 .vscode/
 
+# Worktrees
+.worktrees/
+
 # Local
 CLAUDE.local.md
 .claude/
