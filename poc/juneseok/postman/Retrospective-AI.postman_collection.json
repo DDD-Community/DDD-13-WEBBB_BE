@@ -1,0 +1,259 @@
+{
+  "info": {
+    "name": "Retrospective AI PoC",
+    "description": "취준생 감정 텍스트를 KPT(Keep/Problem/Try) + 응원 메시지로 구조화하는 Spring Boot PoC.\n\nbaseUrl 환경변수로 호스트 변경 가능 (기본 http://localhost:8082).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "ret-ai-poc-juneseok"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8082",
+      "type": "string"
+    },
+    {
+      "key": "correlationId",
+      "value": "postman-{{$randomUUID}}",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/actuator/health",
+          "host": ["{{baseUrl}}"],
+          "path": ["actuator", "health"]
+        },
+        "description": "Spring Boot Actuator health endpoint. UP이 떨어지면 OK."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "pm.test('status=UP', () => pm.expect(pm.response.json().status).to.eql('UP'));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "OpenAPI spec",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/v3/api-docs",
+          "host": ["{{baseUrl}}"],
+          "path": ["v3", "api-docs"]
+        },
+        "description": "Springdoc이 노출하는 OpenAPI 3 스펙. Postman에 그대로 import 가능."
+      }
+    },
+    {
+      "name": "KPT 분석 - 정상 (코딩테스트 회고)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "X-Correlation-Id",
+            "value": "{{correlationId}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"context\": \"오늘 코딩테스트에서 시간이 부족해서 마지막 문제를 못 풀었어요. 자료구조 공부가 부족했던 것 같고, 1번부터 순서대로 풀다가 어려운 문제에서 너무 오래 잡혀있었어요. 그래도 끝까지 자리에 앉아서 시도는 했어요.\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/retrospective/analyze",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "retrospective", "analyze"]
+        },
+        "description": "정상 입력. 200 응답에 keep/problem/try/cheer_message 4개 필드가 비어있지 않게 와야 함."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "const body = pm.response.json();",
+              "pm.test('keep is non-empty array', () => pm.expect(body.keep).to.be.an('array').that.is.not.empty);",
+              "pm.test('problem is array', () => pm.expect(body.problem).to.be.an('array'));",
+              "pm.test('try field exists', () => pm.expect(body).to.have.property('try'));",
+              "pm.test('cheer_message present', () => pm.expect(body.cheer_message).to.be.a('string').and.not.empty);",
+              "pm.test('correlation id echoed', () => {",
+              "  pm.expect(pm.response.headers.get('X-Correlation-Id')).to.eql(pm.collectionVariables.get('correlationId'));",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "KPT 분석 - 정상 (면접 회고)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"context\": \"면접에서 너무 긴장해서 말을 더듬었어요. 준비했던 답변도 절반밖에 못 했고, 마지막 질문에서는 머리가 하얘졌어요. 그래도 끝까지 예의를 지키려고 노력했고, 모르는 건 모른다고 솔직히 말했어요.\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/retrospective/analyze",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "retrospective", "analyze"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "const body = pm.response.json();",
+              "pm.test('all 4 fields present', () => {",
+              "  pm.expect(body).to.have.all.keys('keep','problem','try','cheer_message');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "검증 실패 - 빈 context",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"context\": \"\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/retrospective/analyze",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "retrospective", "analyze"]
+        },
+        "description": "@NotBlank 검증 실패 → 400 ProblemDetail (RFC 7807)."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('400 Bad Request', () => pm.response.to.have.status(400));",
+              "const body = pm.response.json();",
+              "pm.test('ProblemDetail shape', () => {",
+              "  pm.expect(body.title).to.eql('Validation failed');",
+              "  pm.expect(body.detail).to.include('context');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "검증 실패 - 길이 초과 (>2000)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{{oversizeBody}}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/retrospective/analyze",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "retrospective", "analyze"]
+        },
+        "description": "@Size(max=2000) 검증 실패. pre-request script가 2001자짜리 body를 동적 생성."
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const oversize = 'a'.repeat(2001);",
+              "const body = JSON.stringify({ context: oversize });",
+              "pm.collectionVariables.set('oversizeBody', body);"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('400 Bad Request', () => pm.response.to.have.status(400));",
+              "pm.test('detail mentions length', () => {",
+              "  const body = pm.response.json();",
+              "  pm.expect(body.detail.toLowerCase()).to.match(/context|long|size/);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "검증 실패 - context 필드 누락",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/retrospective/analyze",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "retrospective", "analyze"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('400 Bad Request', () => pm.response.to.have.status(400));"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

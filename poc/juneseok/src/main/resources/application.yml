@@ -1,0 +1,57 @@
+server:
+  port: 8082
+
+spring:
+  profiles:
+    default: mock
+  threads:
+    virtual:
+      enabled: true
+  ai:
+    openai:
+      api-key: ${OPENAI_API_KEY:}
+      chat:
+        options:
+          model: gpt-4o-mini
+          temperature: 0.3
+
+retrospective:
+  ai:
+    prompt-location: classpath:prompts/kpt-system.st
+    timeout: 20s
+
+resilience4j:
+  retry:
+    retry-aspect-order: 2
+    instances:
+      kptAnalyzer:
+        max-attempts: 2
+        wait-duration: 500ms
+        retry-exceptions:
+          - com.dnd.poc.retrospective.domain.exception.RetryableUpstreamException
+        ignore-exceptions:
+          - com.dnd.poc.retrospective.domain.exception.PermanentResponseException
+  circuitbreaker:
+    circuit-breaker-aspect-order: 1
+    instances:
+      kptAnalyzer:
+        sliding-window-size: 20
+        failure-rate-threshold: 60
+        wait-duration-in-open-state: 30s
+        permitted-number-of-calls-in-half-open-state: 3
+        record-exceptions:
+          - com.dnd.poc.retrospective.domain.exception.RetryableUpstreamException
+        ignore-exceptions:
+          - com.dnd.poc.retrospective.domain.exception.PermanentResponseException
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui/index.html
+  api-docs:
+    path: /v3/api-docs
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
