@@ -17,9 +17,7 @@ import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 
 @Entity
-@Table(
-        name = "monster",
-        uniqueConstraints = @UniqueConstraint(columnNames = {"post_id"}))
+@Table(name = "monster", uniqueConstraints = @UniqueConstraint(columnNames = {"post_id"}))
 public class Monster extends BaseEntity {
 
     @Id
