@@ -1,5 +1,9 @@
 package com.dnd.poc.retrospective.config;
 
+import java.io.IOException;
+import java.net.http.HttpClient;
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -9,11 +13,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.http.client.JdkClientHttpRequestFactory;
-
-import java.io.IOException;
-import java.net.http.HttpClient;
-import java.nio.charset.StandardCharsets;
-import java.time.Duration;
 
 @Configuration
 @EnableConfigurationProperties(AiProperties.class)
@@ -45,7 +44,8 @@ public class AiConfig {
 
     @Bean
     @ConditionalOnExpression(LIVE_KEY_CONDITION)
-    public KptSystemPrompt kptSystemPrompt(AiProperties props, ResourceLoader loader) throws IOException {
+    public KptSystemPrompt kptSystemPrompt(AiProperties props, ResourceLoader loader)
+            throws IOException {
         Resource resource = loader.getResource(props.promptLocation());
         try (var in = resource.getInputStream()) {
             return new KptSystemPrompt(new String(in.readAllBytes(), StandardCharsets.UTF_8));
