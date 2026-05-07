@@ -19,6 +19,12 @@ spring:
       host: ${REDIS_HOST}
       port: ${REDIS_PORT:6379}
 
+springdoc:
+  swagger-ui:
+    enabled: false
+  api-docs:
+    enabled: false
+
 management:
   endpoints:
     web:

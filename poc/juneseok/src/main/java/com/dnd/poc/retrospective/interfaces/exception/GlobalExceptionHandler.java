@@ -2,6 +2,8 @@ package com.dnd.poc.retrospective.interfaces.exception;
 
 import com.dnd.poc.retrospective.domain.RetrospectiveResult.ErrorCode;
 import com.dnd.poc.retrospective.domain.exception.RetrospectiveGenerationException;
+import java.net.URI;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -9,9 +11,6 @@ import org.springframework.http.ProblemDetail;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-
-import java.net.URI;
-import java.util.stream.Collectors;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -33,9 +32,10 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ProblemDetail handleValidation(MethodArgumentNotValidException e) {
-        String detail = e.getBindingResult().getFieldErrors().stream()
-                .map(fe -> fe.getField() + ": " + fe.getDefaultMessage())
-                .collect(Collectors.joining(", "));
+        String detail =
+                e.getBindingResult().getFieldErrors().stream()
+                        .map(fe -> fe.getField() + ": " + fe.getDefaultMessage())
+                        .collect(Collectors.joining(", "));
         ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, detail);
         pd.setTitle("Validation failed");
         pd.setType(TYPE_VALIDATION);
