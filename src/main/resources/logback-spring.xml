@@ -25,6 +25,8 @@
 
     <!-- prod -->
     <springProfile name="prod">
+        <property name="LOG_PATH" value="${LOG_PATH:-/var/log/webbb}"/>
+
         <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
             <encoder>
                 <pattern>${LOG_PATTERN}</pattern>
@@ -32,12 +34,12 @@
         </appender>
 
         <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-            <file>logs/webbb.log</file>
+            <file>${LOG_PATH}/webbb.log</file>
             <encoder>
                 <pattern>${LOG_PATTERN}</pattern>
             </encoder>
             <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-                <fileNamePattern>logs/webbb.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+                <fileNamePattern>${LOG_PATH}/webbb.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
                 <maxFileSize>50MB</maxFileSize>
                 <maxHistory>30</maxHistory>
                 <totalSizeCap>500MB</totalSizeCap>
@@ -46,7 +48,7 @@
 
         <appender name="ASYNC_FILE" class="ch.qos.logback.classic.AsyncAppender">
             <queueSize>1024</queueSize>
-            <discardingThreshold>0</discardingThreshold>
+            <neverBlock>true</neverBlock>
             <includeCallerData>false</includeCallerData>
             <appender-ref ref="FILE"/>
         </appender>

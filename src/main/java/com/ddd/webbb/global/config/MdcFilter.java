@@ -47,14 +47,14 @@ public class MdcFilter extends OncePerRequestFilter {
         response.setHeader(REQUEST_ID_HEADER, requestId);
 
         long start = System.currentTimeMillis();
-        log.info(">>> {} {} {}", request.getMethod(), request.getRequestURI(), maskQuery(request));
+        log.debug(">>> {} {} {}", request.getMethod(), request.getRequestURI(), maskQuery(request));
 
         try {
             filterChain.doFilter(request, response);
         } finally {
             long elapsed = System.currentTimeMillis() - start;
-            log.info("<<< {} {}ms", response.getStatus(), elapsed);
-            MDC.clear();
+            log.debug("<<< {} {}ms", response.getStatus(), elapsed);
+            MDC.remove(REQUEST_ID_KEY);
         }
     }
 
