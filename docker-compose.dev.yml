@@ -1,12 +1,12 @@
 services:
   app:
     image: ghcr.io/${GITHUB_REPOSITORY}:latest
-    container_name: webbb-prod-app
+    container_name: webbb-dev-app
     ports:
-      - "8081:8080"
+      - "8080:8080"
     environment:
-      SPRING_PROFILES_ACTIVE: prod
-      DB_URL: ${DB_URL_PROD}
+      SPRING_PROFILES_ACTIVE: dev
+      DB_URL: ${DB_URL}
       DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
       REDIS_HOST: redis
@@ -18,9 +18,9 @@ services:
 
   redis:
     image: redis:7.0
-    container_name: webbb-prod-redis
+    container_name: webbb-dev-redis
     volumes:
-      - redis-prod-data:/data
+      - redis-dev-data:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -29,4 +29,4 @@ services:
     restart: unless-stopped
 
 volumes:
-  redis-prod-data:
+  redis-dev-data:
