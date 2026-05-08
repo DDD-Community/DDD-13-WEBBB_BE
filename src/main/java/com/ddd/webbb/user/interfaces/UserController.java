@@ -276,9 +276,9 @@ public class UserController {
                             "id": "550e8400-e29b-41d4-a716-446655440000",
                             "email": "test@test.com",
                             "nickname": "ogu",
-                            "jobRole": "BACKEND",
-                            "careerYear": "YEAR_3",
-                            "status": "ACTIVE",
+                            "jobType": "BACKEND",
+                            "careerLevel": "3년차",
+                            "isActive": true,
                             "createdAt": "2026-05-03T12:00:00"
                           },
                           "timestamp": "2026-05-03T12:00:00"
@@ -305,12 +305,12 @@ public class UserController {
         // TODO: 실제 서비스 연동
         return ApiResponse.ok(
                 new UserMeResponse(
-                        "550e8400-e29b-41d4-a716-446655440000",
+                        UUID.fromString("550e8400-e29b-41d4-a716-446655440000"),
                         "test@test.com",
                         "ogu",
                         "BACKEND",
-                        "YEAR_3",
-                        "ACTIVE",
+                        "3년차",
+                        true,
                         LocalDateTime.of(2026, 5, 3, 12, 0)));
     }
 
@@ -332,9 +332,9 @@ public class UserController {
                             "id": "550e8400-e29b-41d4-a716-446655440000",
                             "email": "test@test.com",
                             "nickname": "newogu",
-                            "jobRole": "PLANNING",
-                            "careerYear": "YEAR_5",
-                            "status": "ACTIVE",
+                            "jobType": "PLANNING",
+                            "careerLevel": "5년차",
+                            "isActive": true,
                             "createdAt": "2026-05-03T12:00:00"
                           },
                           "timestamp": "2026-05-03T12:00:00"
@@ -362,12 +362,12 @@ public class UserController {
         // TODO: 실제 서비스 연동
         return ApiResponse.ok(
                 new UserMeResponse(
-                        "550e8400-e29b-41d4-a716-446655440000",
+                        UUID.fromString("550e8400-e29b-41d4-a716-446655440000"),
                         "test@test.com",
                         request.nickname() != null ? request.nickname() : "ogu",
-                        request.jobRole() != null ? request.jobRole() : "BACKEND",
-                        request.careerYear() != null ? request.careerYear() : "YEAR_3",
-                        "ACTIVE",
+                        request.jobType() != null ? request.jobType() : "BACKEND",
+                        request.careerLevel() != null ? request.careerLevel() : "3년차",
+                        true,
                         LocalDateTime.of(2026, 5, 3, 12, 0)));
     }
 }
