@@ -4,6 +4,8 @@ import com.ddd.webbb.global.common.response.ApiResponse;
 import com.ddd.webbb.user.application.UserService;
 import com.ddd.webbb.user.interfaces.dto.UserCreateRequest;
 import com.ddd.webbb.user.interfaces.dto.UserListResponse;
+import com.ddd.webbb.user.interfaces.dto.UserMeResponse;
+import com.ddd.webbb.user.interfaces.dto.UserProfileUpdateRequest;
 import com.ddd.webbb.user.interfaces.dto.UserResponse;
 import com.ddd.webbb.user.interfaces.dto.UserUpdateRequest;
 import io.swagger.v3.oas.annotations.Operation;
@@ -16,6 +18,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import java.time.LocalDateTime;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -253,5 +256,118 @@ public class UserController {
     public ResponseEntity<Void> withdrawUser(@PathVariable UUID id) {
         userService.withdrawUser(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @Operation(summary = "내 정보 조회")
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "200",
+                description = "조회 성공",
+                content =
+                        @Content(
+                                examples =
+                                        @ExampleObject(
+                                                value =
+                                                        """
+                        {
+                          "success": true,
+                          "message": "요청이 성공했습니다.",
+                          "data": {
+                            "id": "550e8400-e29b-41d4-a716-446655440000",
+                            "email": "test@test.com",
+                            "nickname": "ogu",
+                            "jobType": "BACKEND",
+                            "careerLevel": "3년차",
+                            "isActive": true,
+                            "createdAt": "2026-05-03T12:00:00"
+                          },
+                          "timestamp": "2026-05-03T12:00:00"
+                        }
+                        """))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "401",
+                description = "인증 실패",
+                content =
+                        @Content(
+                                examples =
+                                        @ExampleObject(
+                                                value =
+                                                        """
+                        {
+                          "success": false,
+                          "message": "인증이 필요합니다.",
+                          "timestamp": "2026-05-03T12:00:00"
+                        }
+                        """)))
+    })
+    @GetMapping("/me")
+    public ApiResponse<UserMeResponse> getMe() {
+        // TODO: 실제 서비스 연동
+        return ApiResponse.ok(
+                new UserMeResponse(
+                        UUID.fromString("550e8400-e29b-41d4-a716-446655440000"),
+                        "test@test.com",
+                        "ogu",
+                        "BACKEND",
+                        "3년차",
+                        true,
+                        LocalDateTime.of(2026, 5, 3, 12, 0)));
+    }
+
+    @Operation(summary = "내 프로필 수정")
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "200",
+                description = "수정 성공",
+                content =
+                        @Content(
+                                examples =
+                                        @ExampleObject(
+                                                value =
+                                                        """
+                        {
+                          "success": true,
+                          "message": "요청이 성공했습니다.",
+                          "data": {
+                            "id": "550e8400-e29b-41d4-a716-446655440000",
+                            "email": "test@test.com",
+                            "nickname": "newogu",
+                            "jobType": "PLANNING",
+                            "careerLevel": "5년차",
+                            "isActive": true,
+                            "createdAt": "2026-05-03T12:00:00"
+                          },
+                          "timestamp": "2026-05-03T12:00:00"
+                        }
+                        """))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "401",
+                description = "인증 실패",
+                content =
+                        @Content(
+                                examples =
+                                        @ExampleObject(
+                                                value =
+                                                        """
+                        {
+                          "success": false,
+                          "message": "인증이 필요합니다.",
+                          "timestamp": "2026-05-03T12:00:00"
+                        }
+                        """)))
+    })
+    @PatchMapping("/me/profile")
+    public ApiResponse<UserMeResponse> updateMyProfile(
+            @RequestBody @Valid UserProfileUpdateRequest request) {
+        // TODO: 실제 서비스 연동
+        return ApiResponse.ok(
+                new UserMeResponse(
+                        UUID.fromString("550e8400-e29b-41d4-a716-446655440000"),
+                        "test@test.com",
+                        request.nickname() != null ? request.nickname() : "ogu",
+                        request.jobType() != null ? request.jobType() : "BACKEND",
+                        request.careerLevel() != null ? request.careerLevel() : "3년차",
+                        true,
+                        LocalDateTime.of(2026, 5, 3, 12, 0)));
     }
 }

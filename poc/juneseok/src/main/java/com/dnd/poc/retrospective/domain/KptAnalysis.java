@@ -4,11 +4,7 @@ import java.util.List;
 import java.util.Objects;
 
 public record KptAnalysis(
-        List<String> keep,
-        List<String> problem,
-        List<String> tries,
-        String cheerMessage
-) {
+        List<String> keep, List<String> problem, List<String> tries, String cheerMessage) {
     public KptAnalysis {
         Objects.requireNonNull(keep, "keep must not be null");
         Objects.requireNonNull(problem, "problem must not be null");

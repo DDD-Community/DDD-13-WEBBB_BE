@@ -26,7 +26,8 @@ public class RetrospectiveService {
         try {
             KptAnalysis analysis = analyzer.analyze(context);
             if (analysis.isEmpty()) {
-                return new RetrospectiveResult.Failure(ErrorCode.EMPTY_RESPONSE, "AI returned empty analysis");
+                return new RetrospectiveResult.Failure(
+                        ErrorCode.EMPTY_RESPONSE, "AI returned empty analysis");
             }
             return new RetrospectiveResult.Success(analysis);
         } catch (RetrospectiveGenerationException e) {
