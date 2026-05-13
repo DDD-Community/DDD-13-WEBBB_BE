@@ -5,6 +5,10 @@ plugins {
     id 'com.diffplug.spotless' version '7.0.2'
 }
 
+ext {
+    set('springAiVersion', "1.0.4")
+}
+
 group = 'com.ddd'
 version = '0.0.1-SNAPSHOT'
 
@@ -22,6 +26,12 @@ configurations {
 
 repositories {
     mavenCentral()
+}
+
+dependencyManagement {
+    imports {
+        mavenBom "org.springframework.ai:spring-ai-bom:${springAiVersion}"
+    }
 }
 
 dependencies {
@@ -58,6 +68,24 @@ dependencies {
     annotationProcessor 'com.querydsl:querydsl-apt:5.1.0:jakarta'
     annotationProcessor 'jakarta.annotation:jakarta.annotation-api'
     annotationProcessor 'jakarta.persistence:jakarta.persistence-api'
+
+    // Dotenv (.env 파일 자동 로드)
+    implementation 'me.paulschwarz:spring-dotenv:4.0.0'
+
+    // Spring AI — Anthropic Claude (Primary)
+    implementation 'org.springframework.ai:spring-ai-starter-model-anthropic'
+
+    // Spring AI — OpenAI (Fallback)
+    implementation 'org.springframework.ai:spring-ai-starter-model-openai'
+
+    // Resilience4j (Circuit Breaker + Retry)
+    implementation 'io.github.resilience4j:resilience4j-spring-boot3:2.2.0'
+
+    // AOP (Resilience4j 어노테이션 동작에 필요)
+    implementation 'org.springframework.boot:spring-boot-starter-aop'
+
+    // Micrometer Prometheus
+    implementation 'io.micrometer:micrometer-registry-prometheus'
 
     // Test
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
