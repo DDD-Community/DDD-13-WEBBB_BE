@@ -62,6 +62,7 @@ docker-compose down -v
 ## 패키지 구조
 
 > 레이어 의존 방향 및 각 패키지별 파일 목록은 [docs/architecture.md](docs/architecture.md)를 참고하세요.
+> AI 감정 분석 기능 연동 방법은 [docs/ai-integration.md](docs/ai-integration.md)를 참고하세요.
 
 DDD 스타일 레이어드 아키텍처를 적용합니다. 도메인(Feature) 기반으로 모듈을 분리하고, 각 모듈 내부에 `domain / application / infrastructure / interfaces` 4-레이어를 적용합니다.
 
