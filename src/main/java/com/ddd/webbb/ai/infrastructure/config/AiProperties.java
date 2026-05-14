@@ -4,5 +4,4 @@ import java.time.Duration;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @ConfigurationProperties(prefix = "app.ai")
-public record AiProperties(String promptVersion, Duration timeout) {
-}
+public record AiProperties(String promptVersion, Duration timeout) {}

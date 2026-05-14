@@ -32,10 +32,7 @@ public class OpenAiEmotionAnalyzer implements EmotionAnalyzer {
     public EmotionAnalysisResult analyze(PostContent content) {
         try {
             String prompt = promptTemplate.replace("{content}", content.text());
-            String response = chatClient.prompt()
-                .user(prompt)
-                .call()
-                .content();
+            String response = chatClient.prompt().user(prompt).call().content();
             return parseResponse(response);
         } catch (PermanentAiException | RetryableAiException e) {
             throw e;
@@ -52,9 +49,11 @@ public class OpenAiEmotionAnalyzer implements EmotionAnalyzer {
 
     private EmotionAnalysisResult parseResponse(String json) {
         try {
-            EmotionAnalysisResult result = objectMapper.readValue(json.trim(), EmotionAnalysisResult.class);
+            EmotionAnalysisResult result =
+                    objectMapper.readValue(json.trim(), EmotionAnalysisResult.class);
             if (!result.isValid()) {
-                throw new PermanentAiException(AiErrorCode.INVALID_RESPONSE, "유효하지 않은 AI 응답: " + json);
+                throw new PermanentAiException(
+                        AiErrorCode.INVALID_RESPONSE, "유효하지 않은 AI 응답: " + json);
             }
             return result;
         } catch (PermanentAiException e) {

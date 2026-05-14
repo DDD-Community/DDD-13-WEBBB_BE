@@ -26,25 +26,25 @@ import org.springframework.test.web.servlet.MockMvc;
 @TestPropertySource(properties = "LOG_PATH=build/test-logs")
 class AiTestControllerProdProfileTest {
 
-    @Autowired
-    private MockMvc mockMvc;
+    @Autowired private MockMvc mockMvc;
 
-    @MockitoBean
-    private AiAnalysisService aiAnalysisService;
+    @MockitoBean private AiAnalysisService aiAnalysisService;
 
     @Test
     void prod_프로필에서도_감정_분석_요청을_처리한다() throws Exception {
-        AiAnalysisResponse mockResponse = new AiAnalysisResponse(
-            "ANXIETY", 30, 0.9, "불안 표현이 강함", false, "OPENAI");
+        AiAnalysisResponse mockResponse =
+                new AiAnalysisResponse("ANXIETY", 30, 0.9, "불안 표현이 강함", false, "OPENAI");
         given(aiAnalysisService.analyze(any(PostContent.class))).willReturn(mockResponse);
 
-        mockMvc.perform(post("/api/ai/test/analyze")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("""
+        mockMvc.perform(
+                        post("/api/ai/test/analyze")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(
+                                        """
                     {"content": "프로덕션에서도 테스트하고 싶어요"}
                     """))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.success").value(true))
-            .andExpect(jsonPath("$.data.usedProvider").value("OPENAI"));
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.usedProvider").value("OPENAI"));
     }
 }

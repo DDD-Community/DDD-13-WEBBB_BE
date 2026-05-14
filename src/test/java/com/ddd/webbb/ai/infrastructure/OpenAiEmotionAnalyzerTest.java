@@ -30,7 +30,8 @@ class OpenAiEmotionAnalyzerTest {
 
     @Test
     void 정상_응답을_파싱하여_반환한다() {
-        String jsonResponse = """
+        String jsonResponse =
+                """
             {"emotionType":"LONELINESS","hp":30,"confidence":0.85,"reason":"극도의 외로움"}
             """;
         ChatClientRequestSpec requestSpec = mock(ChatClientRequestSpec.class);
@@ -60,6 +61,6 @@ class OpenAiEmotionAnalyzerTest {
         PostContent content = new PostContent(2L, "테스트 내용");
 
         assertThatThrownBy(() -> analyzer.analyze(content))
-            .isInstanceOf(RetryableAiException.class);
+                .isInstanceOf(RetryableAiException.class);
     }
 }

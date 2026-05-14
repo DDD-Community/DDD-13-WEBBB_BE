@@ -16,14 +16,16 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.core.annotation.Order;
 import org.springframework.core.io.ClassPathResource;
 
-@AutoConfiguration(after = {AnthropicChatAutoConfiguration.class, OpenAiChatAutoConfiguration.class})
+@AutoConfiguration(
+        after = {AnthropicChatAutoConfiguration.class, OpenAiChatAutoConfiguration.class})
 @EnableConfigurationProperties(AiProperties.class)
 public class AiConfig {
 
     @Bean
     @Order(1)
     @ConditionalOnBean(AnthropicChatModel.class)
-    public ClaudeEmotionAnalyzer claudeEmotionAnalyzer(AnthropicChatModel model, AiProperties properties) throws IOException {
+    public ClaudeEmotionAnalyzer claudeEmotionAnalyzer(
+            AnthropicChatModel model, AiProperties properties) throws IOException {
         String template = loadPromptTemplate(properties.promptVersion());
         return new ClaudeEmotionAnalyzer(ChatClient.builder(model).build(), template);
     }
@@ -31,13 +33,15 @@ public class AiConfig {
     @Bean
     @Order(2)
     @ConditionalOnBean(OpenAiChatModel.class)
-    public OpenAiEmotionAnalyzer openAiEmotionAnalyzer(OpenAiChatModel model, AiProperties properties) throws IOException {
+    public OpenAiEmotionAnalyzer openAiEmotionAnalyzer(
+            OpenAiChatModel model, AiProperties properties) throws IOException {
         String template = loadPromptTemplate(properties.promptVersion());
         return new OpenAiEmotionAnalyzer(ChatClient.builder(model).build(), template);
     }
 
     private String loadPromptTemplate(String version) throws IOException {
-        ClassPathResource resource = new ClassPathResource("prompts/emotion-analysis-" + version + ".st");
+        ClassPathResource resource =
+                new ClassPathResource("prompts/emotion-analysis-" + version + ".st");
         return resource.getContentAsString(StandardCharsets.UTF_8);
     }
 }

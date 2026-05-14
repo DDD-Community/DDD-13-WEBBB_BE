@@ -24,21 +24,27 @@ public class AiMetricsLogger {
         Timer.Sample sample = Timer.start(meterRegistry);
         try {
             AiAnalysisResponse response = action.get();
-            sample.stop(Timer.builder(TIMER_NAME)
-                .tag("provider", response.usedProvider())
-                .tag("emotion", response.emotionType())
-                .tag("crisis", String.valueOf(response.crisisDetected()))
-                .register(meterRegistry));
-            log.info("[AI] postId={} emotion={} hp={} provider={} crisis={}",
-                postId, response.emotionType(), response.hp(),
-                response.usedProvider(), response.crisisDetected());
+            sample.stop(
+                    Timer.builder(TIMER_NAME)
+                            .tag("provider", response.usedProvider())
+                            .tag("emotion", response.emotionType())
+                            .tag("crisis", String.valueOf(response.crisisDetected()))
+                            .register(meterRegistry));
+            log.info(
+                    "[AI] postId={} emotion={} hp={} provider={} crisis={}",
+                    postId,
+                    response.emotionType(),
+                    response.hp(),
+                    response.usedProvider(),
+                    response.crisisDetected());
             return response;
         } catch (Exception e) {
-            sample.stop(Timer.builder(TIMER_NAME)
-                .tag("provider", "ERROR")
-                .tag("emotion", "UNKNOWN")
-                .tag("crisis", "false")
-                .register(meterRegistry));
+            sample.stop(
+                    Timer.builder(TIMER_NAME)
+                            .tag("provider", "ERROR")
+                            .tag("emotion", "UNKNOWN")
+                            .tag("crisis", "false")
+                            .register(meterRegistry));
             throw e;
         }
     }

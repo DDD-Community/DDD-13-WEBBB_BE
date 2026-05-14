@@ -29,8 +29,9 @@ public class AiTestController {
 
     @PostMapping("/analyze")
     @Operation(
-        summary = "감정 분석 테스트",
-        description = """
+            summary = "감정 분석 테스트",
+            description =
+                    """
             게시글 내용을 AI로 분석해 감정 유형, 몬스터 HP, 신뢰도, 분류 근거를 반환합니다.
 
             동작 방식:
@@ -67,27 +68,31 @@ public class AiTestController {
             {"emotionType":"ANXIETY|LETHARGY|LONELINESS|SELF_DEPRECATION|IRRITATION","hp":10,"confidence":0.0,"reason":"분류근거50자이내"}
             ```
             """,
-        requestBody = @RequestBody(
-            required = true,
-            content = @Content(
-                examples = @ExampleObject(
-                    name = "감정 분석 요청 예시",
-                    value = """
+            requestBody =
+                    @RequestBody(
+                            required = true,
+                            content =
+                                    @Content(
+                                            examples =
+                                                    @ExampleObject(
+                                                            name = "감정 분석 요청 예시",
+                                                            value =
+                                                                    """
                         {
                           "content": "면접 결과를 기다리는데 계속 불안하고 심장이 떨려요."
                         }
-                        """
-                )
-            )
-        ),
-        responses = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "200",
-                description = "감정 분석 성공",
-                content = @Content(
-                    examples = @ExampleObject(
-                        name = "감정 분석 응답 예시",
-                        value = """
+                        """))),
+            responses = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "감정 분석 성공",
+                        content =
+                                @Content(
+                                        examples =
+                                                @ExampleObject(
+                                                        name = "감정 분석 응답 예시",
+                                                        value =
+                                                                """
                             {
                               "success": true,
                               "data": {
@@ -100,15 +105,13 @@ public class AiTestController {
                               },
                               "error": null
                             }
-                            """
-                    )
-                )
-            )
-        }
-    )
+                            """)))
+            })
     public ApiResponse<AiAnalyzeTestResponse> analyze(
-            @Valid @org.springframework.web.bind.annotation.RequestBody AiAnalyzeTestRequest request) {
-        AiAnalysisResponse response = aiAnalysisService.analyze(new PostContent(null, request.content()));
+            @Valid @org.springframework.web.bind.annotation.RequestBody
+                    AiAnalyzeTestRequest request) {
+        AiAnalysisResponse response =
+                aiAnalysisService.analyze(new PostContent(null, request.content()));
         return ApiResponse.ok(AiAnalyzeTestResponse.from(response));
     }
 }

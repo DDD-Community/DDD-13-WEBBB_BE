@@ -37,7 +37,8 @@ class AiAnalysisServiceTest {
     @Test
     void 정상적인_분석은_첫번째_analyzer를_사용한다() {
         PostContent content = new PostContent(1L, "요즘 너무 불안해요");
-        EmotionAnalysisResult expected = new EmotionAnalysisResult(EmotionType.ANXIETY, 30, 0.9, "불안 표현");
+        EmotionAnalysisResult expected =
+                new EmotionAnalysisResult(EmotionType.ANXIETY, 30, 0.9, "불안 표현");
         given(crisisFilter.check(content.text())).willReturn(CrisisDetectionResult.safe());
         given(primaryAnalyzer.analyze(content)).willReturn(expected);
 
@@ -65,7 +66,8 @@ class AiAnalysisServiceTest {
     @Test
     void 첫번째_analyzer_실패시_다음으로_폴백한다() {
         PostContent content = new PostContent(1L, "힘들어요");
-        EmotionAnalysisResult fallbackResult = new EmotionAnalysisResult(EmotionType.LETHARGY, 10, 0.0, "fallback");
+        EmotionAnalysisResult fallbackResult =
+                new EmotionAnalysisResult(EmotionType.LETHARGY, 10, 0.0, "fallback");
         given(crisisFilter.check(content.text())).willReturn(CrisisDetectionResult.safe());
         given(primaryAnalyzer.analyze(content)).willThrow(new RuntimeException("AI 서비스 오류"));
         given(fallbackAnalyzer.analyze(content)).willReturn(fallbackResult);

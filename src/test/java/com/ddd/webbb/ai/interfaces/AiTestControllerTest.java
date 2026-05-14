@@ -24,39 +24,40 @@ import org.springframework.test.web.servlet.MockMvc;
 @ActiveProfiles("test")
 class AiTestControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
+    @Autowired private MockMvc mockMvc;
 
-    @MockitoBean
-    private AiAnalysisService aiAnalysisService;
+    @MockitoBean private AiAnalysisService aiAnalysisService;
 
     @Test
     void 감정_분석_요청을_처리한다() throws Exception {
-        AiAnalysisResponse mockResponse = new AiAnalysisResponse(
-            "ANXIETY", 30, 0.9, "불안 표현이 강함", false, "CLAUDE");
+        AiAnalysisResponse mockResponse =
+                new AiAnalysisResponse("ANXIETY", 30, 0.9, "불안 표현이 강함", false, "CLAUDE");
         given(aiAnalysisService.analyze(any(PostContent.class))).willReturn(mockResponse);
 
-        mockMvc.perform(post("/api/ai/test/analyze")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("""
+        mockMvc.perform(
+                        post("/api/ai/test/analyze")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(
+                                        """
                     {"content": "면접 때문에 너무 불안해요"}
                     """))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.success").value(true))
-            .andExpect(jsonPath("$.data.emotionType").value("ANXIETY"))
-            .andExpect(jsonPath("$.data.hp").value(30))
-            .andExpect(jsonPath("$.data.crisisDetected").value(false))
-            .andExpect(jsonPath("$.data.usedProvider").value("CLAUDE"));
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.emotionType").value("ANXIETY"))
+                .andExpect(jsonPath("$.data.hp").value(30))
+                .andExpect(jsonPath("$.data.crisisDetected").value(false))
+                .andExpect(jsonPath("$.data.usedProvider").value("CLAUDE"));
     }
 
     @Test
     void 빈_content는_400을_반환한다() throws Exception {
-        mockMvc.perform(post("/api/ai/test/analyze")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("""
+        mockMvc.perform(
+                        post("/api/ai/test/analyze")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(
+                                        """
                     {"content": ""}
                     """))
-            .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest());
     }
-
 }

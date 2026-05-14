@@ -31,7 +31,8 @@ class ClaudeEmotionAnalyzerTest {
 
     @Test
     void 정상_응답을_파싱하여_반환한다() {
-        String jsonResponse = """
+        String jsonResponse =
+                """
             {"emotionType":"ANXIETY","hp":30,"confidence":0.9,"reason":"불안 표현이 강함"}
             """;
         ChatClientRequestSpec requestSpec = mock(ChatClientRequestSpec.class);
@@ -68,7 +69,7 @@ class ClaudeEmotionAnalyzerTest {
         PostContent content = new PostContent(1L, "테스트 내용");
 
         assertThatThrownBy(() -> analyzer.analyze(content))
-            .isInstanceOf(PermanentAiException.class);
+                .isInstanceOf(PermanentAiException.class);
     }
 
     @Test
@@ -78,6 +79,6 @@ class ClaudeEmotionAnalyzerTest {
         PostContent content = new PostContent(1L, "테스트 내용");
 
         assertThatThrownBy(() -> analyzer.analyze(content))
-            .isInstanceOf(RetryableAiException.class);
+                .isInstanceOf(RetryableAiException.class);
     }
 }

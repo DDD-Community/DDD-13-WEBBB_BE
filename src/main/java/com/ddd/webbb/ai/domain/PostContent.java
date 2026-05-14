@@ -1,4 +1,3 @@
 package com.ddd.webbb.ai.domain;
 
-public record PostContent(Long postId, String text) {
-}
+public record PostContent(Long postId, String text) {}

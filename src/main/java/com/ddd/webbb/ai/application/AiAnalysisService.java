@@ -46,26 +46,25 @@ public class AiAnalysisService {
         return toResponse(fallback, "STATIC", false);
     }
 
-    private AiAnalysisResponse toResponse(EmotionAnalysisResult result, String provider, boolean crisisDetected) {
+    private AiAnalysisResponse toResponse(
+            EmotionAnalysisResult result, String provider, boolean crisisDetected) {
         return new AiAnalysisResponse(
-            result.emotionType().name(),
-            result.hp(),
-            result.confidence(),
-            result.reason(),
-            crisisDetected,
-            provider
-        );
+                result.emotionType().name(),
+                result.hp(),
+                result.confidence(),
+                result.reason(),
+                crisisDetected,
+                provider);
     }
 
     private AiAnalysisResponse crisisResponse(CrisisDetectionResult crisis) {
         EmotionAnalysisResult fallback = EmotionAnalysisResult.safeDefault();
         return new AiAnalysisResponse(
-            fallback.emotionType().name(),
-            fallback.hp(),
-            fallback.confidence(),
-            "위기 감지: " + crisis.matchedKeyword(),
-            true,
-            "CRISIS_FILTER"
-        );
+                fallback.emotionType().name(),
+                fallback.hp(),
+                fallback.confidence(),
+                "위기 감지: " + crisis.matchedKeyword(),
+                true,
+                "CRISIS_FILTER");
     }
 }

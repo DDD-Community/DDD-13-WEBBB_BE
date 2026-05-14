@@ -32,10 +32,7 @@ public class ClaudeEmotionAnalyzer implements EmotionAnalyzer {
     public EmotionAnalysisResult analyze(PostContent content) {
         try {
             String prompt = promptTemplate.replace("{content}", content.text());
-            String response = chatClient.prompt()
-                .user(prompt)
-                .call()
-                .content();
+            String response = chatClient.prompt().user(prompt).call().content();
             return parseResponse(response);
         } catch (PermanentAiException | RetryableAiException e) {
             throw e;
@@ -53,9 +50,11 @@ public class ClaudeEmotionAnalyzer implements EmotionAnalyzer {
     private EmotionAnalysisResult parseResponse(String json) {
         try {
             String trimmed = json.trim();
-            EmotionAnalysisResult result = objectMapper.readValue(trimmed, EmotionAnalysisResult.class);
+            EmotionAnalysisResult result =
+                    objectMapper.readValue(trimmed, EmotionAnalysisResult.class);
             if (!result.isValid()) {
-                throw new PermanentAiException(AiErrorCode.INVALID_RESPONSE, "유효하지 않은 AI 응답: " + json);
+                throw new PermanentAiException(
+                        AiErrorCode.INVALID_RESPONSE, "유효하지 않은 AI 응답: " + json);
             }
             return result;
         } catch (PermanentAiException e) {
