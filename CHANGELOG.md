@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://github.com/DDD-Community/DDD-13-WEBBB_BE/compare/v1.0.0...v1.1.0) (2026-05-14)
+
+
+### Features
+
+* AI 공통 감정 분석 서비스 추가 ([#33](https://github.com/DDD-Community/DDD-13-WEBBB_BE/issues/33)) ([d38438e](https://github.com/DDD-Community/DDD-13-WEBBB_BE/commit/d38438e44fa78271995fd55f8bc6828530a1fc5d))
+
 ## 1.0.0 (2026-05-08)
 
 
