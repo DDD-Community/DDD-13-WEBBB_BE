@@ -5,6 +5,9 @@ import com.ddd.webbb.ai.application.AiAnalysisService;
 import com.ddd.webbb.ai.domain.PostContent;
 import com.ddd.webbb.ai.interfaces.dto.AiAnalyzeTestRequest;
 import com.ddd.webbb.ai.interfaces.dto.AiAnalyzeTestResponse;
+import com.ddd.webbb.ai.interfaces.dto.CommentSummarizeTestRequest;
+import com.ddd.webbb.comment.application.CommentSummaryResponse;
+import com.ddd.webbb.comment.application.CommentSummaryService;
 import com.ddd.webbb.global.common.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -18,13 +21,16 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/ai/test")
-@Tag(name = "AI Test", description = "AI 감정 분석 테스트 API")
+@Tag(name = "AI Test", description = "AI 감정 분석 / 댓글 요약 테스트 API")
 public class AiTestController {
 
     private final AiAnalysisService aiAnalysisService;
+    private final CommentSummaryService commentSummaryService;
 
-    public AiTestController(AiAnalysisService aiAnalysisService) {
+    public AiTestController(
+            AiAnalysisService aiAnalysisService, CommentSummaryService commentSummaryService) {
         this.aiAnalysisService = aiAnalysisService;
+        this.commentSummaryService = commentSummaryService;
     }
 
     @PostMapping("/analyze")
@@ -113,5 +119,60 @@ public class AiTestController {
         AiAnalysisResponse response =
                 aiAnalysisService.analyze(new PostContent(null, request.content()));
         return ApiResponse.ok(AiAnalyzeTestResponse.from(response));
+    }
+
+    @PostMapping("/comment-summary")
+    @Operation(
+            summary = "댓글 AI 요약 테스트",
+            description =
+                    """
+            댓글 내용을 AI로 분석해 100자 이내 요약과 톤(CALM/NEUTRAL/URGENT)을 반환합니다.
+
+            동작 방식:
+            1. Claude → OpenAI → Static 순서로 AI 프로바이더를 시도합니다.
+            2. 파싱 실패 시 기본값("요약 실패", NEUTRAL)을 반환합니다.
+            3. `usedProvider` 필드에서 실제로 응답한 프로바이더를 확인할 수 있습니다.
+            """,
+            requestBody =
+                    @RequestBody(
+                            required = true,
+                            content =
+                                    @Content(
+                                            examples =
+                                                    @ExampleObject(
+                                                            name = "댓글 요약 요청 예시",
+                                                            value =
+                                                                    """
+                        {
+                          "content": "지금 많이 힘들겠지만, 여기까지 온 것만으로도 충분히 잘하고 있어요."
+                        }
+                        """))),
+            responses = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "댓글 요약 성공",
+                        content =
+                                @Content(
+                                        examples =
+                                                @ExampleObject(
+                                                        name = "댓글 요약 응답 예시",
+                                                        value =
+                                                                """
+                            {
+                              "success": true,
+                              "data": {
+                                "summary": "힘내라는 따뜻한 위로와 응원의 메시지",
+                                "tone": "CALM",
+                                "usedProvider": "CLAUDE"
+                              },
+                              "error": null
+                            }
+                            """)))
+            })
+    public ApiResponse<CommentSummaryResponse> summarizeComment(
+            @Valid @org.springframework.web.bind.annotation.RequestBody
+                    CommentSummarizeTestRequest request) {
+        CommentSummaryResponse response = commentSummaryService.summarize(null, request.content());
+        return ApiResponse.ok(response);
     }
 }
