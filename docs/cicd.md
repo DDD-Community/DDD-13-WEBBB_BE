@@ -134,6 +134,37 @@ Stage 2 (실행)    eclipse-temurin:21-jre  →  JAR만 복사해서 실행
 | DB 접속 | `${DB_URL}` | RDS JDBC URL 전체를 환경변수로 주입 (SSL 포함) |
 | Redis 접속 | `${REDIS_HOST}`, `${REDIS_PORT}` | 환경변수로 주입 |
 
+### 운영 요청 로그
+
+운영 요청 로그는 애플리케이션 access log 기준으로 `stdout`에서 확인하는 것을 기본으로 한다.
+
+- 일반 요청: `INFO`
+- 서버 오류(`5xx`): `WARN`
+- 지연 요청(`1000ms` 이상): `WARN`
+- 제외 경로: `/swagger-ui`, `/v3/api-docs`, `/actuator`
+
+기록 필드:
+
+- `method`
+- `path`
+- 마스킹된 `query`
+- `status`
+- `durationMs`
+- `requestId`
+- `clientIp`
+
+기록하지 않는 항목:
+
+- 요청 body
+- 응답 body
+- Authorization/Cookie 등 민감 헤더
+
+운영 확인 예시:
+
+```bash
+docker logs webbb-app --tail 200
+```
+
 ---
 
 ## GitHub Secrets 설정
