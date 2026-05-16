@@ -6,61 +6,52 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import com.ddd.webbb.ai.domain.EmotionAnalysisResult;
-import com.ddd.webbb.ai.domain.PostContent;
 import com.ddd.webbb.ai.domain.exception.RetryableAiException;
-import com.ddd.webbb.ai.infrastructure.adapter.OpenAiEmotionAnalyzer;
-import com.ddd.webbb.emotion.domain.EmotionType;
+import com.ddd.webbb.ai.infrastructure.gateway.ClaudeAiProvider;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.ChatClient.CallResponseSpec;
 import org.springframework.ai.chat.client.ChatClient.ChatClientRequestSpec;
 
-class OpenAiEmotionAnalyzerTest {
+class ClaudeAiProviderTest {
 
     private ChatClient chatClient;
-    private OpenAiEmotionAnalyzer analyzer;
+    private ClaudeAiProvider provider;
 
     @BeforeEach
     void setUp() {
         chatClient = mock(ChatClient.class);
-        analyzer = new OpenAiEmotionAnalyzer(chatClient, "게시글: {content}");
+        provider = new ClaudeAiProvider(chatClient);
     }
 
     @Test
-    void 정상_응답을_파싱하여_반환한다() {
-        String jsonResponse =
-                """
-            {"emotionType":"LONELINESS","hp":30,"confidence":0.85,"reason":"극도의 외로움"}
-            """;
+    void 정상_호출시_원시_문자열을_반환한다() {
+        String rawResponse =
+                "{\"emotionType\":\"ANXIETY\",\"hp\":30,\"confidence\":0.9,\"reason\":\"불안\"}";
         ChatClientRequestSpec requestSpec = mock(ChatClientRequestSpec.class);
         CallResponseSpec callSpec = mock(CallResponseSpec.class);
 
         when(chatClient.prompt()).thenReturn(requestSpec);
         when(requestSpec.user(any(String.class))).thenReturn(requestSpec);
         when(requestSpec.call()).thenReturn(callSpec);
-        when(callSpec.content()).thenReturn(jsonResponse);
+        when(callSpec.content()).thenReturn(rawResponse);
 
-        PostContent content = new PostContent(2L, "아무도 나를 이해하지 못해");
-        EmotionAnalysisResult result = analyzer.analyze(content);
+        String result = provider.call("테스트 프롬프트");
 
-        assertThat(result.emotionType()).isEqualTo(EmotionType.LONELINESS);
-        assertThat(result.hp()).isEqualTo(30);
+        assertThat(result).isEqualTo(rawResponse);
     }
 
     @Test
-    void providerName은_OPENAI이다() {
-        assertThat(analyzer.providerName()).isEqualTo("OPENAI");
+    void providerName은_CLAUDE이다() {
+        assertThat(provider.providerName()).isEqualTo("CLAUDE");
     }
 
     @Test
     void API_호출_실패는_RetryableAiException을_던진다() {
-        when(chatClient.prompt()).thenThrow(new RuntimeException("rate limit exceeded"));
+        when(chatClient.prompt()).thenThrow(new RuntimeException("connection timeout"));
 
-        PostContent content = new PostContent(2L, "테스트 내용");
-
-        assertThatThrownBy(() -> analyzer.analyze(content))
+        assertThatThrownBy(() -> provider.call("테스트 프롬프트"))
                 .isInstanceOf(RetryableAiException.class);
     }
 }

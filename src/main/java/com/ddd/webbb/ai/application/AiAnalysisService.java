@@ -1,13 +1,18 @@
 package com.ddd.webbb.ai.application;
 
+import com.ddd.webbb.ai.domain.AiGateway;
+import com.ddd.webbb.ai.domain.AiGatewayResult;
 import com.ddd.webbb.ai.domain.CrisisDetectionResult;
 import com.ddd.webbb.ai.domain.CrisisFilter;
 import com.ddd.webbb.ai.domain.EmotionAnalysisResult;
-import com.ddd.webbb.ai.domain.EmotionAnalyzer;
 import com.ddd.webbb.ai.domain.PostContent;
-import java.util.List;
+import com.ddd.webbb.ai.domain.exception.AiErrorCode;
+import com.ddd.webbb.ai.domain.exception.PermanentAiException;
+import com.ddd.webbb.ai.infrastructure.observability.AiMetricsLogger;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -15,12 +20,23 @@ public class AiAnalysisService {
 
     private static final Logger log = LoggerFactory.getLogger(AiAnalysisService.class);
 
-    private final List<EmotionAnalyzer> analyzers;
+    private final AiGateway aiGateway;
     private final CrisisFilter crisisFilter;
+    private final AiMetricsLogger metricsLogger;
+    private final ObjectMapper objectMapper;
+    private final String promptTemplate;
 
-    public AiAnalysisService(List<EmotionAnalyzer> analyzers, CrisisFilter crisisFilter) {
-        this.analyzers = analyzers;
+    public AiAnalysisService(
+            AiGateway aiGateway,
+            CrisisFilter crisisFilter,
+            AiMetricsLogger metricsLogger,
+            ObjectMapper objectMapper,
+            @Qualifier("emotionPromptTemplate") String promptTemplate) {
+        this.aiGateway = aiGateway;
         this.crisisFilter = crisisFilter;
+        this.metricsLogger = metricsLogger;
+        this.objectMapper = objectMapper;
+        this.promptTemplate = promptTemplate;
     }
 
     public AiAnalysisResponse analyze(PostContent content) {
@@ -28,22 +44,31 @@ public class AiAnalysisService {
         if (crisis.isCrisis()) {
             return crisisResponse(crisis);
         }
-        return runAnalyzers(content);
+        return metricsLogger.recordAndLog(content.postId(), () -> doAnalyze(content));
     }
 
-    private AiAnalysisResponse runAnalyzers(PostContent content) {
-        for (EmotionAnalyzer analyzer : analyzers) {
-            try {
-                EmotionAnalysisResult result = analyzer.analyze(content);
-                if (result.isValid()) {
-                    return toResponse(result, analyzer.providerName(), false);
-                }
-            } catch (Exception e) {
-                log.warn("AI analyzer [{}] failed: {}", analyzer.providerName(), e.getMessage());
+    private AiAnalysisResponse doAnalyze(PostContent content) {
+        String prompt = promptTemplate.replace("{content}", content.text());
+        AiGatewayResult gatewayResult = aiGateway.call(prompt);
+        EmotionAnalysisResult result = parseResponse(gatewayResult.rawResponse());
+        return toResponse(result, gatewayResult.providerName(), false);
+    }
+
+    private EmotionAnalysisResult parseResponse(String json) {
+        try {
+            EmotionAnalysisResult result =
+                    objectMapper.readValue(json.trim(), EmotionAnalysisResult.class);
+            if (!result.isValid()) {
+                throw new PermanentAiException(
+                        AiErrorCode.INVALID_RESPONSE, "유효하지 않은 AI 응답: " + json);
             }
+            return result;
+        } catch (PermanentAiException e) {
+            throw e;
+        } catch (Exception e) {
+            log.warn("AI 응답 파싱 실패, 기본값 사용: {}", json);
+            return EmotionAnalysisResult.safeDefault();
         }
-        EmotionAnalysisResult fallback = EmotionAnalysisResult.safeDefault();
-        return toResponse(fallback, "STATIC", false);
     }
 
     private AiAnalysisResponse toResponse(
