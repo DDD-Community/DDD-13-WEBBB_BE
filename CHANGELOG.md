@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.2](https://github.com/DDD-Community/DDD-13-WEBBB_BE/compare/v1.2.1...v1.2.2) (2026-05-16)
+
+
+### Bug Fixes
+
+* **swagger:** remove hardcoded OpenAPI servers ([a8e915a](https://github.com/DDD-Community/DDD-13-WEBBB_BE/commit/a8e915a089ef7ac6109945d1c54b54d612153b1b))
+
 ## [1.2.1](https://github.com/DDD-Community/DDD-13-WEBBB_BE/compare/v1.2.0...v1.2.1) (2026-05-16)
 
 
