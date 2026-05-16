@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/DDD-Community/DDD-13-WEBBB_BE/compare/v1.1.0...v1.2.0) (2026-05-16)
+
+
+### Features
+
+* **ai:** LLM Gateway Pattern 도입 및 댓글 요약 서비스 추가 ([#35](https://github.com/DDD-Community/DDD-13-WEBBB_BE/issues/35)) ([#36](https://github.com/DDD-Community/DDD-13-WEBBB_BE/issues/36)) ([595e642](https://github.com/DDD-Community/DDD-13-WEBBB_BE/commit/595e6420aa93dfa64a92de0abf72017c3e1b15f8))
+
 ## [1.1.0](https://github.com/DDD-Community/DDD-13-WEBBB_BE/compare/v1.0.0...v1.1.0) (2026-05-14)
 
 
