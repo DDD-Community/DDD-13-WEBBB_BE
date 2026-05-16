@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.1](https://github.com/DDD-Community/DDD-13-WEBBB_BE/compare/v1.3.0...v1.3.1) (2026-05-16)
+
+
+### Bug Fixes
+
+* **ai:** disable claude provider by default ([#45](https://github.com/DDD-Community/DDD-13-WEBBB_BE/issues/45)) ([19ab8bb](https://github.com/DDD-Community/DDD-13-WEBBB_BE/commit/19ab8bb6b945c53a2f212782b98526bd753fffd5))
+
 ## [1.3.0](https://github.com/DDD-Community/DDD-13-WEBBB_BE/compare/v1.2.2...v1.3.0) (2026-05-16)
 
 
