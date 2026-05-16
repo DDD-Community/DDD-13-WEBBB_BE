@@ -9,6 +9,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.ddd.webbb.ai.application.AiAnalysisResponse;
 import com.ddd.webbb.ai.application.AiAnalysisService;
 import com.ddd.webbb.ai.domain.PostContent;
+import com.ddd.webbb.comment.application.CommentSummaryService;
 import com.ddd.webbb.global.config.SecurityConfig;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +30,7 @@ class AiTestControllerProdProfileTest {
     @Autowired private MockMvc mockMvc;
 
     @MockitoBean private AiAnalysisService aiAnalysisService;
+    @MockitoBean private CommentSummaryService commentSummaryService;
 
     @Test
     void prod_프로필에서도_감정_분석_요청을_처리한다() throws Exception {
