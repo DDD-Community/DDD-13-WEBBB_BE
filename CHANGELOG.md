@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.1](https://github.com/DDD-Community/DDD-13-WEBBB_BE/compare/v1.2.0...v1.2.1) (2026-05-16)
+
+
+### Bug Fixes
+
+* **swagger:** enable prod docs and return 404 for missing resources ([cc863b9](https://github.com/DDD-Community/DDD-13-WEBBB_BE/commit/cc863b94be37742a6eb880cf4b9a3c6865810126))
+
 ## [1.2.0](https://github.com/DDD-Community/DDD-13-WEBBB_BE/compare/v1.1.0...v1.2.0) (2026-05-16)
 
 
