@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/DDD-Community/DDD-13-WEBBB_BE/compare/v1.2.2...v1.3.0) (2026-05-16)
+
+
+### Features
+
+* **logging:** add prod access logs ([#40](https://github.com/DDD-Community/DDD-13-WEBBB_BE/issues/40)) ([#41](https://github.com/DDD-Community/DDD-13-WEBBB_BE/issues/41)) ([d6b5dd9](https://github.com/DDD-Community/DDD-13-WEBBB_BE/commit/d6b5dd91fec8c9c6ed1099e85c52eef004b30060))
+
 ## [1.2.2](https://github.com/DDD-Community/DDD-13-WEBBB_BE/compare/v1.2.1...v1.2.2) (2026-05-16)
 
 
