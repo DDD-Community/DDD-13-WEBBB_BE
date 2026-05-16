@@ -1,6 +1,7 @@
 package com.ddd.webbb.global.common.exception;
 
 import com.ddd.webbb.global.common.response.ApiResponse;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.ConstraintViolationException;
 import java.util.List;
 import org.slf4j.Logger;
@@ -59,7 +60,9 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiResponse<Void>> handleException(Exception e) {
+    public ResponseEntity<ApiResponse<Void>> handleException(
+            Exception e, HttpServletResponse response) {
+        response.setContentType(null);
         log.error("Unhandled exception", e);
         return ResponseEntity.internalServerError()
                 .body(ApiResponse.fail(ErrorCode.INTERNAL_SERVER_ERROR.getMessage()));

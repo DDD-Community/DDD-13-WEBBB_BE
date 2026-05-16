@@ -9,6 +9,7 @@ services:
       DB_URL: ${DB_URL}
       DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
       REDIS_HOST: redis
       REDIS_PORT: 6379
     depends_on:

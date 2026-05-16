@@ -44,12 +44,12 @@ resilience4j:
   retry:
     retry-aspect-order: 2
     instances:
-      claudeAnalyzer:
+      claudeProvider:
         max-attempts: 2
         wait-duration: 300ms
         retry-exceptions:
           - com.ddd.webbb.ai.domain.exception.RetryableAiException
-      openAiAnalyzer:
+      openAiProvider:
         max-attempts: 2
         wait-duration: 300ms
         retry-exceptions:
@@ -57,7 +57,7 @@ resilience4j:
   circuitbreaker:
     circuit-breaker-aspect-order: 1
     instances:
-      claudeAnalyzer:
+      claudeProvider:
         sliding-window-size: 20
         failure-rate-threshold: 60
         wait-duration-in-open-state: 30s
@@ -66,7 +66,7 @@ resilience4j:
           - com.ddd.webbb.ai.domain.exception.RetryableAiException
         ignore-exceptions:
           - com.ddd.webbb.ai.domain.exception.PermanentAiException
-      openAiAnalyzer:
+      openAiProvider:
         sliding-window-size: 20
         failure-rate-threshold: 60
         wait-duration-in-open-state: 30s
