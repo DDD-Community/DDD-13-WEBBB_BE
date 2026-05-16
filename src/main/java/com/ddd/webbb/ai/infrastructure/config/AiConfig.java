@@ -13,6 +13,7 @@ import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.annotation.Order;
@@ -26,6 +27,10 @@ public class AiConfig {
     @Bean
     @Order(1)
     @ConditionalOnBean(AnthropicChatModel.class)
+    @ConditionalOnProperty(
+            prefix = "app.ai.providers",
+            name = "claude-enabled",
+            havingValue = "true")
     public ClaudeAiProvider claudeAiProvider(AnthropicChatModel model) {
         return new ClaudeAiProvider(ChatClient.builder(model).build());
     }
@@ -33,6 +38,11 @@ public class AiConfig {
     @Bean
     @Order(2)
     @ConditionalOnBean(OpenAiChatModel.class)
+    @ConditionalOnProperty(
+            prefix = "app.ai.providers",
+            name = "openai-enabled",
+            havingValue = "true",
+            matchIfMissing = true)
     public OpenAiAiProvider openAiAiProvider(OpenAiChatModel model) {
         return new OpenAiAiProvider(ChatClient.builder(model).build());
     }

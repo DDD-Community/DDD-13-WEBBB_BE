@@ -33,7 +33,7 @@ class AiTestControllerTest {
     @Test
     void 감정_분석_요청을_처리한다() throws Exception {
         AiAnalysisResponse mockResponse =
-                new AiAnalysisResponse("ANXIETY", 30, 0.9, "불안 표현이 강함", false, "CLAUDE");
+                new AiAnalysisResponse("ANXIETY", 30, 0.9, "불안 표현이 강함", false, "OPENAI");
         given(aiAnalysisService.analyze(any(PostContent.class))).willReturn(mockResponse);
 
         mockMvc.perform(
@@ -48,7 +48,7 @@ class AiTestControllerTest {
                 .andExpect(jsonPath("$.data.emotionType").value("ANXIETY"))
                 .andExpect(jsonPath("$.data.hp").value(30))
                 .andExpect(jsonPath("$.data.crisisDetected").value(false))
-                .andExpect(jsonPath("$.data.usedProvider").value("CLAUDE"));
+                .andExpect(jsonPath("$.data.usedProvider").value("OPENAI"));
     }
 
     @Test
