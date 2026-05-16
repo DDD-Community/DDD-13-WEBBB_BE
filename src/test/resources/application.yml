@@ -2,6 +2,9 @@ app:
   ai:
     prompt-version: v1
     timeout: 5s
+    providers:
+      claude-enabled: false
+      openai-enabled: true
 
 spring:
   profiles:

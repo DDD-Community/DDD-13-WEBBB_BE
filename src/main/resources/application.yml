@@ -39,6 +39,9 @@ app:
   ai:
     prompt-version: ${PROMPT_VERSION:v1}
     timeout: ${AI_TIMEOUT:20s}
+    providers:
+      claude-enabled: false
+      openai-enabled: true
 
 resilience4j:
   retry:

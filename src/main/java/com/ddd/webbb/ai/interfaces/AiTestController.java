@@ -101,13 +101,13 @@ public class AiTestController {
                                                                 """
                             {
                               "success": true,
-                              "data": {
+                                "data": {
                                 "emotionType": "ANXIETY",
                                 "hp": 30,
                                 "confidence": 0.91,
                                 "reason": "불안과 긴장 표현이 반복적으로 드러남",
                                 "crisisDetected": false,
-                                "usedProvider": "CLAUDE"
+                                "usedProvider": "OPENAI"
                               },
                               "error": null
                             }
@@ -129,9 +129,10 @@ public class AiTestController {
             댓글 내용을 AI로 분석해 100자 이내 요약과 톤(CALM/NEUTRAL/URGENT)을 반환합니다.
 
             동작 방식:
-            1. Claude → OpenAI → Static 순서로 AI 프로바이더를 시도합니다.
-            2. 파싱 실패 시 기본값("요약 실패", NEUTRAL)을 반환합니다.
-            3. `usedProvider` 필드에서 실제로 응답한 프로바이더를 확인할 수 있습니다.
+            1. 기본적으로 OpenAI → Static 순서로 AI 프로바이더를 시도합니다.
+            2. Claude는 설정으로 명시적으로 활성화한 경우에만 등록됩니다.
+            3. 파싱 실패 시 기본값("요약 실패", NEUTRAL)을 반환합니다.
+            4. `usedProvider` 필드에서 실제로 응답한 프로바이더를 확인할 수 있습니다.
             """,
             requestBody =
                     @RequestBody(
@@ -163,7 +164,7 @@ public class AiTestController {
                               "data": {
                                 "summary": "힘내라는 따뜻한 위로와 응원의 메시지",
                                 "tone": "CALM",
-                                "usedProvider": "CLAUDE"
+                                "usedProvider": "OPENAI"
                               },
                               "error": null
                             }
