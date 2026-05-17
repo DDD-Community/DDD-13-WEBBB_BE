@@ -108,6 +108,7 @@ jobs:
             export DB_URL="${{ secrets.DB_URL }}"
             export DB_USERNAME="${{ secrets.DB_USERNAME }}"
             export DB_PASSWORD="${{ secrets.DB_PASSWORD }}"
+            export OPENAI_API_KEY="${{ secrets.OPENAI_API_KEY }}"
 
             cd ~/app
             docker compose -f docker-compose.dev.yml pull app

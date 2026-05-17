@@ -1,3 +1,11 @@
+app:
+  ai:
+    prompt-version: v1
+    timeout: 5s
+    providers:
+      claude-enabled: false
+      openai-enabled: true
+
 spring:
   profiles:
     active: test
@@ -6,6 +14,11 @@ spring:
     exclude:
       - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
       - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
+  ai:
+    anthropic:
+      api-key: "test-dummy-key"
+    openai:
+      api-key: "test-dummy-key"
 
   datasource:
     url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=false

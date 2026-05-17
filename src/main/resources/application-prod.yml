@@ -7,7 +7,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: update
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQLDialect
@@ -21,9 +21,9 @@ spring:
 
 springdoc:
   swagger-ui:
-    enabled: false
+    enabled: true
   api-docs:
-    enabled: false
+    enabled: true
 
 management:
   endpoints:

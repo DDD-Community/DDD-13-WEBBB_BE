@@ -2,6 +2,10 @@ spring:
   profiles:
     active: local
 
+  threads:
+    virtual:
+      enabled: true
+
   jpa:
     hibernate:
       ddl-auto: update
@@ -10,6 +14,80 @@ spring:
         dialect: org.hibernate.dialect.MySQLDialect
         format_sql: true
     show-sql: false
+
+  ai:
+    anthropic:
+      api-key: ${CLAUDE_API_KEY:}
+      chat:
+        options:
+          model: claude-sonnet-4-5-20250929
+          temperature: 0.1
+          max-tokens: 200
+    openai:
+      api-key: ${OPENAI_API_KEY:}
+      chat:
+        options:
+          model: gpt-4o-mini
+          temperature: 0.1
+          max-tokens: 200
+    chat:
+      observations:
+        include-prompt: false
+        include-completion: false
+
+app:
+  ai:
+    prompt-version: ${PROMPT_VERSION:v1}
+    timeout: ${AI_TIMEOUT:20s}
+    providers:
+      claude-enabled: false
+      openai-enabled: true
+
+resilience4j:
+  retry:
+    retry-aspect-order: 2
+    instances:
+      claudeProvider:
+        max-attempts: 2
+        wait-duration: 300ms
+        retry-exceptions:
+          - com.ddd.webbb.ai.domain.exception.RetryableAiException
+      openAiProvider:
+        max-attempts: 2
+        wait-duration: 300ms
+        retry-exceptions:
+          - com.ddd.webbb.ai.domain.exception.RetryableAiException
+  circuitbreaker:
+    circuit-breaker-aspect-order: 1
+    instances:
+      claudeProvider:
+        sliding-window-size: 20
+        failure-rate-threshold: 60
+        wait-duration-in-open-state: 30s
+        permitted-number-of-calls-in-half-open-state: 3
+        record-exceptions:
+          - com.ddd.webbb.ai.domain.exception.RetryableAiException
+        ignore-exceptions:
+          - com.ddd.webbb.ai.domain.exception.PermanentAiException
+      openAiProvider:
+        sliding-window-size: 20
+        failure-rate-threshold: 60
+        wait-duration-in-open-state: 30s
+        permitted-number-of-calls-in-half-open-state: 3
+        record-exceptions:
+          - com.ddd.webbb.ai.domain.exception.RetryableAiException
+        ignore-exceptions:
+          - com.ddd.webbb.ai.domain.exception.PermanentAiException
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  metrics:
+    distribution:
+      percentiles-histogram:
+        ai.emotion.analyze.duration: true
 
 springdoc:
   swagger-ui:

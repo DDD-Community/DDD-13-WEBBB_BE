@@ -1,5 +1,47 @@
 # Changelog
 
+## [1.3.1](https://github.com/DDD-Community/DDD-13-WEBBB_BE/compare/v1.3.0...v1.3.1) (2026-05-16)
+
+
+### Bug Fixes
+
+* **ai:** disable claude provider by default ([#45](https://github.com/DDD-Community/DDD-13-WEBBB_BE/issues/45)) ([19ab8bb](https://github.com/DDD-Community/DDD-13-WEBBB_BE/commit/19ab8bb6b945c53a2f212782b98526bd753fffd5))
+
+## [1.3.0](https://github.com/DDD-Community/DDD-13-WEBBB_BE/compare/v1.2.2...v1.3.0) (2026-05-16)
+
+
+### Features
+
+* **logging:** add prod access logs ([#40](https://github.com/DDD-Community/DDD-13-WEBBB_BE/issues/40)) ([#41](https://github.com/DDD-Community/DDD-13-WEBBB_BE/issues/41)) ([d6b5dd9](https://github.com/DDD-Community/DDD-13-WEBBB_BE/commit/d6b5dd91fec8c9c6ed1099e85c52eef004b30060))
+
+## [1.2.2](https://github.com/DDD-Community/DDD-13-WEBBB_BE/compare/v1.2.1...v1.2.2) (2026-05-16)
+
+
+### Bug Fixes
+
+* **swagger:** remove hardcoded OpenAPI servers ([a8e915a](https://github.com/DDD-Community/DDD-13-WEBBB_BE/commit/a8e915a089ef7ac6109945d1c54b54d612153b1b))
+
+## [1.2.1](https://github.com/DDD-Community/DDD-13-WEBBB_BE/compare/v1.2.0...v1.2.1) (2026-05-16)
+
+
+### Bug Fixes
+
+* **swagger:** enable prod docs and return 404 for missing resources ([cc863b9](https://github.com/DDD-Community/DDD-13-WEBBB_BE/commit/cc863b94be37742a6eb880cf4b9a3c6865810126))
+
+## [1.2.0](https://github.com/DDD-Community/DDD-13-WEBBB_BE/compare/v1.1.0...v1.2.0) (2026-05-16)
+
+
+### Features
+
+* **ai:** LLM Gateway Pattern 도입 및 댓글 요약 서비스 추가 ([#35](https://github.com/DDD-Community/DDD-13-WEBBB_BE/issues/35)) ([#36](https://github.com/DDD-Community/DDD-13-WEBBB_BE/issues/36)) ([595e642](https://github.com/DDD-Community/DDD-13-WEBBB_BE/commit/595e6420aa93dfa64a92de0abf72017c3e1b15f8))
+
+## [1.1.0](https://github.com/DDD-Community/DDD-13-WEBBB_BE/compare/v1.0.0...v1.1.0) (2026-05-14)
+
+
+### Features
+
+* AI 공통 감정 분석 서비스 추가 ([#33](https://github.com/DDD-Community/DDD-13-WEBBB_BE/issues/33)) ([d38438e](https://github.com/DDD-Community/DDD-13-WEBBB_BE/commit/d38438e44fa78271995fd55f8bc6828530a1fc5d))
+
 ## 1.0.0 (2026-05-08)
 
 

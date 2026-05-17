@@ -40,25 +40,50 @@ Release PR 머지 ──→ GitHub Release + 태그 + CHANGELOG 자동 업데이
 
 ---
 
-### 2. CD — `.github/workflows/cd.yml`
+### 2-A. 자동 배포 — `.github/workflows/release-please.yml` (deploy job)
 
 | 항목 | 값 |
 |---|---|
-| 트리거 | `main` 브랜치에 push (= PR 머지) |
-| 목적 | 서버 자동 배포 |
+| 트리거 | Release PR 머지 시 (`release_created == true`) |
+| 목적 | 릴리스 생성에 연동된 자동 배포 |
 
 **실행 단계:**
 
 1. **이미지 이름 소문자 변환** — GHCR은 대문자를 허용하지 않으므로 `github.repository`를 소문자로 변환
 2. **테스트 재실행** — 머지 후 최종 검증
-3. **Docker 이미지 빌드 & GHCR push** — 두 개 태그로 push
+3. **Docker 이미지 빌드 & GHCR push** — 세 개 태그로 push
    - `latest` — 항상 최신 빌드를 가리킴
    - `<commit-sha>` — 특정 커밋으로 롤백할 때 사용
+   - `<release-tag>` — 릴리스 버전 (예: `v1.3.0`)
 4. **SCP로 compose 파일 전송** — EC2의 `~/app`에 최신 `docker-compose.prod.yml` 배치
 5. **SSH 접속 후 배포** — `docker compose pull` → `up -d`로 컨테이너 교체
 6. **Health check** — 최대 150초(5초 × 30회) 대기하며 `/actuator/health` 확인
    - 성공 시 `exit 0` → 워크플로우 성공
    - 실패 시 앱 로그 출력 후 `exit 1` → **워크플로우 실패 처리**
+
+> `chore:`, `docs:` 등 non-releasable 커밋만 있으면 Release PR이 생성되지 않아 배포가 실행되지 않을 수 있다.  
+> 이 경우 아래 수동 배포를 사용한다.
+
+---
+
+### 2-B. 수동 배포 — `.github/workflows/deploy.yml`
+
+| 항목 | 값 |
+|---|---|
+| 트리거 | GitHub Actions UI에서 직접 실행 (`workflow_dispatch`) |
+| 목적 | Release PR 없이 즉시 배포 |
+
+**실행 단계:**
+
+1~6은 자동 배포와 동일. 단, 릴리스 태그는 붙이지 않음 (`:latest`, `:<sha>` 두 개만 push).
+
+**입력값:**
+
+| 이름 | 설명 | 기본값 |
+|---|---|---|
+| `skip_tests` | 테스트 건너뛰기 | `false` |
+
+**사용법:** Actions 탭 → "Manual Deploy" → "Run workflow" 버튼
 
 ---
 
@@ -134,6 +159,37 @@ Stage 2 (실행)    eclipse-temurin:21-jre  →  JAR만 복사해서 실행
 | DB 접속 | `${DB_URL}` | RDS JDBC URL 전체를 환경변수로 주입 (SSL 포함) |
 | Redis 접속 | `${REDIS_HOST}`, `${REDIS_PORT}` | 환경변수로 주입 |
 
+### 운영 요청 로그
+
+운영 요청 로그는 애플리케이션 access log 기준으로 `stdout`에서 확인하는 것을 기본으로 한다.
+
+- 일반 요청: `INFO`
+- 서버 오류(`5xx`): `WARN`
+- 지연 요청(`1000ms` 이상): `WARN`
+- 제외 경로: `/swagger-ui`, `/v3/api-docs`, `/actuator`
+
+기록 필드:
+
+- `method`
+- `path`
+- 마스킹된 `query`
+- `status`
+- `durationMs`
+- `requestId`
+- `clientIp`
+
+기록하지 않는 항목:
+
+- 요청 body
+- 응답 body
+- Authorization/Cookie 등 민감 헤더
+
+운영 확인 예시:
+
+```bash
+docker logs webbb-app --tail 200
+```
+
 ---
 
 ## GitHub Secrets 설정
@@ -198,8 +254,8 @@ mkdir -p ~/app
 | `docker-compose.prod.yml` | 운영 배포용 Compose |
 | `src/main/resources/application-prod.yml` | 운영 Spring 프로필 |
 | `.github/workflows/ci.yml` | PR 시 CI 워크플로우 |
-| `.github/workflows/cd.yml` | main push 시 CD 워크플로우 |
-| `.github/workflows/release-please.yml` | main push 시 릴리즈 자동화 |
+| `.github/workflows/deploy.yml` | 수동 배포 워크플로우 |
+| `.github/workflows/release-please.yml` | main push 시 릴리즈 자동화 + 자동 배포 |
 
 ---
 
