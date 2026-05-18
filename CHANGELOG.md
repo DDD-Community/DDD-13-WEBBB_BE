@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.2](https://github.com/DDD-Community/DDD-13-WEBBB_BE/compare/v1.3.1...v1.3.2) (2026-05-18)
+
+
+### Bug Fixes
+
+* **ai:** Claude provider 제거 및 OpenAI 등록 복구 ([#53](https://github.com/DDD-Community/DDD-13-WEBBB_BE/issues/53)) ([e3089c2](https://github.com/DDD-Community/DDD-13-WEBBB_BE/commit/e3089c2ed1467c884891b8dedd9931ee60094272))
+
 ## [1.3.1](https://github.com/DDD-Community/DDD-13-WEBBB_BE/compare/v1.3.0...v1.3.1) (2026-05-16)
 
 
