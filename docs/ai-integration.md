@@ -66,7 +66,7 @@ application/json
     "confidence": 0.91,
     "reason": "불안과 긴장 표현이 반복적으로 드러남",
     "crisisDetected": false,
-    "usedProvider": "CLAUDE"
+    "usedProvider": "OPENAI"
   },
   "error": null
 }
@@ -85,7 +85,6 @@ application/json
 
 `usedProvider` 값:
 
-- `CLAUDE`
 - `OPENAI`
 - `STATIC`
 - `CRISIS_FILTER`
@@ -133,15 +132,14 @@ application/json
 
 위기 표현이 없으면 아래 순서로 호출합니다.
 
-1. `Claude`
-2. `OpenAI`
-3. `Static fallback`
+1. `OpenAI`
+2. `Static fallback`
 
 각 provider는 동일한 프롬프트 규칙에 따라 JSON 응답을 반환해야 합니다.
 
 ### 3. fallback 처리
 
-Claude 또는 OpenAI 호출 실패, 타임아웃, 파싱 오류가 발생하면 다음 provider로 넘어갑니다.
+OpenAI 호출 실패, 타임아웃, 파싱 오류가 발생하면 Static fallback으로 넘어갑니다.
 
 모든 AI provider가 실패하면:
 
@@ -363,7 +361,6 @@ switch (aiResponse.emotionType()) {
 | `REDIS_HOST` | 운영 Redis 호스트 |
 | `REDIS_PORT` | 운영 Redis 포트 |
 | `OPENAI_API_KEY` | OpenAI API 키 |
-| `CLAUDE_API_KEY` | Claude API 키 |
 | `PROMPT_VERSION` | 사용할 프롬프트 버전 |
 | `AI_TIMEOUT` | AI 호출 타임아웃 |
 
@@ -390,8 +387,7 @@ switch (aiResponse.emotionType()) {
 
 ### 게이트웨이 인프라
 
-- `src/main/java/com/ddd/webbb/ai/infrastructure/gateway/DefaultAiGateway.java` — Claude→OpenAI→Static 폴백 체인
-- `src/main/java/com/ddd/webbb/ai/infrastructure/gateway/ClaudeAiProvider.java`
+- `src/main/java/com/ddd/webbb/ai/infrastructure/gateway/DefaultAiGateway.java` — OpenAI→Static 폴백 체인
 - `src/main/java/com/ddd/webbb/ai/infrastructure/gateway/OpenAiAiProvider.java`
 - `src/main/java/com/ddd/webbb/ai/infrastructure/gateway/StaticAiProvider.java`
 
@@ -416,4 +412,4 @@ switch (aiResponse.emotionType()) {
 → **[docs/ai-feature-guide.md](./ai-feature-guide.md)**
 
 요약: 프롬프트 파일 + 결과 타입 + application 서비스만 작성하면 됩니다.  
-Claude/OpenAI 어댑터와 resilience4j 설정은 건드리지 않아도 됩니다.
+OpenAI 어댑터와 resilience4j 설정은 건드리지 않아도 됩니다.

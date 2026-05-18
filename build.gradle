@@ -72,10 +72,7 @@ dependencies {
     // Dotenv (.env 파일 자동 로드)
     implementation 'me.paulschwarz:spring-dotenv:4.0.0'
 
-    // Spring AI — Anthropic Claude (Primary)
-    implementation 'org.springframework.ai:spring-ai-starter-model-anthropic'
-
-    // Spring AI — OpenAI (Fallback)
+    // Spring AI — OpenAI (Primary)
     implementation 'org.springframework.ai:spring-ai-starter-model-openai'
 
     // Resilience4j (Circuit Breaker + Retry)
