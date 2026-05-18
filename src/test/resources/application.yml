@@ -2,9 +2,6 @@ app:
   ai:
     prompt-version: v1
     timeout: 5s
-    providers:
-      claude-enabled: false
-      openai-enabled: true
 
 spring:
   profiles:
@@ -15,8 +12,6 @@ spring:
       - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
       - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
   ai:
-    anthropic:
-      api-key: "test-dummy-key"
     openai:
       api-key: "test-dummy-key"
 
