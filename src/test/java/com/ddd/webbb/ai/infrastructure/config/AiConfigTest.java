@@ -21,7 +21,8 @@ class AiConfigTest {
     private final ApplicationContextRunner autoConfigContextRunner =
             new ApplicationContextRunner()
                     .withConfiguration(
-                            AutoConfigurations.of(OpenAiChatAutoConfiguration.class, AiConfig.class))
+                            AutoConfigurations.of(
+                                    OpenAiChatAutoConfiguration.class, AiConfig.class))
                     .withPropertyValues(
                             "app.ai.prompt-version=v1",
                             "app.ai.timeout=5s",
