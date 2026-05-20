@@ -5,6 +5,8 @@ import com.ddd.webbb.global.common.entity.BaseEntity;
 import com.ddd.webbb.user.domain.User;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -35,6 +37,10 @@ public class Post extends BaseEntity {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 30)
+    private CommentTone commentTone;
+
     @Column(nullable = false)
     private int viewCount = 0;
 
@@ -49,12 +55,18 @@ public class Post extends BaseEntity {
 
     protected Post() {}
 
-    public static Post create(User user, BoardCategory category, String title, String content) {
+    public static Post create(
+            User user,
+            BoardCategory category,
+            String title,
+            String content,
+            CommentTone commentTone) {
         Post post = new Post();
         post.user = user;
         post.category = category;
         post.title = title;
         post.content = content;
+        post.commentTone = commentTone;
         return post;
     }
 
@@ -100,6 +112,10 @@ public class Post extends BaseEntity {
 
     public String getContent() {
         return content;
+    }
+
+    public CommentTone getCommentTone() {
+        return commentTone;
     }
 
     public int getViewCount() {
