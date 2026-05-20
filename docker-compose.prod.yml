@@ -4,12 +4,16 @@ services:
     container_name: webbb-app
     ports:
       - "8080:8080"
+    mem_limit: ${APP_MEM_LIMIT:-768m}
+    mem_reservation: ${APP_MEM_RESERVATION:-512m}
+    cpus: ${APP_CPU_LIMIT:-1.0}
     environment:
       SPRING_PROFILES_ACTIVE: prod
       DB_URL: ${DB_URL}
       DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
       OPENAI_API_KEY: ${OPENAI_API_KEY}
+      JAVA_TOOL_OPTIONS: -XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -XX:InitialRAMPercentage=25.0
       REDIS_HOST: redis
       REDIS_PORT: 6379
     depends_on:
