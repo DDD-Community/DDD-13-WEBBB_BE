@@ -71,19 +71,50 @@ Release PR 머지 ──→ GitHub Release + 태그 + CHANGELOG 자동 업데이
 | 항목 | 값 |
 |---|---|
 | 트리거 | GitHub Actions UI에서 직접 실행 (`workflow_dispatch`) |
-| 목적 | Release PR 없이 즉시 배포 |
+| 목적 | Release PR 없이 즉시 배포하거나, 특정 릴리즈 버전을 재배포 |
 
-**실행 단계:**
+**동작 모드:**
 
-1~6은 자동 배포와 동일. 단, 릴리스 태그는 붙이지 않음 (`:latest`, `:<sha>` 두 개만 push).
+- `latest`
+  - 현재 브랜치 기준으로 새 이미지를 빌드해 배포
+  - 태그는 `:latest`, `:<sha>` 두 개를 push
+- `release_tag`
+  - 기존 GHCR 릴리즈 태그 이미지를 재배포
+  - 새 이미지는 빌드하지 않음
 
 **입력값:**
 
 | 이름 | 설명 | 기본값 |
 |---|---|---|
+| `deploy_mode` | `latest` 또는 `release_tag` | `latest` |
+| `release_tag` | `deploy_mode=release_tag` 일 때 배포할 릴리즈 태그 (예: `v1.3.0`) | `""` |
 | `skip_tests` | 테스트 건너뛰기 | `false` |
 
+**실행 단계:**
+
+### `deploy_mode=latest`
+
+1. 입력값 검증 후 `IMAGE_TAG=latest` 설정
+2. 테스트 실행 (`skip_tests=false` 일 때만)
+3. Docker 이미지 빌드 & GHCR push
+4. 운영 서버에 `latest` 이미지 배포
+5. `/actuator/health` 헬스체크
+
+### `deploy_mode=release_tag`
+
+1. 입력값 검증
+   - `release_tag` 필수
+   - 형식: `v<major>.<minor>.<patch>` 예: `v1.3.0`
+2. `IMAGE_TAG=<release_tag>` 설정
+3. 새 이미지 빌드 없이 EC2에서 해당 태그 이미지 pull
+4. `/actuator/health` 헬스체크
+
 **사용법:** Actions 탭 → "Manual Deploy" → "Run workflow" 버튼
+
+**주의사항:**
+
+- GitHub Actions의 `choice` 입력은 정적 옵션만 지원하므로, `release_tag` 는 문자열 직접 입력을 기본으로 사용
+- 특정 버전 재배포는 이미지 롤백만 보장하며, DB 스키마 하위호환은 별도 보장하지 않음
 
 ---
 
@@ -145,6 +176,7 @@ Stage 2 (실행)    eclipse-temurin:21-jre  →  JAR만 복사해서 실행
 | redis | redis:7.0 | 캐시/세션 저장소 | 없음 (내부 전용) |
 
 - DB는 AWS RDS(MySQL)를 사용하며, `DB_URL` 환경변수로 JDBC URL 전체를 주입
+- app 이미지는 `${IMAGE_TAG}` 값을 기준으로 선택되며, 값이 없으면 `latest` 를 기본 사용
 - app은 redis가 healthy 상태일 때만 시작 (`depends_on` + `healthcheck`)
 - redis는 호스트 포트를 노출하지 않음 (Docker 내부 네트워크로만 통신)
 - 모든 민감 정보는 환경변수로 주입 (하드코딩 금지)
