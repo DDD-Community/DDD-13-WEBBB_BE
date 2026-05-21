@@ -29,6 +29,9 @@ jobs:
     needs: release-please
     if: ${{ needs.release-please.outputs.release_created }}
     runs-on: ubuntu-latest
+    concurrency:
+      group: webbb-ec2-deploy
+      cancel-in-progress: false
 
     steps:
       - name: Checkout
@@ -109,4 +112,5 @@ jobs:
 
             echo "ERROR: Health check failed after 150 seconds."
             docker compose -f docker-compose.prod.yml logs app --tail 50
+            docker compose -f docker-compose.prod.yml stop app
             exit 1
