@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.3](https://github.com/DDD-Community/DDD-13-WEBBB_BE/compare/v1.3.2...v1.3.3) (2026-05-21)
+
+
+### Bug Fixes
+
+* **cicd:** 운영 배포에 JWT_SECRET 환경변수 추가 ([c2dc471](https://github.com/DDD-Community/DDD-13-WEBBB_BE/commit/c2dc471e43eb5ad0a36fb876c2b378bfd3092703))
+
 ## [1.3.2](https://github.com/DDD-Community/DDD-13-WEBBB_BE/compare/v1.3.1...v1.3.2) (2026-05-18)
 
 
