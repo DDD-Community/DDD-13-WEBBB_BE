@@ -28,7 +28,13 @@ spring:
         include-prompt: false
         include-completion: false
 
+jwt:
+  secret: ${JWT_SECRET:dev-only-secret-key-must-be-at-least-256-bits-long-for-hmac-sha}
+  access-token-expiry: ${JWT_ACCESS_EXPIRY:1800000}
+  refresh-token-expiry: ${JWT_REFRESH_EXPIRY:604800000}
+
 app:
+  frontend-url: ${FRONTEND_URL:http://localhost:3000}
   ai:
     prompt-version: ${PROMPT_VERSION:v1}
     timeout: ${AI_TIMEOUT:20s}
