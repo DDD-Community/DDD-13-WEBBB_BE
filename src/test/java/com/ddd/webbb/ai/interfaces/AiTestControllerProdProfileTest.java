@@ -10,11 +10,11 @@ import com.ddd.webbb.ai.application.AiAnalysisResponse;
 import com.ddd.webbb.ai.application.AiAnalysisService;
 import com.ddd.webbb.ai.domain.PostContent;
 import com.ddd.webbb.comment.application.CommentSummaryService;
-import com.ddd.webbb.global.config.SecurityConfig;
+import com.ddd.webbb.global.auth.JwtAuthFilter;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
@@ -22,7 +22,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(AiTestController.class)
-@Import(SecurityConfig.class)
+@AutoConfigureMockMvc(addFilters = false)
 @ActiveProfiles("prod")
 @TestPropertySource(properties = "LOG_PATH=build/test-logs")
 class AiTestControllerProdProfileTest {
@@ -31,6 +31,7 @@ class AiTestControllerProdProfileTest {
 
     @MockitoBean private AiAnalysisService aiAnalysisService;
     @MockitoBean private CommentSummaryService commentSummaryService;
+    @MockitoBean private JwtAuthFilter jwtAuthFilter;
 
     @Test
     void prod_프로필에서도_감정_분석_요청을_처리한다() throws Exception {
