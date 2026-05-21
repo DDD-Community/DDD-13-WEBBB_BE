@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.0](https://github.com/DDD-Community/DDD-13-WEBBB_BE/compare/v1.3.3...v1.4.0) (2026-05-21)
+
+
+### Features
+
+* **post:** 게시글 작성/삭제 및 감정·몬스터 연동 구현 ([#58](https://github.com/DDD-Community/DDD-13-WEBBB_BE/issues/58)) ([ac307cc](https://github.com/DDD-Community/DDD-13-WEBBB_BE/commit/ac307ccd385ac3c2499f5baa3b3b8352b45b7fc5))
+
 ## [1.3.3](https://github.com/DDD-Community/DDD-13-WEBBB_BE/compare/v1.3.2...v1.3.3) (2026-05-21)
 
 
