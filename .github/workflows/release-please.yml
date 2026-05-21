@@ -32,7 +32,6 @@ jobs:
     concurrency:
       group: webbb-ec2-deploy
       cancel-in-progress: false
-      queue: max
 
     steps:
       - name: Checkout
