@@ -96,6 +96,7 @@ jobs:
             export DB_PASSWORD="${{ secrets.DB_PASSWORD }}"
             export OPENAI_API_KEY="${{ secrets.OPENAI_API_KEY }}"
             export JWT_SECRET="${{ secrets.JWT_SECRET }}"
+            export IMAGE_TAG=latest
 
             cd ~/app
             docker compose -f docker-compose.prod.yml pull app
