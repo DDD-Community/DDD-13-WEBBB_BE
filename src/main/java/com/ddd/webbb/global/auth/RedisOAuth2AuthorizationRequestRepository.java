@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.SerializationUtils;
 
 @Component
-public class HttpCookieOAuth2AuthorizationRequestRepository
+public class RedisOAuth2AuthorizationRequestRepository
         implements AuthorizationRequestRepository<OAuth2AuthorizationRequest> {
 
     private static final String KEY_PREFIX = "oauth2_auth_req:";
@@ -19,7 +19,7 @@ public class HttpCookieOAuth2AuthorizationRequestRepository
 
     private final StringRedisTemplate redisTemplate;
 
-    public HttpCookieOAuth2AuthorizationRequestRepository(StringRedisTemplate redisTemplate) {
+    public RedisOAuth2AuthorizationRequestRepository(StringRedisTemplate redisTemplate) {
         this.redisTemplate = redisTemplate;
     }
 

@@ -9,6 +9,8 @@ import com.ddd.webbb.auth.interfaces.dto.EmailSignupRequest;
 import com.ddd.webbb.auth.interfaces.dto.OAuthCodeExchangeRequest;
 import com.ddd.webbb.auth.interfaces.dto.OAuthLinkRequest;
 import com.ddd.webbb.auth.interfaces.dto.OAuthLoginRequest;
+import com.ddd.webbb.global.common.exception.AppException;
+import com.ddd.webbb.global.common.exception.ErrorCode;
 import com.ddd.webbb.global.common.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -85,7 +87,10 @@ public class AuthController {
     @PostMapping("/refresh")
     public ApiResponse<TokenInfo> refresh(
             @RequestHeader("Authorization") String authorizationHeader) {
-        String refreshToken = authorizationHeader.replace("Bearer ", "");
+        if (!authorizationHeader.startsWith("Bearer ")) {
+            throw new AppException(ErrorCode.INVALID_TOKEN);
+        }
+        String refreshToken = authorizationHeader.substring(7);
         TokenInfo tokenInfo = authService.refresh(refreshToken);
         return ApiResponse.ok("토큰이 재발급되었습니다.", tokenInfo);
     }

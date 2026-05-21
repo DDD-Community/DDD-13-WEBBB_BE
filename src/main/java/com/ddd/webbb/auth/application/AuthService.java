@@ -103,6 +103,7 @@ public class AuthService {
         OAuthClient client = getOAuthClient(provider);
 
         OAuthUserInfo oauthUserInfo = client.getUserInfo(request.oauthAccessToken());
+        validateOAuthUserInfo(oauthUserInfo);
 
         Optional<UserOauth> existingOauth =
                 userOauthRepository.findByProviderAndProviderUserId(
@@ -139,6 +140,36 @@ public class AuthService {
         return new AuthResponse(UserInfo.from(user), TokenInfo.from(authToken), true);
     }
 
+    @Transactional
+    public AuthToken oauthLoginFromProvider(
+            String providerName, String providerUserId, String email) {
+        OAuthProvider provider = OAuthProvider.valueOf(providerName);
+
+        Optional<UserOauth> existingOauth =
+                userOauthRepository.findByProviderAndProviderUserId(provider, providerUserId);
+
+        if (existingOauth.isPresent()) {
+            User user = existingOauth.get().getUser();
+            if (!user.isActive()) {
+                throw new AppException(ErrorCode.ALREADY_WITHDRAWN_USER);
+            }
+            return issueTokens(user.getPublicId());
+        }
+
+        if (userRepository.existsByEmailAndDeletedAtIsNull(email)) {
+            throw new AppException(ErrorCode.EMAIL_ALREADY_EXISTS_LINK_REQUIRED);
+        }
+
+        String nickname = generateUniqueNickname(email.split("@")[0]);
+        User user = User.createOAuthUser(email, nickname, null, null);
+        userRepository.save(user);
+
+        UserOauth userOauth = UserOauth.create(user, provider, providerUserId);
+        userOauthRepository.save(userOauth);
+
+        return issueTokens(user.getPublicId());
+    }
+
     public TokenInfo refresh(String refreshToken) {
         if (!jwtProvider.validate(refreshToken)) {
             throw new AppException(ErrorCode.INVALID_TOKEN);
@@ -170,6 +201,7 @@ public class AuthService {
         }
 
         OAuthUserInfo oauthUserInfo = client.getUserInfo(oauthAccessToken);
+        validateOAuthUserInfo(oauthUserInfo);
 
         Optional<UserOauth> existingOauth =
                 userOauthRepository.findByProviderAndProviderUserId(
@@ -209,6 +241,15 @@ public class AuthService {
 
     public void logout(UUID publicId) {
         refreshTokenStore.delete(publicId);
+    }
+
+    private void validateOAuthUserInfo(OAuthUserInfo oauthUserInfo) {
+        if (oauthUserInfo.email() == null
+                || oauthUserInfo.email().isBlank()
+                || oauthUserInfo.providerUserId() == null
+                || oauthUserInfo.providerUserId().isBlank()) {
+            throw new AppException(ErrorCode.OAUTH_AUTHENTICATION_FAILED);
+        }
     }
 
     private OAuthProvider parseProvider(String providerName) {

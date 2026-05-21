@@ -1,12 +1,12 @@
 package com.ddd.webbb.global.config;
 
 import com.ddd.webbb.global.auth.CustomOAuth2UserService;
-import com.ddd.webbb.global.auth.HttpCookieOAuth2AuthorizationRequestRepository;
 import com.ddd.webbb.global.auth.JwtAuthFilter;
 import com.ddd.webbb.global.auth.JwtAuthenticationEntryPoint;
 import com.ddd.webbb.global.auth.OAuth2LoginFailureHandler;
 import com.ddd.webbb.global.auth.OAuth2LoginSuccessHandler;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.ddd.webbb.global.auth.RedisOAuth2AuthorizationRequestRepository;
+import java.util.Optional;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -14,8 +14,6 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -29,10 +27,8 @@ public class SecurityConfig {
     private final CustomOAuth2UserService customOAuth2UserService;
     private final OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
     private final OAuth2LoginFailureHandler oAuth2LoginFailureHandler;
-    private final HttpCookieOAuth2AuthorizationRequestRepository authorizationRequestRepository;
-
-    @Autowired(required = false)
-    private ClientRegistrationRepository clientRegistrationRepository;
+    private final RedisOAuth2AuthorizationRequestRepository authorizationRequestRepository;
+    private final Optional<ClientRegistrationRepository> clientRegistrationRepository;
 
     public SecurityConfig(
             JwtAuthFilter jwtAuthFilter,
@@ -40,13 +36,15 @@ public class SecurityConfig {
             CustomOAuth2UserService customOAuth2UserService,
             OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler,
             OAuth2LoginFailureHandler oAuth2LoginFailureHandler,
-            HttpCookieOAuth2AuthorizationRequestRepository authorizationRequestRepository) {
+            RedisOAuth2AuthorizationRequestRepository authorizationRequestRepository,
+            Optional<ClientRegistrationRepository> clientRegistrationRepository) {
         this.jwtAuthFilter = jwtAuthFilter;
         this.jwtAuthenticationEntryPoint = jwtAuthenticationEntryPoint;
         this.customOAuth2UserService = customOAuth2UserService;
         this.oAuth2LoginSuccessHandler = oAuth2LoginSuccessHandler;
         this.oAuth2LoginFailureHandler = oAuth2LoginFailureHandler;
         this.authorizationRequestRepository = authorizationRequestRepository;
+        this.clientRegistrationRepository = clientRegistrationRepository;
     }
 
     @Bean
@@ -66,8 +64,8 @@ public class SecurityConfig {
                                                 "/v3/api-docs/**",
                                                 "/swagger-ui.html")
                                         .permitAll()
-                                        // Actuator
-                                        .requestMatchers("/actuator/**")
+                                        // Actuator (health, info만 공개)
+                                        .requestMatchers("/actuator/health", "/actuator/info")
                                         .permitAll()
                                         // Auth 공개 엔드포인트
                                         .requestMatchers(
@@ -84,15 +82,12 @@ public class SecurityConfig {
                                         .permitAll()
                                         .requestMatchers(HttpMethod.GET, "/api/posts/**")
                                         .permitAll()
-                                        // AI 테스트 공개
-                                        .requestMatchers("/api/ai/test/**")
-                                        .permitAll()
                                         // 나머지는 인증 필요
                                         .anyRequest()
                                         .authenticated())
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
-        if (clientRegistrationRepository != null) {
+        if (clientRegistrationRepository.isPresent()) {
             http.oauth2Login(
                     oauth2 ->
                             oauth2.authorizationEndpoint(
@@ -107,10 +102,5 @@ public class SecurityConfig {
         }
 
         return http.build();
-    }
-
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
     }
 }
