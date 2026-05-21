@@ -12,13 +12,17 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.ddd.webbb.auth.application.TokenService;
+import com.ddd.webbb.global.auth.CustomOAuth2UserService;
+import com.ddd.webbb.global.auth.JwtAuthFilter;
+import com.ddd.webbb.global.auth.JwtAuthenticationEntryPoint;
+import com.ddd.webbb.global.auth.JwtProvider;
+import com.ddd.webbb.global.auth.OAuth2LoginFailureHandler;
+import com.ddd.webbb.global.auth.OAuth2LoginSuccessHandler;
+import com.ddd.webbb.global.auth.RedisOAuth2AuthorizationRequestRepository;
 import com.ddd.webbb.global.common.exception.AppException;
 import com.ddd.webbb.global.common.exception.ErrorCode;
 import com.ddd.webbb.global.config.SecurityConfig;
-import com.ddd.webbb.global.security.CustomAuthenticationEntryPoint;
 import com.ddd.webbb.global.security.CustomUserPrincipal;
-import com.ddd.webbb.global.security.JwtAuthenticationFilter;
 import com.ddd.webbb.post.application.PostService;
 import com.ddd.webbb.post.domain.CommentTone;
 import com.ddd.webbb.post.interfaces.dto.PostCreateRequest;
@@ -39,15 +43,19 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(PostController.class)
-@Import({SecurityConfig.class, JwtAuthenticationFilter.class, CustomAuthenticationEntryPoint.class})
+@Import({SecurityConfig.class, JwtAuthFilter.class, JwtAuthenticationEntryPoint.class})
 @ActiveProfiles("test")
 class PostControllerTest {
 
     @Autowired private MockMvc mockMvc;
 
     @MockitoBean private PostService postService;
-    @MockitoBean private TokenService tokenService;
     @MockitoBean private UserService userService;
+    @MockitoBean private JwtProvider jwtProvider;
+    @MockitoBean private CustomOAuth2UserService customOAuth2UserService;
+    @MockitoBean private OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
+    @MockitoBean private OAuth2LoginFailureHandler oAuth2LoginFailureHandler;
+    @MockitoBean private RedisOAuth2AuthorizationRequestRepository authorizationRequestRepository;
 
     @Test
     void 정상_글_작성은_201을_반환한다() throws Exception {

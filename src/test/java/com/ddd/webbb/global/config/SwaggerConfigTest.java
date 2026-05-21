@@ -73,7 +73,7 @@ class SwaggerConfigTest {
         OperationCustomizer customizer = swaggerConfig.apiStatusOperationCustomizer();
         HandlerMethod handlerMethod =
                 new HandlerMethod(
-                        new AuthController(null),
+                        new AuthController(null, null),
                         AuthController.class.getMethod("loginEmail", EmailLoginRequest.class));
         Operation operation = new Operation().summary("이메일 로그인");
 
