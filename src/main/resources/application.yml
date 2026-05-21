@@ -38,6 +38,11 @@ app:
   ai:
     prompt-version: ${PROMPT_VERSION:v1}
     timeout: ${AI_TIMEOUT:20s}
+  auth:
+    jwt:
+      secret: ${JWT_SECRET:change-me-change-me-change-me-change-me}
+      access-token-expiration: ${JWT_ACCESS_TOKEN_EXPIRATION:15m}
+      refresh-token-expiration: ${JWT_REFRESH_TOKEN_EXPIRATION:14d}
 
 resilience4j:
   retry:
