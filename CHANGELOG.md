@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.0](https://github.com/DDD-Community/DDD-13-WEBBB_BE/compare/v1.4.0...v1.5.0) (2026-05-21)
+
+
+### Features
+
+* **cicd:** 특정 릴리즈 버전 수동 배포 지원 ([#61](https://github.com/DDD-Community/DDD-13-WEBBB_BE/issues/61)) ([dc5fbfa](https://github.com/DDD-Community/DDD-13-WEBBB_BE/commit/dc5fbfa11c73cc3a931363114a25bcfea0446aa1))
+
 ## [1.4.0](https://github.com/DDD-Community/DDD-13-WEBBB_BE/compare/v1.3.3...v1.4.0) (2026-05-21)
 
 
