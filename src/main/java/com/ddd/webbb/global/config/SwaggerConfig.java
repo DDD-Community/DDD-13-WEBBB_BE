@@ -137,11 +137,14 @@ public class SwaggerConfig {
         put(statuses, ApiImplementationStatus.TEST, "POST", "/api/ai/test/analyze");
         put(statuses, ApiImplementationStatus.TEST, "POST", "/api/ai/test/comment-summary");
 
-        put(statuses, ApiImplementationStatus.STUB, "POST", "/api/auth/oauth/{provider}");
+        put(statuses, ApiImplementationStatus.LIVE, "POST", "/api/auth/oauth/{provider}");
+        put(statuses, ApiImplementationStatus.LIVE, "POST", "/api/auth/oauth/exchange");
         put(statuses, ApiImplementationStatus.LIVE, "POST", "/api/auth/signup/email");
         put(statuses, ApiImplementationStatus.LIVE, "POST", "/api/auth/login/email");
-        put(statuses, ApiImplementationStatus.STUB, "POST", "/api/auth/logout");
+        put(statuses, ApiImplementationStatus.LIVE, "POST", "/api/auth/logout");
         put(statuses, ApiImplementationStatus.LIVE, "POST", "/api/auth/refresh");
+        put(statuses, ApiImplementationStatus.LIVE, "POST", "/api/auth/link/{provider}");
+        put(statuses, ApiImplementationStatus.LIVE, "DELETE", "/api/auth/link/{provider}");
 
         put(statuses, ApiImplementationStatus.STUB, "GET", "/api/users/me");
         put(statuses, ApiImplementationStatus.STUB, "PATCH", "/api/users/me/profile");

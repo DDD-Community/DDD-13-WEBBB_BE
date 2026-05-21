@@ -1,5 +1,6 @@
 package com.ddd.webbb.global.auth;
 
+import com.ddd.webbb.global.security.CustomUserPrincipal;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -33,9 +34,10 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         if (token != null && jwtProvider.validate(token)) {
             UUID publicId = jwtProvider.getPublicId(token);
+            CustomUserPrincipal principal = new CustomUserPrincipal(publicId, null, null);
             UsernamePasswordAuthenticationToken authentication =
                     new UsernamePasswordAuthenticationToken(
-                            publicId, null, Collections.emptyList());
+                            principal, null, Collections.emptyList());
             SecurityContextHolder.getContext().setAuthentication(authentication);
         }
 
