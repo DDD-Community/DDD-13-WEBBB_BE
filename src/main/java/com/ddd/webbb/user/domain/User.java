@@ -52,6 +52,35 @@ public class User extends BaseEntity {
         return user;
     }
 
+    public static User createWithPassword(
+            String email,
+            String nickname,
+            String passwordHash,
+            String jobType,
+            String careerLevel) {
+        User user = new User();
+        user.publicId = UUID.randomUUID();
+        user.email = email;
+        user.nickname = nickname;
+        user.passwordHash = passwordHash;
+        user.jobType = jobType;
+        user.careerLevel = careerLevel;
+        user.isActive = true;
+        return user;
+    }
+
+    public static User createOAuthUser(
+            String email, String nickname, String jobType, String careerLevel) {
+        User user = new User();
+        user.publicId = UUID.randomUUID();
+        user.email = email;
+        user.nickname = nickname;
+        user.jobType = jobType;
+        user.careerLevel = careerLevel;
+        user.isActive = true;
+        return user;
+    }
+
     public void update(String nickname, String jobType, String careerLevel) {
         if (nickname != null) {
             this.nickname = nickname;

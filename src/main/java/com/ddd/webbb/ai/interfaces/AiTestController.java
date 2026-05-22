@@ -43,8 +43,8 @@ public class AiTestController {
             동작 방식:
             1. 입력 문장에서 위기 키워드(예: 자해/자살 표현)를 먼저 검사합니다.
             2. 위기 표현이 감지되면 AI 호출 없이 안전 기본값과 `crisisDetected=true`를 반환합니다.
-            3. 위기 표현이 없으면 Claude -> OpenAI 순서로 프롬프트 기반 감정 분석을 시도합니다.
-            4. AI 응답이 실패하거나 파싱 불가하면 STATIC fallback 결과를 반환합니다.
+            3. 위기 표현이 없으면 OpenAI로 프롬프트 기반 감정 분석을 시도합니다.
+            4. OpenAI 응답이 실패하거나 파싱 불가하면 STATIC fallback 결과를 반환합니다.
 
             현재 사용 프롬프트 요약:
             - 역할: 익명 감정 지지 커뮤니티의 감정 분석 전문가
@@ -129,10 +129,9 @@ public class AiTestController {
             댓글 내용을 AI로 분석해 100자 이내 요약과 톤(CALM/NEUTRAL/URGENT)을 반환합니다.
 
             동작 방식:
-            1. 기본적으로 OpenAI → Static 순서로 AI 프로바이더를 시도합니다.
-            2. Claude는 설정으로 명시적으로 활성화한 경우에만 등록됩니다.
-            3. 파싱 실패 시 기본값("요약 실패", NEUTRAL)을 반환합니다.
-            4. `usedProvider` 필드에서 실제로 응답한 프로바이더를 확인할 수 있습니다.
+            1. OpenAI → Static 순서로 AI 프로바이더를 시도합니다.
+            2. 파싱 실패 시 기본값("요약 실패", NEUTRAL)을 반환합니다.
+            3. `usedProvider` 필드에서 실제로 응답한 프로바이더를 확인할 수 있습니다.
             """,
             requestBody =
                     @RequestBody(

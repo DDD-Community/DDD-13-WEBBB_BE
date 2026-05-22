@@ -1,5 +1,26 @@
 # Changelog
 
+## [1.4.0](https://github.com/DDD-Community/DDD-13-WEBBB_BE/compare/v1.3.3...v1.4.0) (2026-05-21)
+
+
+### Features
+
+* **post:** 게시글 작성/삭제 및 감정·몬스터 연동 구현 ([#58](https://github.com/DDD-Community/DDD-13-WEBBB_BE/issues/58)) ([ac307cc](https://github.com/DDD-Community/DDD-13-WEBBB_BE/commit/ac307ccd385ac3c2499f5baa3b3b8352b45b7fc5))
+
+## [1.3.3](https://github.com/DDD-Community/DDD-13-WEBBB_BE/compare/v1.3.2...v1.3.3) (2026-05-21)
+
+
+### Bug Fixes
+
+* **cicd:** 운영 배포에 JWT_SECRET 환경변수 추가 ([c2dc471](https://github.com/DDD-Community/DDD-13-WEBBB_BE/commit/c2dc471e43eb5ad0a36fb876c2b378bfd3092703))
+
+## [1.3.2](https://github.com/DDD-Community/DDD-13-WEBBB_BE/compare/v1.3.1...v1.3.2) (2026-05-18)
+
+
+### Bug Fixes
+
+* **ai:** Claude provider 제거 및 OpenAI 등록 복구 ([#53](https://github.com/DDD-Community/DDD-13-WEBBB_BE/issues/53)) ([e3089c2](https://github.com/DDD-Community/DDD-13-WEBBB_BE/commit/e3089c2ed1467c884891b8dedd9931ee60094272))
+
 ## [1.3.1](https://github.com/DDD-Community/DDD-13-WEBBB_BE/compare/v1.3.0...v1.3.1) (2026-05-16)
 
 

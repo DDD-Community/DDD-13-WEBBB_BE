@@ -28,6 +28,9 @@ jobs:
   build:
     needs: release-please
     runs-on: ubuntu-latest
+    concurrency:
+      group: webbb-ec2-deploy
+      cancel-in-progress: false
 
     steps:
       - name: Checkout
@@ -109,6 +112,8 @@ jobs:
             export DB_USERNAME="${{ secrets.DB_USERNAME }}"
             export DB_PASSWORD="${{ secrets.DB_PASSWORD }}"
             export OPENAI_API_KEY="${{ secrets.OPENAI_API_KEY }}"
+            export JWT_SECRET="${{ secrets.JWT_SECRET }}"
+            export IMAGE_TAG=latest
 
             cd ~/app
             docker compose -f docker-compose.dev.yml pull app
@@ -174,4 +179,5 @@ jobs:
 
             echo "ERROR: Prod health check failed after 150 seconds."
             docker compose -f docker-compose.prod.yml logs app --tail 50
+            docker compose -f docker-compose.prod.yml stop app
             exit 1

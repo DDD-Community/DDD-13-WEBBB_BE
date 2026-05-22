@@ -27,13 +27,13 @@ class CommentSummaryServiceTest {
     @Test
     void 정상_응답을_파싱하여_반환한다() {
         String json = "{\"summary\":\"따뜻한 위로 댓글\",\"tone\":\"CALM\"}";
-        given(aiGateway.call(anyString())).willReturn(new AiGatewayResult(json, "CLAUDE"));
+        given(aiGateway.call(anyString())).willReturn(new AiGatewayResult(json, "OPENAI"));
 
         CommentSummaryResponse response = service.summarize(1L, "힘내세요, 잘 될 거예요.");
 
         assertThat(response.summary()).isEqualTo("따뜻한 위로 댓글");
         assertThat(response.tone()).isEqualTo("CALM");
-        assertThat(response.usedProvider()).isEqualTo("CLAUDE");
+        assertThat(response.usedProvider()).isEqualTo("OPENAI");
     }
 
     @Test
@@ -60,7 +60,7 @@ class CommentSummaryServiceTest {
     @Test
     void 프롬프트에_댓글_텍스트가_치환되어_전달된다() {
         String json = "{\"summary\":\"요약\",\"tone\":\"NEUTRAL\"}";
-        given(aiGateway.call(contains("실제 댓글 내용"))).willReturn(new AiGatewayResult(json, "CLAUDE"));
+        given(aiGateway.call(contains("실제 댓글 내용"))).willReturn(new AiGatewayResult(json, "OPENAI"));
 
         service.summarize(4L, "실제 댓글 내용");
 

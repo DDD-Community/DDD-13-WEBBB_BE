@@ -52,13 +52,13 @@ class AiAnalysisServiceTest {
         String validJson =
                 "{\"emotionType\":\"ANXIETY\",\"hp\":30,\"confidence\":0.9,\"reason\":\"불안 표현\"}";
         given(crisisFilter.check(content.text())).willReturn(CrisisDetectionResult.safe());
-        given(aiGateway.call(anyString())).willReturn(new AiGatewayResult(validJson, "CLAUDE"));
+        given(aiGateway.call(anyString())).willReturn(new AiGatewayResult(validJson, "OPENAI"));
 
         AiAnalysisResponse response = service.analyze(content);
 
         assertThat(response.emotionType()).isEqualTo("ANXIETY");
         assertThat(response.hp()).isEqualTo(30);
-        assertThat(response.usedProvider()).isEqualTo("CLAUDE");
+        assertThat(response.usedProvider()).isEqualTo("OPENAI");
         assertThat(response.crisisDetected()).isFalse();
     }
 

@@ -26,8 +26,8 @@ public record AiAnalyzeTestResponse(
         @Schema(description = "위기 키워드 사전 감지 여부", example = "false") boolean crisisDetected,
         @Schema(
                         description = "최종 응답을 생성한 제공자",
-                        allowableValues = {"CRISIS_FILTER", "CLAUDE", "OPENAI", "STATIC"},
-                        example = "CLAUDE")
+                        allowableValues = {"CRISIS_FILTER", "OPENAI", "STATIC"},
+                        example = "OPENAI")
                 String usedProvider) {
     public static AiAnalyzeTestResponse from(AiAnalysisResponse response) {
         return new AiAnalyzeTestResponse(

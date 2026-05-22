@@ -1,10 +1,13 @@
 app:
+  frontend-url: http://localhost:3000
   ai:
     prompt-version: v1
     timeout: 5s
-    providers:
-      claude-enabled: false
-      openai-enabled: true
+
+jwt:
+  secret: test-only-secret-key-must-be-at-least-256-bits-long-for-hmac-sha-algorithm
+  access-token-expiry: 1800000
+  refresh-token-expiry: 604800000
 
 spring:
   profiles:
@@ -14,9 +17,8 @@ spring:
     exclude:
       - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
       - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
+      - org.springframework.boot.autoconfigure.security.oauth2.client.servlet.OAuth2ClientAutoConfiguration
   ai:
-    anthropic:
-      api-key: "test-dummy-key"
     openai:
       api-key: "test-dummy-key"
 

@@ -36,11 +36,15 @@ public class UserService {
     }
 
     public UserResponse getUser(UUID publicId) {
+        return UserResponse.from(getUserEntity(publicId));
+    }
+
+    public User getUserEntity(UUID publicId) {
         User user =
                 userRepository
                         .findByPublicIdAndDeletedAtIsNull(publicId)
                         .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
-        return UserResponse.from(user);
+        return user;
     }
 
     public UserListResponse getUsers(Long cursor, int size) {

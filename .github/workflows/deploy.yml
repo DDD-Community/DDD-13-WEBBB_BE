@@ -3,6 +3,18 @@ name: Manual Deploy
 on:
   workflow_dispatch:
     inputs:
+      deploy_mode:
+        description: '배포 방식 선택'
+        required: true
+        default: latest
+        type: choice
+        options:
+          - latest
+          - release_tag
+      release_tag:
+        description: '배포할 릴리즈 태그 (예: v1.3.0)'
+        required: false
+        type: string
       skip_tests:
         description: '테스트 건너뛰기 (긴급 배포 시 사용)'
         required: false
@@ -16,28 +28,55 @@ permissions:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    concurrency:
+      group: webbb-ec2-deploy
+      cancel-in-progress: false
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Validate inputs and determine image tag
+        run: |
+          deploy_mode="${{ inputs.deploy_mode }}"
+          release_tag="${{ inputs.release_tag }}"
+
+          if [ "$deploy_mode" = "release_tag" ]; then
+            if [ -z "$release_tag" ]; then
+              echo "release_tag is required when deploy_mode=release_tag"
+              exit 1
+            fi
+
+            if ! printf '%s' "$release_tag" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
+              echo "release_tag must match v<major>.<minor>.<patch>"
+              exit 1
+            fi
+
+            echo "IMAGE_TAG=$release_tag" >> "$GITHUB_ENV"
+          else
+            echo "IMAGE_TAG=latest" >> "$GITHUB_ENV"
+          fi
+
       - name: Set image name (lowercase)
         run: echo "IMAGE_NAME=ghcr.io/$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_ENV"
 
       - name: Set up JDK 21
+        if: ${{ inputs.deploy_mode == 'latest' }}
         uses: actions/setup-java@v4
         with:
           java-version: '21'
           distribution: 'temurin'
 
       - name: Setup Gradle
+        if: ${{ inputs.deploy_mode == 'latest' }}
         uses: gradle/actions/setup-gradle@v4
 
       - name: Grant execute permission for gradlew
+        if: ${{ inputs.deploy_mode == 'latest' }}
         run: chmod +x gradlew
 
       - name: Run tests
-        if: ${{ !inputs.skip_tests }}
+        if: ${{ inputs.deploy_mode == 'latest' && !inputs.skip_tests }}
         run: ./gradlew test
 
       - name: Log in to GHCR
@@ -48,6 +87,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push Docker image
+        if: ${{ inputs.deploy_mode == 'latest' }}
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -79,6 +119,8 @@ jobs:
             export DB_USERNAME="${{ secrets.DB_USERNAME }}"
             export DB_PASSWORD="${{ secrets.DB_PASSWORD }}"
             export OPENAI_API_KEY="${{ secrets.OPENAI_API_KEY }}"
+            export JWT_SECRET="${{ secrets.JWT_SECRET }}"
+            export IMAGE_TAG="${{ env.IMAGE_TAG }}"
 
             cd ~/app
             docker compose -f docker-compose.prod.yml pull app
@@ -95,4 +137,5 @@ jobs:
 
             echo "ERROR: Health check failed after 150 seconds."
             docker compose -f docker-compose.prod.yml logs app --tail 50
+            docker compose -f docker-compose.prod.yml stop app
             exit 1

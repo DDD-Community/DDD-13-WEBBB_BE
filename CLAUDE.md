@@ -34,6 +34,7 @@ Java 21 + Spring Boot 3.4.5 백엔드. DDD + Layered Architecture.
 - Service 클래스 기본값 `@Transactional(readOnly = true)`, 변경 메서드에만 `@Transactional`.
 - 엔티티를 Controller 응답으로 직접 반환 금지 → record 응답 DTO로 변환.
 - 다른 도메인 Repository 직접 주입 금지 → 그 도메인의 Service를 주입.
+- API를 추가/수정하며 Swagger 문서를 업데이트할 때는 `@Tag` 등 Swagger 라벨도 함께 점검하고 최신 상태로 맞춘다.
 - 커밋 전 `./gradlew spotlessCheck` 통과.
 - PR/리뷰는 한국어.
 
@@ -50,3 +51,4 @@ Java 21 + Spring Boot 3.4.5 백엔드. DDD + Layered Architecture.
    - `[BE]` 같은 접두사 금지. `type:` 없이 시작 금지.
 6. GitHub 이슈를 작성할 때는 **이슈 템플릿: @.github/ISSUE_TEMPLATE/**을 참고한다. 작업 유형에 맞는 템플릿(feat/fix/refactor/docs/build)을 선택해 항목을 채운다.
 7. PR을 작성할 때는 **PR 템플릿: @.github/pull_request_template.md**의 항목(변경 내용 & 이유 / 테스트 방법 / 관련 이슈)을 빠짐없이 채운다.
+8. 다른 개발자가 API를 개발하거나 수정할 수 있으므로, Swagger UI 문서를 갱신할 때는 엔드포인트 설명뿐 아니라 라벨(`@Tag` 기준 분류명) 변경 필요 여부도 함께 확인하고 반영한다.

@@ -10,10 +10,10 @@
 
 이 프로젝트는 **LLM Gateway Pattern**을 사용합니다.
 
-Claude/OpenAI 어댑터·resilience4j 설정은 `DefaultAiGateway` 안에 구성되어 있습니다.  
+OpenAI 어댑터·resilience4j 설정은 `DefaultAiGateway` 안에 구성되어 있습니다.  
 새 기능을 추가할 때 **건드리지 않아도 되는 것**:
 
-- `ClaudeAiProvider`, `OpenAiAiProvider` — 변경 없음
+- `OpenAiAiProvider` — 변경 없음
 - `AiConfig` 프로바이더 빈 — 변경 없음
 - `application.yml` resilience4j 설정 — 변경 없음
 
@@ -35,9 +35,8 @@ Claude/OpenAI 어댑터·resilience4j 설정은 `DefaultAiGateway` 안에 구성
 XxxService.xxx()
     ↓ aiGateway.call(prompt)
 DefaultAiGateway
-    ├── ClaudeAiProvider.call()    ← 성공 시 바로 반환
-    ├── OpenAiAiProvider.call()    ← Claude 실패 시 시도
-    └── StaticAiProvider.call()    ← 모두 실패 시 JSON 기본값 반환
+    ├── OpenAiAiProvider.call()    ← 성공 시 바로 반환
+    └── StaticAiProvider.call()    ← 실패 시 JSON 기본값 반환
     ↓ AiGatewayResult(rawResponse, providerName)
 XxxService → ObjectMapper로 파싱 → XxxResponse 반환
 ```
@@ -188,7 +187,6 @@ public class CommentSummaryService {
 └── ai/infrastructure/config/AiConfig.java           ← 프롬프트 빈만 추가
 
 건드리지 않은 파일
-├── ai/infrastructure/gateway/ClaudeAiProvider.java  ← 그대로
 ├── ai/infrastructure/gateway/OpenAiAiProvider.java  ← 그대로
 ├── ai/infrastructure/gateway/DefaultAiGateway.java  ← 그대로
 └── application.yml (resilience4j 설정)              ← 그대로
@@ -198,7 +196,7 @@ public class CommentSummaryService {
 
 ## 테스트 작성 패턴
 
-`AiGateway`를 목으로 주입해 테스트합니다. 실제 Claude/OpenAI 호출은 필요 없습니다.
+`AiGateway`를 목으로 주입해 테스트합니다. 실제 OpenAI 호출은 필요 없습니다.
 
 ```java
 class CommentSummaryServiceTest {
@@ -215,12 +213,12 @@ class CommentSummaryServiceTest {
     @Test
     void 정상_응답을_파싱하여_반환한다() {
         String json = "{\"summary\":\"잘 요약됨\",\"tone\":\"CALM\"}";
-        given(aiGateway.call(anyString())).willReturn(new AiGatewayResult(json, "CLAUDE"));
+        given(aiGateway.call(anyString())).willReturn(new AiGatewayResult(json, "OPENAI"));
 
         CommentSummaryResponse response = service.summarize("긴 댓글 내용...");
 
         assertThat(response.summary()).isEqualTo("잘 요약됨");
-        assertThat(response.usedProvider()).isEqualTo("CLAUDE");
+        assertThat(response.usedProvider()).isEqualTo("OPENAI");
     }
 
     @Test
@@ -235,7 +233,7 @@ class CommentSummaryServiceTest {
     @Test
     void 프롬프트에_입력_텍스트가_포함된다() {
         given(aiGateway.call(contains("실제 댓글"))).willReturn(
-                new AiGatewayResult("{\"summary\":\"요약\",\"tone\":\"CALM\"}", "CLAUDE"));
+                new AiGatewayResult("{\"summary\":\"요약\",\"tone\":\"CALM\"}", "OPENAI"));
 
         service.summarize("실제 댓글");
 
