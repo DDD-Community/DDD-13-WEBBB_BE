@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.1](https://github.com/DDD-Community/DDD-13-WEBBB_BE/compare/v1.5.0...v1.5.1) (2026-05-25)
+
+
+### Bug Fixes
+
+* dev 배포 환경변수 전달 누락 수정 ([#66](https://github.com/DDD-Community/DDD-13-WEBBB_BE/issues/66)) ([728261a](https://github.com/DDD-Community/DDD-13-WEBBB_BE/commit/728261a3216cf5f6d4096d77b772f719f04eea36))
+
 ## [1.5.0](https://github.com/DDD-Community/DDD-13-WEBBB_BE/compare/v1.4.0...v1.5.0) (2026-05-25)
 
 
