@@ -67,6 +67,10 @@ public class SecurityConfig {
                                         // Actuator (health, info만 공개)
                                         .requestMatchers("/actuator/health", "/actuator/info")
                                         .permitAll()
+                                        // OAuth2 로그인 진입점
+                                        .requestMatchers(
+                                                "/oauth2/authorization/**", "/login/oauth2/code/**")
+                                        .permitAll()
                                         // Auth 공개 엔드포인트
                                         .requestMatchers(
                                                 "/api/auth/signup/email",
