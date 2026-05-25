@@ -39,3 +39,5 @@ out/
 
 # QueryDSL generated
 src/main/generated/
+
+.codex/
