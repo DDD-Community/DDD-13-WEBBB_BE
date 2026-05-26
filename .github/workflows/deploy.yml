@@ -120,6 +120,13 @@ jobs:
             export DB_PASSWORD="${{ secrets.DB_PASSWORD }}"
             export OPENAI_API_KEY="${{ secrets.OPENAI_API_KEY }}"
             export JWT_SECRET="${{ secrets.JWT_SECRET }}"
+            export GOOGLE_CLIENT_ID="${{ secrets.GOOGLE_CLIENT_ID }}"
+            export GOOGLE_CLIENT_SECRET="${{ secrets.GOOGLE_CLIENT_SECRET }}"
+            export KAKAO_CLIENT_ID="${{ secrets.KAKAO_CLIENT_ID }}"
+            export KAKAO_CLIENT_SECRET="${{ secrets.KAKAO_CLIENT_SECRET }}"
+            export NAVER_CLIENT_ID="${{ secrets.NAVER_CLIENT_ID }}"
+            export NAVER_CLIENT_SECRET="${{ secrets.NAVER_CLIENT_SECRET }}"
+            export FRONTEND_URL="${{ secrets.FRONTEND_URL }}"
             export IMAGE_TAG="${{ env.IMAGE_TAG }}"
 
             cd ~/app
