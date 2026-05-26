@@ -69,7 +69,9 @@ public class SecurityConfig {
                                         .permitAll()
                                         // OAuth2 로그인 진입점
                                         .requestMatchers(
-                                                "/oauth2/authorization/**", "/login/oauth2/code/**")
+                                                HttpMethod.GET,
+                                                "/oauth2/authorization/*",
+                                                "/login/oauth2/code/*")
                                         .permitAll()
                                         // Auth 공개 엔드포인트
                                         .requestMatchers(
