@@ -115,7 +115,7 @@ jobs:
             echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u ${{ secrets.GHCR_USERNAME }} --password-stdin
 
             export GITHUB_REPOSITORY=$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')
-            export DB_URL='${{ secrets.DB_URL }}'
+            export DB_URL_PROD='${{ secrets.DB_URL_PROD }}'
             export DB_USERNAME='${{ secrets.DB_USERNAME }}'
             export DB_PASSWORD='${{ secrets.DB_PASSWORD }}'
             export OPENAI_API_KEY='${{ secrets.OPENAI_API_KEY }}'
