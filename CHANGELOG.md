@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.6.0](https://github.com/DDD-Community/DDD-13-WEBBB_BE/compare/v1.5.1...v1.6.0) (2026-05-27)
+
+
+### Features
+
+* **security:** OAuth2 엔드포인트 허용 및 로컬 설정 파일 추적 제거 ([5d0e564](https://github.com/DDD-Community/DDD-13-WEBBB_BE/commit/5d0e564894ca6d44034e384839aa439d3ad2f664))
+* **security:** OAuth2 엔드포인트 허용 및 로컬 설정 파일 추적 제거 ([51cd74b](https://github.com/DDD-Community/DDD-13-WEBBB_BE/commit/51cd74be6f2716b72078d03340dd853c0ddd6e9f))
+
+
+### Bug Fixes
+
+* **deploy:** main 머지 컨플릭트 해결 — DB_URL_PROD 반영 ([f7986ea](https://github.com/DDD-Community/DDD-13-WEBBB_BE/commit/f7986ea314a83a686ffec4c9b2086c40c2cc41b3))
+* **deploy:** 리뷰 반영 — secrets 쉘 확장 방지 + 필수 변수 누락 시 즉시 실패 ([dfdd9f7](https://github.com/DDD-Community/DDD-13-WEBBB_BE/commit/dfdd9f7b02d070cecf9df8a9059967517d03d0fd))
+* **deploy:** 프로덕션 배포 시 누락된 환경변수 추가 ([53f7a43](https://github.com/DDD-Community/DDD-13-WEBBB_BE/commit/53f7a430671baa7b362056a8a4e876e9dfc0ec99))
+* **deploy:** 프로덕션 배포 시 누락된 환경변수 추가 ([6acb2c6](https://github.com/DDD-Community/DDD-13-WEBBB_BE/commit/6acb2c62be80de076305cf9099d90c46436db9b3))
+* **security:** 리뷰 반영 — OAuth2 permitAll 최소 권한 + 프로필 기본값 환경변수화 ([fa660d8](https://github.com/DDD-Community/DDD-13-WEBBB_BE/commit/fa660d887d6f3b6e252e170ad6ca0324dceaac4f))
+
 ## [1.5.1](https://github.com/DDD-Community/DDD-13-WEBBB_BE/compare/v1.5.0...v1.5.1) (2026-05-25)
 
 
