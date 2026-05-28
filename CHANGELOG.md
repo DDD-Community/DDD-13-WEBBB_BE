@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.6.1](https://github.com/DDD-Community/DDD-13-WEBBB_BE/compare/v1.6.0...v1.6.1) (2026-05-28)
+
+
+### Bug Fixes
+
+* **deploy:** secret 값 특수문자로 인한 환경변수 누락 수정 ([ac449f0](https://github.com/DDD-Community/DDD-13-WEBBB_BE/commit/ac449f094a0c647d59dae44421614abcff219933))
+* **deploy:** secret 특수문자로 인한 배포 실패 수정 ([15d5370](https://github.com/DDD-Community/DDD-13-WEBBB_BE/commit/15d5370db9a459ee5e477dc6f9acbc9b6b557a63))
+* **deploy:** 배포 파이프라인 전면 수정 ([9112c6c](https://github.com/DDD-Community/DDD-13-WEBBB_BE/commit/9112c6c89f33608ae6e4d620d2883ad0ed526eaf))
+
 ## [1.6.0](https://github.com/DDD-Community/DDD-13-WEBBB_BE/compare/v1.5.1...v1.6.0) (2026-05-27)
 
 
