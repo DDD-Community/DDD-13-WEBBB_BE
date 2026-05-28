@@ -96,22 +96,11 @@ jobs:
             ${{ env.IMAGE_NAME }}:latest
             ${{ env.IMAGE_NAME }}:${{ github.sha }}
 
-      - name: Copy docker-compose to EC2
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          source: docker-compose.prod.yml
-          target: ~/app
-
-      - name: Deploy to EC2
-        uses: appleboy/ssh-action@v1
+      - name: Create .env for production
         env:
           GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
           GHCR_USERNAME: ${{ secrets.GHCR_USERNAME }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
-          DB_URL_PROD: ${{ secrets.DB_URL_PROD }}
+          DB_URL_PROD: ${{ secrets.DB_URL }}
           DB_USERNAME: ${{ secrets.DB_USERNAME }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
@@ -123,31 +112,72 @@ jobs:
           NAVER_CLIENT_ID: ${{ secrets.NAVER_CLIENT_ID }}
           NAVER_CLIENT_SECRET: ${{ secrets.NAVER_CLIENT_SECRET }}
           FRONTEND_URL: ${{ secrets.FRONTEND_URL }}
-          IMAGE_TAG: ${{ env.IMAGE_TAG }}
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          envs: GHCR_TOKEN,GHCR_USERNAME,GITHUB_REPOSITORY,DB_URL_PROD,DB_USERNAME,DB_PASSWORD,OPENAI_API_KEY,JWT_SECRET,GOOGLE_CLIENT_ID,GOOGLE_CLIENT_SECRET,KAKAO_CLIENT_ID,KAKAO_CLIENT_SECRET,NAVER_CLIENT_ID,NAVER_CLIENT_SECRET,FRONTEND_URL,IMAGE_TAG
-          script: |
-            echo "${GHCR_TOKEN}" | docker login ghcr.io -u "${GHCR_USERNAME}" --password-stdin
+        run: |
+          {
+            printf 'GHCR_TOKEN=%s\n' "$GHCR_TOKEN"
+            printf 'GHCR_USERNAME=%s\n' "$GHCR_USERNAME"
+            printf 'GITHUB_REPOSITORY=%s\n' "$(echo "$GITHUB_REPOSITORY" | tr '[:upper:]' '[:lower:]')"
+            printf 'IMAGE_TAG=%s\n' "$IMAGE_TAG"
+            printf 'DB_URL_PROD=%s\n' "$DB_URL_PROD"
+            printf 'DB_USERNAME=%s\n' "$DB_USERNAME"
+            printf 'DB_PASSWORD=%s\n' "$DB_PASSWORD"
+            printf 'OPENAI_API_KEY=%s\n' "$OPENAI_API_KEY"
+            printf 'JWT_SECRET=%s\n' "$JWT_SECRET"
+            printf 'GOOGLE_CLIENT_ID=%s\n' "$GOOGLE_CLIENT_ID"
+            printf 'GOOGLE_CLIENT_SECRET=%s\n' "$GOOGLE_CLIENT_SECRET"
+            printf 'KAKAO_CLIENT_ID=%s\n' "$KAKAO_CLIENT_ID"
+            printf 'KAKAO_CLIENT_SECRET=%s\n' "$KAKAO_CLIENT_SECRET"
+            printf 'NAVER_CLIENT_ID=%s\n' "$NAVER_CLIENT_ID"
+            printf 'NAVER_CLIENT_SECRET=%s\n' "$NAVER_CLIENT_SECRET"
+            printf 'FRONTEND_URL=%s\n' "$FRONTEND_URL"
+          } > .env
 
-            export GITHUB_REPOSITORY=$(echo "${GITHUB_REPOSITORY}" | tr '[:upper:]' '[:lower:]')
+      - name: Deploy to EC2
+        env:
+          EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+          EC2_USER: ${{ secrets.EC2_USER }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$EC2_SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
 
-            cd ~/app
-            docker compose -f docker-compose.prod.yml pull app
-            docker compose -f docker-compose.prod.yml up -d
+          COMPOSE_B64=$(base64 -w0 docker-compose.prod.yml)
+          ENV_B64=$(base64 -w0 .env)
 
-            echo "Waiting for application to start..."
-            for i in $(seq 1 30); do
-              if curl -sf http://localhost:8080/actuator/health > /dev/null 2>&1; then
-                echo "Application is healthy!"
-                exit 0
-              fi
-              sleep 5
-            done
+          ssh -o StrictHostKeyChecking=no -o ConnectTimeout=60 \
+            -i ~/.ssh/deploy_key "${EC2_USER}@${EC2_HOST}" bash << DEPLOY_EOF
+          set -euo pipefail
+          mkdir -p ~/app && cd ~/app
 
-            echo "ERROR: Health check failed after 150 seconds."
-            docker compose -f docker-compose.prod.yml logs app --tail 50
-            docker compose -f docker-compose.prod.yml stop app
-            exit 1
+          echo '${COMPOSE_B64}' | base64 -d > docker-compose.prod.yml
+          echo '${ENV_B64}' | base64 -d > .env
+
+          GHCR_TOKEN=\$(grep '^GHCR_TOKEN=' .env | cut -d= -f2-)
+          GHCR_USERNAME=\$(grep '^GHCR_USERNAME=' .env | cut -d= -f2-)
+          echo "\${GHCR_TOKEN}" | docker login ghcr.io -u "\${GHCR_USERNAME}" --password-stdin
+
+          echo "Cleaning up non-prod containers..."
+          docker stop webbb-dev-app webbb-dev-redis 2>/dev/null || true
+          docker rm webbb-dev-app webbb-dev-redis 2>/dev/null || true
+
+          docker compose --env-file .env -f docker-compose.prod.yml pull app
+          docker compose --env-file .env -f docker-compose.prod.yml up -d
+          docker image prune -f 2>/dev/null || true
+
+          echo "Waiting for application to start..."
+          for i in \$(seq 1 30); do
+            if curl -sf http://localhost:8080/actuator/health > /dev/null 2>&1; then
+              echo "Application is healthy!"
+              exit 0
+            fi
+            sleep 5
+          done
+
+          echo "ERROR: Health check failed after 150 seconds."
+          docker compose -f docker-compose.prod.yml logs app --tail 50
+          docker compose -f docker-compose.prod.yml stop app
+          exit 1
+          DEPLOY_EOF
+
+          rm -f ~/.ssh/deploy_key
