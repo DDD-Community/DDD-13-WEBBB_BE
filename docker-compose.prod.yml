@@ -3,9 +3,9 @@ services:
     image: ghcr.io/${GITHUB_REPOSITORY}:${IMAGE_TAG:-latest}
     container_name: webbb-prod-app
     ports:
-      - "8081:8080"
-    mem_limit: ${APP_MEM_LIMIT:-768m}
-    mem_reservation: ${APP_MEM_RESERVATION:-512m}
+      - "8080:8080"
+    mem_limit: ${APP_MEM_LIMIT:-384m}
+    mem_reservation: ${APP_MEM_RESERVATION:-256m}
     cpus: ${APP_CPU_LIMIT:-1.0}
     environment:
       SPRING_PROFILES_ACTIVE: prod
