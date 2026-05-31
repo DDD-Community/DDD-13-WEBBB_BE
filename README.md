@@ -22,6 +22,14 @@ DB명: `webbb`
 
 ### 2. 애플리케이션 실행
 
+기본 프로필은 `local`입니다. 처음 실행할 때는 로컬 설정 파일을 템플릿에서 복사해 만듭니다.
+
+```bash
+cp src/main/resources/application-local.yml.example src/main/resources/application-local.yml
+```
+
+필요하면 `src/main/resources/application-local.yml`에서 로컬 DB, Redis, JWT 값을 수정한 뒤 실행합니다.
+
 ```bash
 ./gradlew bootRun
 ```
