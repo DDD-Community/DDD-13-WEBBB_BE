@@ -15,8 +15,6 @@ import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import java.time.LocalDateTime;
-import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -40,16 +38,6 @@ public class PostController {
     public PostController(PostService postService) {
         this.postService = postService;
     }
-
-    private static final PostResponse.AuthorInfo STUB_AUTHOR =
-            new PostResponse.AuthorInfo(
-                    "01939b10-7b0f-7c8f-9a2b-111111111111", "ogu", "DEVELOPMENT", "YEAR_3");
-
-    private static final PostResponse.EmotionInfo STUB_EMOTION =
-            new PostResponse.EmotionInfo("ANXIETY", "불안", "면접 불합격으로 인한 자신감 저하");
-
-    private static final PostResponse.MonsterInfo STUB_MONSTER =
-            new PostResponse.MonsterInfo("ANXIETY_MONSTER", 80, 100, "ALIVE");
 
     @Operation(
             summary = "게시글 작성 (글 작성)",
@@ -208,22 +196,7 @@ public class PostController {
     public ApiResponse<PostListResponse> getPosts(
             @Parameter(description = "커서 (마지막 postId)") @RequestParam(required = false) Long cursor,
             @Parameter(description = "페이지 크기") @RequestParam(defaultValue = "20") int size) {
-        // TODO: 실제 서비스 연동
-        PostListResponse.MonsterInfo monsterInfo =
-                new PostListResponse.MonsterInfo("ANXIETY_MONSTER", 80, 100, "ALIVE");
-        PostListResponse.PostSummary summary =
-                new PostListResponse.PostSummary(
-                        1L,
-                        "ogu",
-                        "DEVELOPMENT",
-                        "YEAR_3",
-                        "면접에서 계속 떨어져서 점점 자신감이...",
-                        "ANXIETY",
-                        monsterInfo,
-                        3,
-                        5,
-                        LocalDateTime.now());
-        return ApiResponse.ok("게시글 목록을 조회했습니다.", new PostListResponse(List.of(summary), null));
+        return ApiResponse.ok("게시글 목록을 조회했습니다.", postService.getPosts(cursor, size));
     }
 
     @Operation(summary = "게시글 상세 조회")
@@ -260,29 +233,7 @@ public class PostController {
     })
     @GetMapping("/{postId}")
     public ApiResponse<PostDetailResponse> getPost(@PathVariable Long postId) {
-        // TODO: 실제 서비스 연동
-        PostDetailResponse.AuthorInfo author =
-                new PostDetailResponse.AuthorInfo(
-                        "01939b10-7b0f-7c8f-9a2b-111111111111", "ogu", "DEVELOPMENT", "YEAR_3");
-        PostDetailResponse.EmotionInfo emotion =
-                new PostDetailResponse.EmotionInfo("ANXIETY", "불안");
-        PostDetailResponse.MonsterInfo monster =
-                new PostDetailResponse.MonsterInfo("ANXIETY_MONSTER", 80, 100, "ALIVE");
-        PostDetailResponse.CommentInfo comment =
-                new PostDetailResponse.CommentInfo(1L, "anonymous", "힘내세요!", LocalDateTime.now());
-        PostDetailResponse response =
-                new PostDetailResponse(
-                        postId,
-                        author,
-                        "면접에서 계속 떨어져서 점점 자신감이 사라져요.",
-                        "COMFORT_ME",
-                        emotion,
-                        monster,
-                        3,
-                        1,
-                        List.of(comment),
-                        LocalDateTime.now());
-        return ApiResponse.ok("게시글을 조회했습니다.", response);
+        return ApiResponse.ok("게시글을 조회했습니다.", postService.getPostDetail(postId));
     }
 
     @Operation(summary = "게시글 수정")
@@ -316,20 +267,11 @@ public class PostController {
     })
     @PatchMapping("/{postId}")
     public ApiResponse<PostResponse> updatePost(
-            @PathVariable Long postId, @RequestBody @Valid PostCreateRequest request) {
-        // TODO: 실제 서비스 연동
-        PostResponse response =
-                new PostResponse(
-                        postId,
-                        STUB_AUTHOR,
-                        request.content(),
-                        request.commentTone().name(),
-                        STUB_EMOTION,
-                        STUB_MONSTER,
-                        3,
-                        5,
-                        LocalDateTime.now());
-        return ApiResponse.ok("게시글이 수정되었습니다.", response);
+            @AuthenticationPrincipal CustomUserPrincipal principal,
+            @PathVariable Long postId,
+            @RequestBody @Valid PostCreateRequest request) {
+        return ApiResponse.ok(
+                "게시글이 수정되었습니다.", postService.modifyPost(principal.publicId(), postId, request));
     }
 
     @Operation(summary = "게시글 삭제")

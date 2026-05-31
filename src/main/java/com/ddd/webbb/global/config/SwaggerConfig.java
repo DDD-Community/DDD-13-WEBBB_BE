@@ -149,9 +149,9 @@ public class SwaggerConfig {
         put(statuses, ApiImplementationStatus.STUB, "GET", "/api/users/me");
         put(statuses, ApiImplementationStatus.STUB, "PATCH", "/api/users/me/profile");
 
-        put(statuses, ApiImplementationStatus.STUB, "GET", "/api/posts");
-        put(statuses, ApiImplementationStatus.STUB, "GET", "/api/posts/{postId}");
-        put(statuses, ApiImplementationStatus.STUB, "PATCH", "/api/posts/{postId}");
+        put(statuses, ApiImplementationStatus.LIVE, "GET", "/api/posts");
+        put(statuses, ApiImplementationStatus.LIVE, "GET", "/api/posts/{postId}");
+        put(statuses, ApiImplementationStatus.LIVE, "PATCH", "/api/posts/{postId}");
         put(statuses, ApiImplementationStatus.LIVE, "DELETE", "/api/posts/{postId}");
 
         put(statuses, ApiImplementationStatus.STUB, "POST", "/api/posts/{postId}/comments");

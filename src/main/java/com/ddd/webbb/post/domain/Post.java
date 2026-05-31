@@ -94,6 +94,20 @@ public class Post extends BaseEntity {
         this.isDeleted = true;
     }
 
+    public void update(String content, CommentTone commentTone) {
+        String normalized = content == null ? "" : content.trim();
+        this.content = content;
+        this.title =
+                normalized.isEmpty()
+                        ? "고민글"
+                        : normalized.substring(0, Math.min(normalized.length(), 30));
+        this.commentTone = commentTone;
+    }
+
+    public void incrementViewCount() {
+        this.viewCount++;
+    }
+
     public Long getId() {
         return id;
     }
