@@ -68,6 +68,12 @@ public class PostService {
         this.commentService = commentService;
     }
 
+    public Post getPostEntity(Long postId) {
+        return postRepository
+                .findByIdAndIsDeletedFalse(postId)
+                .orElseThrow(() -> new AppException(ErrorCode.POST_NOT_FOUND));
+    }
+
     public PostCreateResponse addPost(UUID userPublicId, PostCreateRequest request) {
         User user = userService.getUserEntity(userPublicId);
         BoardCategory category = resolveDefaultCategory();

@@ -154,9 +154,21 @@ public class SwaggerConfig {
         put(statuses, ApiImplementationStatus.LIVE, "PATCH", "/api/posts/{postId}");
         put(statuses, ApiImplementationStatus.LIVE, "DELETE", "/api/posts/{postId}");
 
-        put(statuses, ApiImplementationStatus.STUB, "POST", "/api/posts/{postId}/comments");
-        put(statuses, ApiImplementationStatus.STUB, "GET", "/api/posts/{postId}/comments");
-        put(statuses, ApiImplementationStatus.STUB, "DELETE", "/api/comments/{commentId}");
+        put(statuses, ApiImplementationStatus.LIVE, "POST", "/api/posts/{postId}/comments");
+        put(statuses, ApiImplementationStatus.LIVE, "GET", "/api/posts/{postId}/comments");
+        put(statuses, ApiImplementationStatus.LIVE, "PATCH", "/api/comments/{commentId}");
+        put(statuses, ApiImplementationStatus.LIVE, "DELETE", "/api/comments/{commentId}");
+
+        put(
+                statuses,
+                ApiImplementationStatus.LIVE,
+                "POST",
+                "/api/posts/{postId}/comments/{commentId}/likes");
+        put(
+                statuses,
+                ApiImplementationStatus.LIVE,
+                "DELETE",
+                "/api/posts/{postId}/comments/{commentId}/likes/me");
 
         put(statuses, ApiImplementationStatus.STUB, "POST", "/api/posts/{postId}/likes");
         put(statuses, ApiImplementationStatus.STUB, "DELETE", "/api/posts/{postId}/likes/me");
