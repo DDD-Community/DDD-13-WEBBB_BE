@@ -61,4 +61,8 @@ public class PostEmotion extends BaseCreatedEntity {
     public User getUser() {
         return user;
     }
+
+    public void updateEmotionType(EmotionType emotionType) {
+        this.emotionType = emotionType;
+    }
 }

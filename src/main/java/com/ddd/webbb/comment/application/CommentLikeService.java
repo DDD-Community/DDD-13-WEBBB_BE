@@ -13,6 +13,7 @@ import com.ddd.webbb.monster.domain.Monster;
 import com.ddd.webbb.user.application.UserService;
 import com.ddd.webbb.user.domain.User;
 import java.util.UUID;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -43,11 +44,11 @@ public class CommentLikeService {
         User user = userService.getUserEntity(userPublicId);
         Comment comment = getCommentAndValidatePost(commentId, postId);
 
-        if (commentLikeRepository.existsByCommentAndUser(comment, user)) {
+        try {
+            commentLikeRepository.saveAndFlush(CommentLike.create(comment, user));
+        } catch (DataIntegrityViolationException e) {
             throw new AppException(ErrorCode.ALREADY_LIKED_COMMENT);
         }
-
-        commentLikeRepository.save(CommentLike.create(comment, user));
         comment.incrementLikeCount();
 
         Monster monster = monsterService.getMonsterByPostId(postId);

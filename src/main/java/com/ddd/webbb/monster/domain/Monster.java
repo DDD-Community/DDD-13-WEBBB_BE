@@ -61,6 +61,13 @@ public class Monster extends BaseEntity {
         }
     }
 
+    public void reset(EmotionType emotionType, int newMaxHp) {
+        this.emotionType = emotionType;
+        this.maxHp = newMaxHp;
+        this.hp = newMaxHp;
+        this.status = MonsterStatus.ALIVE;
+    }
+
     public Long getId() {
         return id;
     }

@@ -12,6 +12,7 @@ import com.ddd.webbb.ai.application.AiAnalysisResponse;
 import com.ddd.webbb.ai.application.AiAnalysisService;
 import com.ddd.webbb.category.domain.BoardCategory;
 import com.ddd.webbb.category.domain.BoardCategoryRepository;
+import com.ddd.webbb.comment.application.CommentService;
 import com.ddd.webbb.emotion.application.PostEmotionService;
 import com.ddd.webbb.emotion.domain.EmotionType;
 import com.ddd.webbb.global.common.exception.AppException;
@@ -21,6 +22,7 @@ import com.ddd.webbb.monster.domain.Monster;
 import com.ddd.webbb.post.domain.CommentTone;
 import com.ddd.webbb.post.domain.Post;
 import com.ddd.webbb.post.domain.PostRepository;
+import com.ddd.webbb.post.infrastructure.PostRepositoryImpl;
 import com.ddd.webbb.post.interfaces.dto.PostCreateRequest;
 import com.ddd.webbb.post.interfaces.dto.PostCreateResponse;
 import com.ddd.webbb.user.application.UserService;
@@ -34,29 +36,35 @@ import org.springframework.test.util.ReflectionTestUtils;
 class PostServiceTest {
 
     private PostRepository postRepository;
+    private PostRepositoryImpl postRepositoryImpl;
     private BoardCategoryRepository boardCategoryRepository;
     private UserService userService;
     private AiAnalysisService aiAnalysisService;
     private MonsterService monsterService;
     private PostEmotionService postEmotionService;
+    private CommentService commentService;
     private PostService postService;
 
     @BeforeEach
     void setUp() {
         postRepository = mock(PostRepository.class);
+        postRepositoryImpl = mock(PostRepositoryImpl.class);
         boardCategoryRepository = mock(BoardCategoryRepository.class);
         userService = mock(UserService.class);
         aiAnalysisService = mock(AiAnalysisService.class);
         monsterService = mock(MonsterService.class);
         postEmotionService = mock(PostEmotionService.class);
+        commentService = mock(CommentService.class);
         postService =
                 new PostService(
                         postRepository,
+                        postRepositoryImpl,
                         boardCategoryRepository,
                         userService,
                         aiAnalysisService,
                         monsterService,
-                        postEmotionService);
+                        postEmotionService,
+                        commentService);
     }
 
     @Test

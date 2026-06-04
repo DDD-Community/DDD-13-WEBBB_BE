@@ -11,6 +11,7 @@ import com.ddd.webbb.monster.domain.MonsterHpLogRepository;
 import com.ddd.webbb.monster.domain.MonsterRepository;
 import com.ddd.webbb.post.domain.Post;
 import com.ddd.webbb.user.domain.User;
+import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,6 +38,16 @@ public class MonsterService {
                 .orElseThrow(() -> new AppException(ErrorCode.MONSTER_NOT_FOUND));
     }
 
+    public Monster findByPost(Long postId) {
+        return monsterRepository
+                .findByPost_Id(postId)
+                .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND));
+    }
+
+    public List<Monster> findByPostIds(List<Long> postIds) {
+        return monsterRepository.findByPost_IdIn(postIds);
+    }
+
     @Transactional
     public Monster addMonster(Post post, EmotionType emotionType, int hp) {
         return monsterRepository.save(Monster.create(post, emotionType, normalizeHp(hp)));
@@ -56,6 +67,13 @@ public class MonsterService {
         monsterHpLogRepository.save(
                 MonsterHpLog.create(
                         monster, user, post, comment, actionType, delta, beforeHp, afterHp));
+    }
+
+    @Transactional
+    public Monster resetMonster(Long postId, EmotionType emotionType, int hp) {
+        Monster monster = findByPost(postId);
+        monster.reset(emotionType, normalizeHp(hp));
+        return monster;
     }
 
     private int normalizeHp(int hp) {

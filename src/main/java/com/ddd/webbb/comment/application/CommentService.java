@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,7 +39,7 @@ public class CommentService {
     public CommentService(
             CommentRepository commentRepository,
             CommentQueryRepository commentQueryRepository,
-            PostService postService,
+            @Lazy PostService postService,
             UserService userService,
             MonsterService monsterService) {
         this.commentRepository = commentRepository;
@@ -48,7 +49,14 @@ public class CommentService {
         this.monsterService = monsterService;
     }
 
+    public List<Comment> findCommentsByPost(Long postId) {
+        return commentRepository.findByPost_IdAndIsDeletedFalseOrderByCreatedAtAsc(postId);
+    }
+
     public CommentListResponse getComments(Long postId, Long cursor, int size) {
+        if (size <= 0) {
+            throw new AppException(ErrorCode.INVALID_INPUT);
+        }
         List<Comment> rootComments =
                 commentQueryRepository.findRootCommentsByPostId(postId, cursor, size);
 

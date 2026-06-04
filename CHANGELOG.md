@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.0](https://github.com/DDD-Community/DDD-13-WEBBB_BE/compare/v1.6.1...v1.7.0) (2026-05-31)
+
+
+### Features
+
+* **post:** 게시글 목록/상세 조회 및 수정 API 구현 ([#73](https://github.com/DDD-Community/DDD-13-WEBBB_BE/issues/73)) ([5bce840](https://github.com/DDD-Community/DDD-13-WEBBB_BE/commit/5bce840bb5ec509733035a5c6e3ac3e35694e26f))
+
 ## [1.6.1](https://github.com/DDD-Community/DDD-13-WEBBB_BE/compare/v1.6.0...v1.6.1) (2026-05-28)
 
 
