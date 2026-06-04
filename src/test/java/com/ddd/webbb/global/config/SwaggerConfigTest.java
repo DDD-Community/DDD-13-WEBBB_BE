@@ -6,6 +6,7 @@ import com.ddd.webbb.ai.interfaces.AiTestController;
 import com.ddd.webbb.auth.interfaces.AuthController;
 import com.ddd.webbb.auth.interfaces.dto.EmailLoginRequest;
 import com.ddd.webbb.comment.interfaces.CommentController;
+import com.ddd.webbb.comment.interfaces.CommentLikeController;
 import com.ddd.webbb.mypage.interfaces.MyPageController;
 import com.ddd.webbb.post.interfaces.LikeController;
 import com.ddd.webbb.post.interfaces.PostController;
@@ -104,6 +105,7 @@ class SwaggerConfigTest {
                 AiTestController.class,
                 AuthController.class,
                 CommentController.class,
+                CommentLikeController.class,
                 LikeController.class,
                 MyPageController.class,
                 PostController.class,

@@ -8,6 +8,7 @@ import static org.mockito.Mockito.mock;
 import com.ddd.webbb.category.domain.BoardCategory;
 import com.ddd.webbb.emotion.domain.EmotionType;
 import com.ddd.webbb.monster.domain.Monster;
+import com.ddd.webbb.monster.domain.MonsterHpLogRepository;
 import com.ddd.webbb.monster.domain.MonsterRepository;
 import com.ddd.webbb.post.domain.CommentTone;
 import com.ddd.webbb.post.domain.Post;
@@ -18,12 +19,14 @@ import org.junit.jupiter.api.Test;
 class MonsterServiceTest {
 
     private MonsterRepository monsterRepository;
+    private MonsterHpLogRepository monsterHpLogRepository;
     private MonsterService monsterService;
 
     @BeforeEach
     void setUp() {
         monsterRepository = mock(MonsterRepository.class);
-        monsterService = new MonsterService(monsterRepository);
+        monsterHpLogRepository = mock(MonsterHpLogRepository.class);
+        monsterService = new MonsterService(monsterRepository, monsterHpLogRepository);
     }
 
     @Test

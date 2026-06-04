@@ -22,7 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-@Transactional
+@Transactional(readOnly = true)
 public class PostService {
 
     private static final String DEFAULT_CATEGORY_NAME = "멘탈케어";
@@ -49,6 +49,13 @@ public class PostService {
         this.postEmotionService = postEmotionService;
     }
 
+    public Post getPostEntity(Long postId) {
+        return postRepository
+                .findByIdAndIsDeletedFalse(postId)
+                .orElseThrow(() -> new AppException(ErrorCode.POST_NOT_FOUND));
+    }
+
+    @Transactional
     public PostCreateResponse addPost(UUID userPublicId, PostCreateRequest request) {
         User user = userService.getUserEntity(userPublicId);
         BoardCategory category = resolveDefaultCategory();
@@ -68,6 +75,7 @@ public class PostService {
         return PostCreateResponse.of(post, user, emotionType, monster);
     }
 
+    @Transactional
     public void deletePost(UUID userPublicId, Long postId) {
         User user = userService.getUserEntity(userPublicId);
         Post post =
