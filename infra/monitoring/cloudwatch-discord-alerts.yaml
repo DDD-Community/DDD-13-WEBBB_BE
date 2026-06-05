@@ -1,21 +1,21 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: >
   WEBBB 모니터링 알림 - EC2 CPU 피크 + 앱 예외/키워드 로그 N회 반복을
-  SNS -> Lambda -> Discord(이대리 봇)로 통합 전송. self-monitoring(Heartbeat/DLQ/이메일) 포함.
+  SNS -> Lambda -> Discord(이대리 웹훅)으로 통합 전송. self-monitoring(Heartbeat/DLQ/이메일) 포함.
   codex + omc(architect/critic) 3중 리뷰 반영. Free Tier 범위.
 
 Parameters:
   InstanceId:
     Type: String
     Description: CPU 알람 대상 EC2 인스턴스 ID (예 i-0abc123...). Step 0 메타데이터로 확인.
-  DiscordChannelId:
+  WebhookUrlSsmParam:
     Type: String
-    Default: "1512246623642718308"
-    Description: 알림을 게시할 Discord 채널 ID
-  BotTokenSsmParam:
+    Default: "/webbb/monitoring/discord-webhook-url"
+    Description: Discord 웹훅 URL이 저장된 SSM SecureString 파라미터 이름(값은 사전 등록). 채널은 웹훅 URL에 포함됨.
+  WebhookUsername:
     Type: String
-    Default: "/webbb/monitoring/discord-bot-token"
-    Description: 이대리 봇 토큰이 저장된 SSM SecureString 파라미터 이름(값은 사전 등록)
+    Default: "이대리"
+    Description: Discord에 표시될 이름(웹훅 username override)
   AppLogGroupName:
     Type: String
     Default: "/webbb/app"
@@ -92,10 +92,10 @@ Resources:
           PolicyDocument:
             Version: "2012-10-17"
             Statement:
-              - Sid: ReadBotToken
+              - Sid: ReadWebhookUrl
                 Effect: Allow
                 Action: ssm:GetParameter
-                Resource: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter${BotTokenSsmParam}"
+                Resource: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter${WebhookUrlSsmParam}"
               - Sid: DecryptViaSsmOnly
                 Effect: Allow
                 Action: kms:Decrypt
@@ -130,27 +130,26 @@ Resources:
         TargetArn: !GetAtt NotifierDLQ.Arn
       Environment:
         Variables:
-          CHANNEL_ID: !Ref DiscordChannelId
-          TOKEN_PARAM: !Ref BotTokenSsmParam
+          WEBHOOK_PARAM: !Ref WebhookUrlSsmParam
+          WEBHOOK_USERNAME: !Ref WebhookUsername
       Code:
         ZipFile: |
           import json, os, time, urllib.error, urllib.request
           import boto3
           _ssm = boto3.client("ssm")
-          _tok = {}
+          _wh = {}
 
-          def _token():
-              if "v" not in _tok:
-                  r = _ssm.get_parameter(Name=os.environ["TOKEN_PARAM"], WithDecryption=True)
-                  _tok["v"] = r["Parameter"]["Value"]
-              return _tok["v"]
+          def _webhook():
+              if "v" not in _wh:
+                  r = _ssm.get_parameter(Name=os.environ["WEBHOOK_PARAM"], WithDecryption=True)
+                  _wh["v"] = r["Parameter"]["Value"]
+              return _wh["v"]
 
-          def _post(channel, payload):
-              url = "https://discord.com/api/v10/channels/%s/messages" % channel
+          def _post(payload):
+              payload.setdefault("username", os.environ.get("WEBHOOK_USERNAME", "이대리"))
               req = urllib.request.Request(
-                  url, data=json.dumps(payload).encode("utf-8"), method="POST",
-                  headers={"Authorization": "Bot " + _token(),
-                           "Content-Type": "application/json",
+                  _webhook(), data=json.dumps(payload).encode("utf-8"), method="POST",
+                  headers={"Content-Type": "application/json",
                            "User-Agent": "webbb-monitor/1.0"})
               try:
                   with urllib.request.urlopen(req, timeout=8) as r:
@@ -175,16 +174,15 @@ Resources:
                              {"name": "시각", "value": a.get("StateChangeTime", "-"), "inline": False}]}]}
 
           def handler(event, context):
-              ch = os.environ["CHANNEL_ID"]
               if not event.get("Records"):
-                  _post(ch, {"content": "✅ WEBBB 모니터링 정상 동작 중 (heartbeat)"})
+                  _post({"content": "✅ WEBBB 모니터링 정상 동작 중 (heartbeat)"})
                   return {"ok": True, "mode": "heartbeat"}
               for rec in event["Records"]:
                   msg = rec.get("Sns", {}).get("Message", "")
                   try:
-                      _post(ch, _embed(json.loads(msg)))
+                      _post(_embed(json.loads(msg)))
                   except (ValueError, TypeError):
-                      _post(ch, {"content": "⚠️ " + str(msg)[:1800]})
+                      _post({"content": "⚠️ " + str(msg)[:1800]})
               return {"ok": True, "mode": "alarm", "count": len(event["Records"])}
 
   PermitSnsInvoke:

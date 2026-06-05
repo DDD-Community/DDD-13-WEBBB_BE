@@ -9,7 +9,7 @@
 
 1. **CPU 피크 알림**: EC2 CPU가 지속적으로 높으면 알림.
 2. **로그 반복 알림**: 특정 예외/키워드가 일정 시간 내 N회 이상이면 알림.
-3. 두 알림 모두 **Discord 채널 `1512246623642718308`** 에 **이대리 봇**으로 게시.
+3. 두 알림 모두 **Discord 채널 `1512246623642718308`** 에 **이대리 웹훅**으로 게시.
 
 ## 2. 아키텍처
 
@@ -25,9 +25,9 @@
                                                          │
    CPU·로그 Alarm ──(ALARM/OK)──► [SNS: webbb-alerts] ──► [Lambda(py3.12) 변환기]
                                                               │ timeout 8s, 429 backoff
-                                                              │ 봇토큰=SSM SecureString
+                                                              │ 웹훅URL=SSM SecureString
                                                               ▼
-                                  POST /channels/1512246623642718308/messages (Bot)
+                                  POST {Discord 웹훅 URL}  (username=이대리)
                                                               │ 실패(async 2회 재시도 후)
                                                               ▼  [DLQ(SQS)]
    [Self-monitoring]
@@ -35,14 +35,14 @@
    · Lambda Errors / DLQ depth Alarm ──► [SNS: webbb-ops] ──► 이메일 (Discord와 분리된 경로)
 ```
 
-**핵심 사실**: SNS는 Discord로 직접 전송 불가(SNS는 email/SMS/HTTP(S)/SQS/Lambda만 지원, Discord 봇 REST 포맷과 불일치) → **Lambda 변환기 필수**. (codex 확인)
+**핵심 사실**: SNS는 Discord로 직접 전송 불가(SNS는 email/SMS/HTTP(S)/SQS/Lambda만 지원, Discord 웹훅 JSON 포맷과 불일치 — SNS HTTP 구독은 자체 봉투 포맷+confirm 핸드셰이크) → **Lambda 변환기 필수**. (codex 확인)
 
 ## 3. 설계 결정 및 근거
 
 | 결정 | 내용 | 근거 |
 |---|---|---|
-| Discord 전송 | **이대리 봇 토큰** (Webhook 아님) | 사용자 결정. 리뷰어 3인은 Webhook 권고했으나, 봇 유지 시 §5 하드닝으로 위험 상쇄 |
-| 봇 토큰 보관 | SSM Parameter Store **SecureString** | Secrets Manager는 유료. SSM standard + aws/ssm 키는 Free Tier |
+| Discord 전송 | **이대리 웹훅(Webhook)** | 봇이 없는 것으로 확인 → 웹훅 채택. 리뷰어 3인 권고와 일치, 레포 기존 PR 알림도 웹훅 사용. 토큰·서버멤버십·채널권한 불필요 |
+| 웹훅 URL 보관 | SSM Parameter Store **SecureString** | Secrets Manager는 유료. SSM standard + aws/ssm 키는 Free Tier |
 | CPU 알람 정책 | EvaluationPeriods 3 / Datapoints 2 | 순간 출렁임(flapping) 억제. 로그 알람과 정책 분리 (architect) |
 | 로그 알람 정책 | Sum≥N / Period300 / Eval1 / Datapoints1 | "5분 내 N회" 의미와 일치 (codex 권장값) |
 | 멀티라인 | Agent `multi_line_start_pattern` | Java 스택트레이스를 1이벤트로 → 예외 1건=1카운트 (B3) |
@@ -70,9 +70,9 @@
 
 ### 4.4 Lambda 변환기 (Python 3.12)
 - 트리거 SNS(`webbb-alerts`), timeout 8s, urllib만
-- SNS→CloudWatch Alarm JSON 파싱 → embed(알람명/상태전이/사유/리전/시각) → 봇토큰(SSM, 캐시) → Discord REST POST
+- SNS→CloudWatch Alarm JSON 파싱 → embed(알람명/상태전이/사유/리전/시각) → 웹훅URL(SSM, 캐시) → Discord 웹훅 POST(username=이대리)
 - 429 시 `Retry-After` 1회 backoff, 실패 시 raise → SNS 재시도 → DLQ
-- 토큰/Authorization 헤더 **로깅 금지**
+- 웹훅 URL **로깅 금지** (URL 자체가 시크릿)
 - Heartbeat 모드: SNS Records 없는 이벤트(EventBridge)면 "정상 동작 중" 메시지
 
 ### 4.5 Self-monitoring
@@ -82,13 +82,13 @@
 
 ### 4.6 IaC
 - 단일 CloudFormation 템플릿 `infra/monitoring/cloudwatch-discord-alerts.yaml`
-- 봇 토큰 값은 템플릿에 미포함 (SSM에 사전 등록)
+- 웹훅 URL 값은 템플릿에 미포함 (SSM에 사전 등록)
 
-## 5. 보안 하드닝 (봇 토큰 유지에 따른)
-- 토큰: SSM SecureString `/webbb/monitoring/discord-bot-token`
+## 5. 보안 하드닝 (웹훅 URL)
+- 웹훅 URL: SSM SecureString `/webbb/monitoring/discord-webhook-url`
 - Lambda IAM 최소권한: `ssm:GetParameter`는 **해당 파라미터 ARN으로만**, `kms:Decrypt`는 `kms:ViaService=ssm.<region>.amazonaws.com` 조건으로만, Logs 기본 + DLQ `sqs:SendMessage`만
-- 봇은 서버 멤버십 + 채널 `SEND_MESSAGES` 권한 필요
-- 어떤 로그/embed에도 토큰·민감정보 미포함
+- 웹훅은 채널이 URL에 종속 → 서버 멤버십/채널 권한 설정 불필요 (봇 대비 폭발 반경 작음)
+- 어떤 로그/embed에도 웹훅 URL·민감정보 미포함
 
 ## 6. Step 0 — 배포 런타임 분기 (구현 1단계, 1줄 확인)
 EC2 안에서 `hostname` 확인 후 한 번만 판별. 결과별 로그 수집:
@@ -110,11 +110,11 @@ EC2 안에서 `hostname` 확인 후 한 번만 판별. 결과별 로그 수집:
 2. 리전 / InstanceId (Step 0 메타데이터)
 3. 예외/키워드 실제 패턴 + 멀티라인 검증
 4. CPU/로그 임계치 최종값 (운영 튜닝)
-5. 봇 서버/채널 권한 + 토큰 확보
+5. 채널 `1512246623642718308`에 웹훅 생성 + URL 확보
 6. self-monitoring 이메일 주소
 
 ## 9. e2e 검증 절차 (배포 후 필수)
 - 합성 에러: 매칭 패턴 N+1회 로그 주입 → 5분 내 Discord 도달 → OK 복귀 확인
 - 합성 CPU: 부하 발생 → CPU 알람 발화
 - Heartbeat: 스케줄 수동 트리거 → Discord 핑
-- 실패경로: 봇 토큰 일시 무효화 → DLQ 적재 + webbb-ops 이메일 도달
+- 실패경로: 웹훅 URL 일시 무효화 → DLQ 적재 + webbb-ops 이메일 도달

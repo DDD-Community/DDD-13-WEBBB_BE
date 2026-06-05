@@ -1,6 +1,6 @@
 # WEBBB 모니터링 알림 (EC2 CPU/로그 → Discord)
 
-EC2 **CPU 피크** 와 **앱 예외/키워드 로그 N회 반복** 을 감지해 **Discord 채널(이대리 봇)** 로 알림을 보냅니다.
+EC2 **CPU 피크** 와 **앱 예외/키워드 로그 N회 반복** 을 감지해 **Discord 채널(이대리 웹훅)** 로 알림을 보냅니다.
 codex + omc(architect/critic) 3중 리뷰를 반영했고, **AWS Free Tier** 범위로 설계했습니다.
 
 > 설계 배경/근거: [docs/superpowers/specs/2026-06-05-ec2-cpu-log-discord-alerts-design.md](../../docs/superpowers/specs/2026-06-05-ec2-cpu-log-discord-alerts-design.md)
@@ -17,7 +17,7 @@ codex + omc(architect/critic) 3중 리뷰를 반영했고, **AWS Free Tier** 범
 ## 한눈에 보는 흐름
 ```
 CPU 알람 ┐
-        ├─ SNS(webbb-alerts) ─ Lambda ─ Discord(이대리 봇, 채널 1512246623642718308)
+        ├─ SNS(webbb-alerts) ─ Lambda ─ Discord(이대리 웹훅, 채널 1512246623642718308)
 로그 알람 ┘                        └ 실패 시 DLQ
 Heartbeat(1일1회) ─ Lambda ─ Discord "정상 동작 중"
 Lambda/DLQ 장애 ─ SNS(webbb-ops) ─ 이메일   ← Discord와 분리된 경로
@@ -97,13 +97,20 @@ sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl \
 
 ---
 
-## STEP 2. Discord 봇 토큰을 SSM에 저장 (1번)
-토큰 값은 템플릿에 넣지 않습니다. 콘솔: **Systems Manager → 파라미터 스토어 → 파라미터 생성**
-- 이름: `/webbb/monitoring/discord-bot-token`
-- 유형: **SecureString** (KMS 키: `alias/aws/ssm` 기본)
-- 값: 이대리 봇 토큰
+## STEP 2. Discord 웹훅 URL을 SSM에 저장 (1번)
 
-> 이대리 봇이 대상 서버에 있고, 채널 `1512246623642718308` 에 **메시지 보내기** 권한이 있어야 합니다.
+### 2-1. 채널에 웹훅 만들기 (봇 불필요)
+Discord에서 채널 `1512246623642718308` → **채널 편집(톱니) → 연동(Integrations) → 웹후크 → 새 웹후크**
+- 이름: `이대리` (표시 이름)
+- **웹후크 URL 복사** (`https://discord.com/api/webhooks/...` 형태, 이게 시크릿)
+
+### 2-2. URL을 SSM에 저장
+URL 값은 템플릿에 넣지 않습니다. 콘솔: **Systems Manager → 파라미터 스토어 → 파라미터 생성**
+- 이름: `/webbb/monitoring/discord-webhook-url`
+- 계층: **표준(Standard)** / 유형: **SecureString** (KMS 키 `alias/aws/ssm` 기본)
+- 값: 위에서 복사한 웹후크 URL
+
+> 웹훅은 채널이 URL에 포함되어 있어 봇 토큰·서버 멤버십·채널 권한 설정이 모두 불필요합니다. (Lambda가 `username`을 `이대리`로 표시)
 
 ---
 
@@ -115,7 +122,7 @@ sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl \
 3. 파라미터 입력:
    - `InstanceId`: STEP 0에서 확인한 값
    - `OpsEmail`: 파이프라인 장애 통보 받을 이메일
-   - 나머지(채널ID·토큰파라미터명·임계치)는 기본값 확인/조정
+   - 나머지(웹훅 파라미터명·임계치)는 기본값 확인/조정
 4. 다음 → **"IAM 리소스를 생성할 수 있음" 체크** → 스택 생성
 5. 상태가 `CREATE_COMPLETE` 면 완료
 
@@ -144,7 +151,7 @@ aws cloudformation deploy \
    → 5분 내 Discord에 🔴 알림 → 멈추면 🟢 OK 알림 확인
 2. **CPU 알람**: `sudo yum install -y stress && stress --cpu 2 --timeout 600` → CPU 알람 발화 확인
 3. **Heartbeat**: 콘솔 Lambda → `webbb-discord-notifier` → 테스트 이벤트 `{}` 실행 → Discord "✅ 정상 동작 중"
-4. **실패 경로**: SSM 토큰을 잠깐 틀린 값으로 → 알람 1건 유발 → DLQ 적재 + ops 이메일 도착 확인 → 토큰 복구
+4. **실패 경로**: SSM 웹훅 URL을 잠깐 틀린 값으로 → 알람 1건 유발 → DLQ 적재 + ops 이메일 도착 확인 → URL 복구
 
 ---
 
@@ -189,7 +196,7 @@ CloudWatch → Metrics → `AWS/Logs > IncomingBytes`(LogGroupName=`/webbb/app`)
 `LogIngestionBudgetAlarm` 이 일 ~120MB 초과 시 자동으로 ops 이메일 경고.
 
 ## 제거
-콘솔 CloudFormation에서 `webbb-monitoring` 스택 삭제. 단, **SSM 봇 토큰 파라미터**와 (awslogs로 만든) 로그 그룹은 별도 정리.
+콘솔 CloudFormation에서 `webbb-monitoring` 스택 삭제. 단, **SSM 웹훅 URL 파라미터**와 (awslogs로 만든) 로그 그룹은 별도 정리.
 
 ## 조정 포인트
 - 예외/키워드 패턴: 템플릿 `ErrorFilterPattern` (실측 로그로 콘솔 "패턴 테스트" 후 확정)
