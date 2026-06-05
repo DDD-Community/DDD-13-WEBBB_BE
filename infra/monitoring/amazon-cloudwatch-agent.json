@@ -1,0 +1,21 @@
+{
+  "agent": {
+    "metrics_collection_interval": 60,
+    "run_as_user": "root"
+  },
+  "logs": {
+    "logs_collected": {
+      "files": {
+        "collect_list": [
+          {
+            "file_path": "/var/log/webbb/app.log",
+            "log_group_name": "/webbb/app",
+            "log_stream_name": "{instance_id}",
+            "timezone": "Local",
+            "multi_line_start_pattern": "^\\d{4}-\\d{2}-\\d{2}"
+          }
+        ]
+      }
+    }
+  }
+}

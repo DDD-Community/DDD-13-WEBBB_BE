@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  [선택] CloudWatch Logs 수집량(ingestion) 절감용 logback 예시.
+
+  목적: WARN/ERROR 만 별도 파일(/var/log/webbb/error.log)로 남기고,
+        CloudWatch Agent는 "그 에러 파일만" 수집 → 수집량을 INFO 제외로 대폭 절감.
+        (전체 로그는 콘솔/기존 경로에 그대로 → 인스턴스에서 디버깅 가능)
+
+  적용 방법(선택 시):
+    1) 이 파일을 src/main/resources/logback-spring.xml 로 복사
+    2) amazon-cloudwatch-agent.json 의 file_path 를 /var/log/webbb/error.log 로 변경
+    3) 재배포
+
+  주의: 이건 "Java 코드"가 아니라 로깅 "설정"입니다. 앱 도메인/레이어 코드는 건드리지 않습니다.
+        Docker(awslogs 드라이버)로 stdout 전체를 보내는 구성에서는 이 방식 대신
+        application-prod.yml 의 로그 레벨 조정(아래 README 참고)을 사용하세요.
+-->
+<configuration>
+  <!-- Spring Boot 기본 콘솔 포맷/색상 유지 (기존 동작 보존) -->
+  <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+  <include resource="org/springframework/boot/logging/logback/console-appender.xml"/>
+
+  <!-- ERROR 만 담는 파일 (CloudWatch 수집 대상). 수집량 최소화. -->
+  <appender name="ERROR_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>/var/log/webbb/error.log</file>
+    <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+      <!-- ERROR 만 통과(가장 저렴). WARN 신호도 알림받으려면 ERROR -> WARN 으로 변경 -->
+      <level>ERROR</level>
+    </filter>
+    <!-- 첫 줄이 타임스탬프로 시작 → Agent multi_line_start_pattern "^\d{4}-\d{2}-\d{2}" 과 일치 -->
+    <encoder>
+      <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] %logger{36} - %msg%n</pattern>
+    </encoder>
+    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+      <fileNamePattern>/var/log/webbb/error.%d{yyyy-MM-dd}.log</fileNamePattern>
+      <maxHistory>7</maxHistory>   <!-- 디스크에는 7일치만 -->
+    </rollingPolicy>
+  </appender>
+
+  <!-- 노이즈 큰 로거는 prod 에서 WARN 으로 낮춰 수집량 추가 절감 -->
+  <springProfile name="prod">
+    <logger name="org.hibernate.SQL" level="WARN"/>
+    <logger name="org.springframework.web" level="WARN"/>
+    <logger name="org.springframework.security" level="WARN"/>
+  </springProfile>
+
+  <root level="INFO">
+    <appender-ref ref="CONSOLE"/>     <!-- 전체 로그: 콘솔(디버깅용) -->
+    <appender-ref ref="ERROR_FILE"/>  <!-- WARN+ERROR: 파일(CloudWatch 수집) -->
+  </root>
+</configuration>

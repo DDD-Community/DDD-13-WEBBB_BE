@@ -1,0 +1,346 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >
+  WEBBB 모니터링 알림 - EC2 CPU 피크 + 앱 예외/키워드 로그 N회 반복을
+  SNS -> Lambda -> Discord(이대리 봇)로 통합 전송. self-monitoring(Heartbeat/DLQ/이메일) 포함.
+  codex + omc(architect/critic) 3중 리뷰 반영. Free Tier 범위.
+
+Parameters:
+  InstanceId:
+    Type: String
+    Description: CPU 알람 대상 EC2 인스턴스 ID (예 i-0abc123...). Step 0 메타데이터로 확인.
+  DiscordChannelId:
+    Type: String
+    Default: "1512246623642718308"
+    Description: 알림을 게시할 Discord 채널 ID
+  BotTokenSsmParam:
+    Type: String
+    Default: "/webbb/monitoring/discord-bot-token"
+    Description: 이대리 봇 토큰이 저장된 SSM SecureString 파라미터 이름(값은 사전 등록)
+  AppLogGroupName:
+    Type: String
+    Default: "/webbb/app"
+    Description: 앱 로그가 수집될 CloudWatch Logs 로그 그룹 이름
+  LogRetentionInDays:
+    Type: Number
+    Default: 14
+    Description: 로그 "저장" 보관 기간(일). 저장비/디버깅 이력용. (수집 5GB 한도와는 무관)
+  DailyLogBytesThreshold:
+    Type: Number
+    Default: 120000000
+    Description: >
+      일일 로그 "수집량"(byte)이 이 값을 넘으면 ops 이메일 경보.
+      기본 120MB/일 ≈ 3.6GB/월 → 무료 수집 5GB 넘기기 전에 미리 경고.
+  ErrorFilterPattern:
+    Type: String
+    Default: "?ERROR ?Exception"
+    Description: 로그 카운트 필터 패턴. 실측 로그로 콘솔 Test Pattern 검증 후 조정.
+  ErrorThreshold:
+    Type: Number
+    Default: 10
+    Description: 5분간 이 횟수 이상이면 로그 알람 발화
+  CpuThreshold:
+    Type: Number
+    Default: 80
+    Description: 이 % 이상(평균)이면 CPU 알람 발화
+  OpsEmail:
+    Type: String
+    Description: 파이프라인 자체 장애(Lambda/DLQ) 통보용 이메일 (Discord와 분리 경로)
+
+Resources:
+  # ───────────── SNS ─────────────
+  AlertsTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: webbb-alerts
+      DisplayName: WEBBB Alerts
+
+  OpsTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: webbb-ops
+      DisplayName: WEBBB Ops (pipeline self-monitoring)
+
+  OpsEmailSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      TopicArn: !Ref OpsTopic
+      Protocol: email
+      Endpoint: !Ref OpsEmail
+
+  # ───────────── DLQ ─────────────
+  NotifierDLQ:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: webbb-discord-notifier-dlq
+      MessageRetentionPeriod: 1209600  # 14일
+
+  # ───────────── Lambda 변환기 ─────────────
+  NotifierRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: webbb-discord-notifier-role
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: { Service: lambda.amazonaws.com }
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: webbb-notifier-least-privilege
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Sid: ReadBotToken
+                Effect: Allow
+                Action: ssm:GetParameter
+                Resource: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter${BotTokenSsmParam}"
+              - Sid: DecryptViaSsmOnly
+                Effect: Allow
+                Action: kms:Decrypt
+                Resource: "*"
+                Condition:
+                  StringEquals:
+                    kms:ViaService: !Sub "ssm.${AWS::Region}.amazonaws.com"
+              - Sid: SendToDLQ
+                Effect: Allow
+                Action: sqs:SendMessage
+                Resource: !GetAtt NotifierDLQ.Arn
+
+  # Lambda 자체 실행 로그 그룹 - 명시 생성으로 보관기간 지정(기본은 무기한 → 누적 방지).
+  # Lambda 실행 로그도 같은 CloudWatch Logs 5GB 수집 한도에 합산되므로 함께 관리.
+  NotifierLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/webbb-discord-notifier
+      RetentionInDays: !Ref LogRetentionInDays
+
+  NotifierFunction:
+    Type: AWS::Lambda::Function
+    DependsOn: NotifierLogGroup
+    Properties:
+      FunctionName: webbb-discord-notifier
+      Runtime: python3.12
+      Handler: index.handler
+      Timeout: 8
+      MemorySize: 128
+      Role: !GetAtt NotifierRole.Arn
+      DeadLetterConfig:
+        TargetArn: !GetAtt NotifierDLQ.Arn
+      Environment:
+        Variables:
+          CHANNEL_ID: !Ref DiscordChannelId
+          TOKEN_PARAM: !Ref BotTokenSsmParam
+      Code:
+        ZipFile: |
+          import json, os, time, urllib.error, urllib.request
+          import boto3
+          _ssm = boto3.client("ssm")
+          _tok = {}
+
+          def _token():
+              if "v" not in _tok:
+                  r = _ssm.get_parameter(Name=os.environ["TOKEN_PARAM"], WithDecryption=True)
+                  _tok["v"] = r["Parameter"]["Value"]
+              return _tok["v"]
+
+          def _post(channel, payload):
+              url = "https://discord.com/api/v10/channels/%s/messages" % channel
+              req = urllib.request.Request(
+                  url, data=json.dumps(payload).encode("utf-8"), method="POST",
+                  headers={"Authorization": "Bot " + _token(),
+                           "Content-Type": "application/json",
+                           "User-Agent": "webbb-monitor/1.0"})
+              try:
+                  with urllib.request.urlopen(req, timeout=8) as r:
+                      return r.status
+              except urllib.error.HTTPError as e:
+                  if e.code == 429:
+                      time.sleep(min(float(e.headers.get("Retry-After", "1") or "1"), 5))
+                      with urllib.request.urlopen(req, timeout=8) as r:
+                          return r.status
+                  raise
+
+          def _embed(a):
+              s = a.get("NewStateValue", "")
+              color = 15158332 if s == "ALARM" else (5763719 if s == "OK" else 15844367)
+              icon = "🔴 " if s == "ALARM" else "🟢 " if s == "OK" else "🟡 "
+              title = (icon + a.get("AlarmName", "(unknown)"))[:250]
+              region = a.get("Region") or os.environ.get("AWS_REGION", "")
+              return {"embeds": [{"title": title,
+                  "description": (a.get("NewStateReason") or "")[:1500], "color": color,
+                  "fields": [{"name": "상태", "value": s or "-", "inline": True},
+                             {"name": "리전", "value": region or "-", "inline": True},
+                             {"name": "시각", "value": a.get("StateChangeTime", "-"), "inline": False}]}]}
+
+          def handler(event, context):
+              ch = os.environ["CHANNEL_ID"]
+              if not event.get("Records"):
+                  _post(ch, {"content": "✅ WEBBB 모니터링 정상 동작 중 (heartbeat)"})
+                  return {"ok": True, "mode": "heartbeat"}
+              for rec in event["Records"]:
+                  msg = rec.get("Sns", {}).get("Message", "")
+                  try:
+                      _post(ch, _embed(json.loads(msg)))
+                  except (ValueError, TypeError):
+                      _post(ch, {"content": "⚠️ " + str(msg)[:1800]})
+              return {"ok": True, "mode": "alarm", "count": len(event["Records"])}
+
+  PermitSnsInvoke:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref NotifierFunction
+      Action: lambda:InvokeFunction
+      Principal: sns.amazonaws.com
+      SourceArn: !Ref AlertsTopic
+
+  AlertsToLambda:
+    Type: AWS::SNS::Subscription
+    Properties:
+      TopicArn: !Ref AlertsTopic
+      Protocol: lambda
+      Endpoint: !GetAtt NotifierFunction.Arn
+
+  # ───────────── Heartbeat (데드맨 스위치) ─────────────
+  HeartbeatRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: webbb-monitor-heartbeat
+      ScheduleExpression: rate(1 day)
+      State: ENABLED
+      Targets:
+        - Id: notifier
+          Arn: !GetAtt NotifierFunction.Arn
+          Input: '{"heartbeat": true}'
+
+  PermitEventsInvoke:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref NotifierFunction
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt HeartbeatRule.Arn
+
+  # ───────────── 로그: LogGroup + Metric Filter ─────────────
+  AppLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Ref AppLogGroupName
+      RetentionInDays: !Ref LogRetentionInDays
+
+  ErrorMetricFilter:
+    Type: AWS::Logs::MetricFilter
+    Properties:
+      LogGroupName: !Ref AppLogGroup
+      FilterPattern: !Ref ErrorFilterPattern
+      MetricTransformations:
+        - MetricName: AppErrorCount
+          MetricNamespace: WEBBB/App
+          MetricValue: "1"
+          DefaultValue: 0
+
+  # ───────────── 알람 ─────────────
+  CpuAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: webbb-ec2-cpu-high
+      AlarmDescription: !Sub "EC2 ${InstanceId} CPU 평균 ${CpuThreshold}% 이상 (5분*3 중 2)"
+      Namespace: AWS/EC2
+      MetricName: CPUUtilization
+      Dimensions:
+        - Name: InstanceId
+          Value: !Ref InstanceId
+      Statistic: Average
+      Period: 300
+      EvaluationPeriods: 3
+      DatapointsToAlarm: 2
+      Threshold: !Ref CpuThreshold
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: [!Ref AlertsTopic]
+      OKActions: [!Ref AlertsTopic]
+
+  LogErrorAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: webbb-app-errors-high
+      AlarmDescription: !Sub "앱 예외/키워드 로그 5분간 ${ErrorThreshold}회 이상"
+      Namespace: WEBBB/App
+      MetricName: AppErrorCount
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      DatapointsToAlarm: 1
+      Threshold: !Ref ErrorThreshold
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: [!Ref AlertsTopic]
+      OKActions: [!Ref AlertsTopic]
+
+  LambdaErrorsAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: webbb-notifier-lambda-errors
+      AlarmDescription: "Discord 전송 Lambda 실패 - 파이프라인 자체 장애(이메일 경로)"
+      Namespace: AWS/Lambda
+      MetricName: Errors
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref NotifierFunction
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 0
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: [!Ref OpsTopic]
+
+  DlqDepthAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: webbb-notifier-dlq-depth
+      AlarmDescription: "DLQ에 미전송 알림 적재 - 이메일 경로"
+      Namespace: AWS/SQS
+      MetricName: ApproximateNumberOfMessagesVisible
+      Dimensions:
+        - Name: QueueName
+          Value: !GetAtt NotifierDLQ.QueueName
+      Statistic: Maximum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 0
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: [!Ref OpsTopic]
+
+  # 비용 방어: 일일 로그 "수집량"이 임계 초과 시 ops 이메일 경고 (5GB/월 넘기기 전 조기경보)
+  LogIngestionBudgetAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: webbb-log-ingestion-budget
+      AlarmDescription: !Sub "로그 수집량 일일 ${DailyLogBytesThreshold} byte 초과 - Free Tier 5GB/월 초과 위험(이메일 경로)"
+      Namespace: AWS/Logs
+      MetricName: IncomingBytes
+      Dimensions:
+        - Name: LogGroupName
+          Value: !Ref AppLogGroupName
+      Statistic: Sum
+      Period: 86400
+      EvaluationPeriods: 1
+      Threshold: !Ref DailyLogBytesThreshold
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: [!Ref OpsTopic]
+
+Outputs:
+  AlertsTopicArn:
+    Value: !Ref AlertsTopic
+  OpsTopicArn:
+    Value: !Ref OpsTopic
+  NotifierFunctionName:
+    Value: !Ref NotifierFunction
+  AppLogGroup:
+    Value: !Ref AppLogGroup
+  DLQUrl:
+    Value: !Ref NotifierDLQ
