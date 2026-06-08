@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.8.0](https://github.com/DDD-Community/DDD-13-WEBBB_BE/compare/v1.7.0...v1.8.0) (2026-06-08)
+
+
+### Features
+
+* **comment:** 댓글 CRUD 및 댓글 공감 기능 구현 ([fc98647](https://github.com/DDD-Community/DDD-13-WEBBB_BE/commit/fc98647c5d3d567953ed3f95f53857a73fa5acfe))
+* **comment:** 댓글 CRUD 및 댓글 공감 기능 구현 ([d9ca155](https://github.com/DDD-Community/DDD-13-WEBBB_BE/commit/d9ca155dfe841e18effce4917dc39c7334c8887c))
+* Flyway 마이그레이션 도입 ([#80](https://github.com/DDD-Community/DDD-13-WEBBB_BE/issues/80)) ([490727a](https://github.com/DDD-Community/DDD-13-WEBBB_BE/commit/490727a4fb53255533bccb3cdfc87cd9db8af28f))
+
+
+### Bug Fixes
+
+* main 브랜치 머지 충돌 해결 및 코파일럿 리뷰 반영 ([0458816](https://github.com/DDD-Community/DDD-13-WEBBB_BE/commit/04588164abd316a8f649cfeea9f866dd16059129))
+
 ## [1.7.0](https://github.com/DDD-Community/DDD-13-WEBBB_BE/compare/v1.6.1...v1.7.0) (2026-05-31)
 
 
