@@ -175,7 +175,7 @@ public class SwaggerConfig {
 
         put(statuses, ApiImplementationStatus.STUB, "GET", "/api/me/posts");
         put(statuses, ApiImplementationStatus.STUB, "GET", "/api/me/comments");
-        put(statuses, ApiImplementationStatus.STUB, "GET", "/api/me/monster-stats");
+        put(statuses, ApiImplementationStatus.LIVE, "GET", "/api/me/monster-stats");
 
         return Map.copyOf(statuses);
     }
