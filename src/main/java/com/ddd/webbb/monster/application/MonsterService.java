@@ -48,6 +48,10 @@ public class MonsterService {
         return monsterRepository.findByPost_IdIn(postIds);
     }
 
+    public List<Monster> findByUserId(Long userId) {
+        return monsterRepository.findByPost_UserIdAndPost_IsDeletedFalse(userId);
+    }
+
     @Transactional
     public Monster addMonster(Post post, EmotionType emotionType, int hp) {
         return monsterRepository.save(Monster.create(post, emotionType, normalizeHp(hp)));
