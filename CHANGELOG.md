@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.9.0](https://github.com/DDD-Community/DDD-13-WEBBB_BE/compare/v1.8.0...v1.9.0) (2026-06-10)
+
+
+### Features
+
+* **mypage:** 몬스터 통계 API 구현 ([#81](https://github.com/DDD-Community/DDD-13-WEBBB_BE/issues/81)) ([7656c70](https://github.com/DDD-Community/DDD-13-WEBBB_BE/commit/7656c70e1f44d5039aeb5b8de58b834f959e0450))
+
 ## [1.8.0](https://github.com/DDD-Community/DDD-13-WEBBB_BE/compare/v1.7.0...v1.8.0) (2026-06-08)
 
 
