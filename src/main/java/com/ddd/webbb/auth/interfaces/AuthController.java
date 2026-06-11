@@ -44,7 +44,16 @@ public class AuthController {
         this.oAuthCodeStore = oAuthCodeStore;
     }
 
-    @Operation(summary = "SNS 로그인/회원가입")
+    @Operation(
+            summary = "SNS 로그인/회원가입",
+            description =
+                    "신규 OAuth 사용자 생성 시 직군(jobRole)과 경력(careerYear)을 함께 저장할 수 있습니다.\n\n"
+                            + "직군 허용 값: PLANNING(기획), DESIGN(디자인), DEVELOPMENT(개발), MARKETING(마케팅), "
+                            + "SALES(영업), HR(인사), GENERAL_AFFAIRS(총무), PRODUCTION(생산), "
+                            + "ACCOUNTING(회계), OTHER(기타)\n"
+                            + "경력 허용 값: NEWCOMER(신입), YEAR_1(1년차), YEAR_2(2년차), YEAR_3(3년차), "
+                            + "YEAR_4(4년차), YEAR_5(5년차), YEAR_6(6년차), YEAR_7_PLUS(7년차 이상)\n\n"
+                            + "허용 값 외 문자열을 보내면 400 Bad Request를 반환합니다.")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "200",
@@ -145,7 +154,16 @@ public class AuthController {
                 "토큰 교환에 성공했습니다.", new TokenInfo(tokenPair.accessToken(), tokenPair.refreshToken()));
     }
 
-    @Operation(summary = "이메일 회원가입")
+    @Operation(
+            summary = "이메일 회원가입",
+            description =
+                    "이메일 회원가입 시 직군(jobRole)과 경력(careerYear)을 함께 저장할 수 있습니다.\n\n"
+                            + "직군 허용 값: PLANNING(기획), DESIGN(디자인), DEVELOPMENT(개발), MARKETING(마케팅), "
+                            + "SALES(영업), HR(인사), GENERAL_AFFAIRS(총무), PRODUCTION(생산), "
+                            + "ACCOUNTING(회계), OTHER(기타)\n"
+                            + "경력 허용 값: NEWCOMER(신입), YEAR_1(1년차), YEAR_2(2년차), YEAR_3(3년차), "
+                            + "YEAR_4(4년차), YEAR_5(5년차), YEAR_6(6년차), YEAR_7_PLUS(7년차 이상)\n\n"
+                            + "허용 값 외 문자열을 보내면 400 Bad Request를 반환합니다.")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "201",
