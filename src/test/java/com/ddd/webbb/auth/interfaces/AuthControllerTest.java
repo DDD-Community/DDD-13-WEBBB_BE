@@ -114,6 +114,50 @@ class AuthControllerTest {
                     """))
                     .andExpect(status().isBadRequest());
         }
+
+        @Test
+        @DisplayName("허용되지 않은 직군/경력 코드 → 400")
+        void invalidJobRoleAndCareerYear() throws Exception {
+            mockMvc.perform(
+                            post("/api/auth/signup/email")
+                                    .contentType(MediaType.APPLICATION_JSON)
+                                    .content(
+                                            """
+                    {
+                        "email": "invalid-profile@test.com",
+                        "password": "password123!",
+                        "nickname": "잘못된프로필",
+                        "jobRole": "BACKEND",
+                        "careerYear": "3년차"
+                    }
+                    """))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.message").value("유효하지 않은 요청입니다."));
+        }
+    }
+
+    @Nested
+    @DisplayName("POST /api/auth/oauth/{provider}")
+    class OAuthLogin {
+
+        @Test
+        @DisplayName("허용되지 않은 직군/경력 코드 → 400")
+        void invalidJobRoleAndCareerYear() throws Exception {
+            mockMvc.perform(
+                            post("/api/auth/oauth/google")
+                                    .contentType(MediaType.APPLICATION_JSON)
+                                    .content(
+                                            """
+                    {
+                        "oauthAccessToken": "provider-access-token",
+                        "nickname": "소셜유저",
+                        "jobRole": "BACKEND",
+                        "careerYear": "3년차"
+                    }
+                    """))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.message").value("유효하지 않은 요청입니다."));
+        }
     }
 
     @Nested

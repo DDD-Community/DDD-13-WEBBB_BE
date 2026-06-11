@@ -71,8 +71,8 @@ public class AuthService {
                         request.email(),
                         request.nickname(),
                         encodedPassword,
-                        request.jobRole(),
-                        request.careerYear());
+                        request.jobRole() != null ? request.jobRole().name() : null,
+                        request.careerYear() != null ? request.careerYear().name() : null);
         userRepository.save(user);
 
         AuthToken authToken = issueTokens(user.getPublicId());
@@ -129,7 +129,10 @@ public class AuthService {
 
         User user =
                 User.createOAuthUser(
-                        oauthUserInfo.email(), nickname, request.jobRole(), request.careerYear());
+                        oauthUserInfo.email(),
+                        nickname,
+                        request.jobRole() != null ? request.jobRole().name() : null,
+                        request.careerYear() != null ? request.careerYear().name() : null);
         userRepository.save(user);
 
         UserOauth userOauth =

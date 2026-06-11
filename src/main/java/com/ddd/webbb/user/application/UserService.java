@@ -63,7 +63,10 @@ public class UserService {
                 userRepository
                         .findByPublicIdAndDeletedAtIsNull(publicId)
                         .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
-        user.update(request.nickname(), request.jobType(), request.careerLevel());
+        user.update(
+                request.nickname(),
+                request.jobType() != null ? request.jobType().name() : null,
+                request.careerLevel() != null ? request.careerLevel().name() : null);
         return UserResponse.from(user);
     }
 

@@ -95,7 +95,12 @@ public class PostService {
 
     @Transactional(readOnly = true)
     public PostListResponse getPosts(Long cursor, int size) {
-        List<Post> fetched = postRepositoryImpl.findByCursor(cursor, size);
+        return getPosts(cursor, size, PostSearchCondition.empty());
+    }
+
+    @Transactional(readOnly = true)
+    public PostListResponse getPosts(Long cursor, int size, PostSearchCondition condition) {
+        List<Post> fetched = postRepositoryImpl.findByCursor(cursor, size, condition);
         boolean hasNext = fetched.size() > size;
         List<Post> posts = hasNext ? fetched.subList(0, size) : fetched;
 
