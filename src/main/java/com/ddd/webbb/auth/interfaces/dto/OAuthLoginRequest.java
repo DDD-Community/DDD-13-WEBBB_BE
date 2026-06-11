@@ -12,9 +12,6 @@ public record OAuthLoginRequest(
         @Schema(example = "ogu", description = "닉네임 (최대 10자)")
                 @Size(max = 10, message = "닉네임은 10자 이하여야 합니다.")
                 String nickname,
-        @Schema(example = "DEVELOPMENT") String jobRole,
-        @Schema(example = "YEAR_3") String careerYear) {}
-        @Schema(example = "ogu") String nickname,
         @Schema(
                         description =
                                 "직군. PLANNING=기획, DESIGN=디자인, DEVELOPMENT=개발, MARKETING=마케팅, "
