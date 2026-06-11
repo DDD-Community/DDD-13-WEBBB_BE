@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.12.0](https://github.com/DDD-Community/DDD-13-WEBBB_BE/compare/v1.11.0...v1.12.0) (2026-06-11)
+
+
+### Features
+
+* **user:** 닉네임 중복 확인 API 추가 및 OAuth 닉네임 검증 보완 ([#92](https://github.com/DDD-Community/DDD-13-WEBBB_BE/issues/92)) ([811035a](https://github.com/DDD-Community/DDD-13-WEBBB_BE/commit/811035a4c1541e7734fcfe17e6bf6a895e8f9dbb))
+
 ## [1.11.0](https://github.com/DDD-Community/DDD-13-WEBBB_BE/compare/v1.10.0...v1.11.0) (2026-06-11)
 
 
