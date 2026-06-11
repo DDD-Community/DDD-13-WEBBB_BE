@@ -1,6 +1,7 @@
 package com.ddd.webbb.auth.interfaces;
 
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -33,7 +34,7 @@ class AuthControllerTest {
 
     @Nested
     @DisplayName("POST /api/auth/oauth/{provider}")
-    class OAuthLogin {
+    class OAuthLoginValidation {
 
         @Test
         @DisplayName("닉네임 11자 이상 → 400")
@@ -53,11 +54,43 @@ class AuthControllerTest {
     }
 
     @Nested
+    @DisplayName("GET /api/auth/email/check")
+    class EmailCheck {
+
+        @Test
+        @DisplayName("사용 가능한 이메일 → available: true")
+        void available() throws Exception {
+            mockMvc.perform(get("/api/auth/email/check").param("email", "available@test.com"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.success").value(true))
+                    .andExpect(jsonPath("$.data.available").value(true));
+        }
+
+        @Test
+        @DisplayName("이미 사용 중인 이메일 → available: false")
+        void alreadyTaken() throws Exception {
+            signup("taken-email@test.com", "기존유저");
+
+            mockMvc.perform(get("/api/auth/email/check").param("email", "taken-email@test.com"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.success").value(true))
+                    .andExpect(jsonPath("$.data.available").value(false));
+        }
+
+        @Test
+        @DisplayName("이메일 형식이 아니면 → 400")
+        void invalidEmail() throws Exception {
+            mockMvc.perform(get("/api/auth/email/check").param("email", "invalid-email"))
+                    .andExpect(status().isBadRequest());
+        }
+    }
+
+    @Nested
     @DisplayName("POST /api/auth/signup/email")
     class SignupEmail {
 
         @Test
-        @DisplayName("정상 회원가입 → 201 + 사용자/토큰 반환")
+        @DisplayName("닉네임 없이 정상 회원가입 → 201 + 사용자/토큰 반환")
         void success() throws Exception {
             mockMvc.perform(
                             post("/api/auth/signup/email")
@@ -66,16 +99,13 @@ class AuthControllerTest {
                                             """
                     {
                         "email": "new@test.com",
-                        "password": "password123!",
-                        "nickname": "테스터",
-                        "jobRole": "DEVELOPMENT",
-                        "careerYear": "NEWCOMER"
+                        "password": "password123"
                     }
                     """))
                     .andExpect(status().isCreated())
                     .andExpect(jsonPath("$.success").value(true))
                     .andExpect(jsonPath("$.data.user.email").value("new@test.com"))
-                    .andExpect(jsonPath("$.data.user.nickname").value("테스터"))
+                    .andExpect(jsonPath("$.data.user.nickname").doesNotExist())
                     .andExpect(jsonPath("$.data.tokens.accessToken").isNotEmpty())
                     .andExpect(jsonPath("$.data.tokens.refreshToken").isNotEmpty())
                     .andExpect(jsonPath("$.data.isNewUser").value(true));
@@ -111,6 +141,70 @@ class AuthControllerTest {
                                     .content(
                                             """
                     {"email": "test@test.com"}
+                    """))
+                    .andExpect(status().isBadRequest());
+        }
+
+        @Test
+        @DisplayName("비밀번호 7자 → 400")
+        void passwordTooShort() throws Exception {
+            mockMvc.perform(
+                            post("/api/auth/signup/email")
+                                    .contentType(MediaType.APPLICATION_JSON)
+                                    .content(
+                                            """
+                    {
+                        "email": "short-password@test.com",
+                        "password": "abc1234"
+                    }
+                    """))
+                    .andExpect(status().isBadRequest());
+        }
+
+        @Test
+        @DisplayName("비밀번호 21자 → 400")
+        void passwordTooLong() throws Exception {
+            mockMvc.perform(
+                            post("/api/auth/signup/email")
+                                    .contentType(MediaType.APPLICATION_JSON)
+                                    .content(
+                                            """
+                    {
+                        "email": "long-password@test.com",
+                        "password": "abc123456789012345678"
+                    }
+                    """))
+                    .andExpect(status().isBadRequest());
+        }
+
+        @Test
+        @DisplayName("비밀번호 숫자만 입력 → 400")
+        void passwordNumbersOnly() throws Exception {
+            mockMvc.perform(
+                            post("/api/auth/signup/email")
+                                    .contentType(MediaType.APPLICATION_JSON)
+                                    .content(
+                                            """
+                    {
+                        "email": "numbers-password@test.com",
+                        "password": "12345678"
+                    }
+                    """))
+                    .andExpect(status().isBadRequest());
+        }
+
+        @Test
+        @DisplayName("비밀번호 영문만 입력 → 400")
+        void passwordLettersOnly() throws Exception {
+            mockMvc.perform(
+                            post("/api/auth/signup/email")
+                                    .contentType(MediaType.APPLICATION_JSON)
+                                    .content(
+                                            """
+                    {
+                        "email": "letters-password@test.com",
+                        "password": "abcdefgh"
+                    }
                     """))
                     .andExpect(status().isBadRequest());
         }
