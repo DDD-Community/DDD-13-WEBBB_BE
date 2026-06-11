@@ -15,6 +15,8 @@ import com.ddd.webbb.config.TestRedisConfig;
 import com.ddd.webbb.global.auth.JwtProvider;
 import com.ddd.webbb.global.common.exception.AppException;
 import com.ddd.webbb.global.common.exception.ErrorCode;
+import com.ddd.webbb.user.domain.CareerLevel;
+import com.ddd.webbb.user.domain.JobType;
 import com.ddd.webbb.user.domain.User;
 import com.ddd.webbb.user.domain.UserRepository;
 import java.util.UUID;
@@ -47,7 +49,11 @@ class AuthServiceTest {
             // Given
             EmailSignupRequest request =
                     new EmailSignupRequest(
-                            "new@test.com", "password123!", "테스터", "DEVELOPMENT", "NEWCOMER");
+                            "new@test.com",
+                            "password123!",
+                            "테스터",
+                            JobType.DEVELOPMENT,
+                            CareerLevel.NEWCOMER);
 
             // When
             AuthResponse response = authService.signupEmail(request);
@@ -61,6 +67,11 @@ class AuthServiceTest {
             assertThat(response.tokens().accessToken()).isNotBlank();
             assertThat(response.tokens().refreshToken()).isNotBlank();
             assertThat(userRepository.existsByEmailAndDeletedAtIsNull("new@test.com")).isTrue();
+
+            User savedUser =
+                    userRepository.findByEmailAndDeletedAtIsNull("new@test.com").orElseThrow();
+            assertThat(savedUser.getJobType()).isEqualTo("DEVELOPMENT");
+            assertThat(savedUser.getCareerLevel()).isEqualTo("NEWCOMER");
         }
 
         @Test

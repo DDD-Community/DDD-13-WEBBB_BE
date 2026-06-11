@@ -2,6 +2,7 @@ package com.ddd.webbb.post.interfaces;
 
 import com.ddd.webbb.global.common.response.ApiResponse;
 import com.ddd.webbb.global.security.CustomUserPrincipal;
+import com.ddd.webbb.post.application.PostSearchCondition;
 import com.ddd.webbb.post.application.PostService;
 import com.ddd.webbb.post.interfaces.dto.PostCreateRequest;
 import com.ddd.webbb.post.interfaces.dto.PostCreateResponse;
@@ -15,6 +16,7 @@ import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -157,7 +159,14 @@ public class PostController {
                 .body(ApiResponse.ok("게시글이 작성되었습니다.", response));
     }
 
-    @Operation(summary = "게시글 목록 조회")
+    @Operation(
+            summary = "게시글 목록 조회",
+            description =
+                    "게시글 목록을 커서 기반으로 조회합니다. "
+                            + "jobRole과 careerYear는 반복 쿼리 파라미터로 다중 선택을 지원하며, "
+                            + "작성자의 현재 프로필 정보(users.job_type, users.career_level)를 기준으로 필터링합니다. "
+                            + "같은 필터 그룹 안에서는 OR 조건, 직군과 경력 조건 사이에서는 AND 조건으로 조합합니다. "
+                            + "전체 선택 상태는 해당 파라미터를 생략합니다.")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "200",
@@ -195,8 +204,28 @@ public class PostController {
     @GetMapping
     public ApiResponse<PostListResponse> getPosts(
             @Parameter(description = "커서 (마지막 postId)") @RequestParam(required = false) Long cursor,
-            @Parameter(description = "페이지 크기") @RequestParam(defaultValue = "20") int size) {
-        return ApiResponse.ok("게시글 목록을 조회했습니다.", postService.getPosts(cursor, size));
+            @Parameter(description = "페이지 크기") @RequestParam(defaultValue = "20") int size,
+            @Parameter(
+                            description =
+                                    "직군 필터. 반복 파라미터로 다중 선택 가능. "
+                                            + "예: jobRole=PLANNING&jobRole=DESIGN. "
+                                            + "허용 값: PLANNING(기획), DESIGN(디자인), DEVELOPMENT(개발), "
+                                            + "MARKETING(마케팅), SALES(영업), HR(인사), "
+                                            + "GENERAL_AFFAIRS(총무), PRODUCTION(생산), ACCOUNTING(회계), OTHER(기타)")
+                    @RequestParam(required = false)
+                    List<String> jobRole,
+            @Parameter(
+                            description =
+                                    "경력 필터. 반복 파라미터로 다중 선택 가능. "
+                                            + "예: careerYear=YEAR_1&careerYear=YEAR_3. "
+                                            + "허용 값: NEWCOMER(신입), YEAR_1(1년차), YEAR_2(2년차), "
+                                            + "YEAR_3(3년차), YEAR_4(4년차), YEAR_5(5년차), "
+                                            + "YEAR_6(6년차), YEAR_7_PLUS(7년차 이상)")
+                    @RequestParam(required = false)
+                    List<String> careerYear) {
+        return ApiResponse.ok(
+                "게시글 목록을 조회했습니다.",
+                postService.getPosts(cursor, size, new PostSearchCondition(jobRole, careerYear)));
     }
 
     @Operation(summary = "게시글 상세 조회")
