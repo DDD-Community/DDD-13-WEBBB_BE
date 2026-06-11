@@ -100,28 +100,46 @@ public class UserController {
                 .body(ApiResponse.ok("회원이 생성되었습니다.", userService.createUser(request)));
     }
 
-    @Operation(summary = "닉네임 중복 확인")
+    @Operation(summary = "닉네임 중복 확인", description = "닉네임 사용 가능 여부를 확인합니다. 인증 없이 호출 가능합니다.")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "200",
-                description = "중복 확인 성공",
+                description = "사용 가능한 닉네임",
                 content =
                         @Content(
                                 examples =
                                         @ExampleObject(
+                                                name = "사용 가능",
                                                 value =
                                                         """
                         {
                           "success": true,
                           "message": "요청이 성공했습니다.",
                           "data": { "available": true },
-                          "timestamp": "2026-05-03T12:00:00"
+                          "timestamp": "2026-06-12T12:00:00"
+                        }
+                        """))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "200",
+                description = "이미 사용 중인 닉네임",
+                content =
+                        @Content(
+                                examples =
+                                        @ExampleObject(
+                                                name = "사용 불가",
+                                                value =
+                                                        """
+                        {
+                          "success": true,
+                          "message": "요청이 성공했습니다.",
+                          "data": { "available": false },
+                          "timestamp": "2026-06-12T12:00:00"
                         }
                         """)))
     })
     @GetMapping("/nickname/check")
     public ApiResponse<NicknameCheckResponse> checkNickname(
-            @Parameter(description = "확인할 닉네임") @RequestParam String value) {
+            @Parameter(description = "확인할 닉네임 (최대 10자)") @RequestParam String value) {
         return ApiResponse.ok(NicknameCheckResponse.of(userService.isNicknameAvailable(value)));
     }
 
