@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.12.1](https://github.com/DDD-Community/DDD-13-WEBBB_BE/compare/v1.12.0...v1.12.1) (2026-06-11)
+
+
+### Bug Fixes
+
+* **auth:** OAuthLoginRequest 중복 record 정의 제거 ([#94](https://github.com/DDD-Community/DDD-13-WEBBB_BE/issues/94)) ([11e75d9](https://github.com/DDD-Community/DDD-13-WEBBB_BE/commit/11e75d9605f1b53db50f083346250a671d138a7b))
+
 ## [1.12.0](https://github.com/DDD-Community/DDD-13-WEBBB_BE/compare/v1.11.0...v1.12.0) (2026-06-11)
 
 
