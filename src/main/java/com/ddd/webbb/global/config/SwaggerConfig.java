@@ -146,6 +146,7 @@ public class SwaggerConfig {
         put(statuses, ApiImplementationStatus.LIVE, "POST", "/api/auth/link/{provider}");
         put(statuses, ApiImplementationStatus.LIVE, "DELETE", "/api/auth/link/{provider}");
 
+        put(statuses, ApiImplementationStatus.LIVE, "GET", "/api/users/nickname/check");
         put(statuses, ApiImplementationStatus.STUB, "GET", "/api/users/me");
         put(statuses, ApiImplementationStatus.STUB, "PATCH", "/api/users/me/profile");
 

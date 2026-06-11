@@ -32,6 +32,27 @@ class AuthControllerTest {
     @MockitoBean private RefreshTokenStore refreshTokenStore;
 
     @Nested
+    @DisplayName("POST /api/auth/oauth/{provider}")
+    class OAuthLogin {
+
+        @Test
+        @DisplayName("닉네임 11자 이상 → 400")
+        void nicknameTooLong() throws Exception {
+            mockMvc.perform(
+                            post("/api/auth/oauth/google")
+                                    .contentType(MediaType.APPLICATION_JSON)
+                                    .content(
+                                            """
+                    {
+                        "oauthAccessToken": "some-token",
+                        "nickname": "12345678901"
+                    }
+                    """))
+                    .andExpect(status().isBadRequest());
+        }
+    }
+
+    @Nested
     @DisplayName("POST /api/auth/signup/email")
     class SignupEmail {
 
