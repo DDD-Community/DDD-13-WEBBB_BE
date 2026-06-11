@@ -76,6 +76,7 @@ public class SecurityConfig {
                                         // Auth 공개 엔드포인트
                                         .requestMatchers(
                                                 "/api/auth/signup/email",
+                                                "/api/auth/email/check",
                                                 "/api/auth/login/email",
                                                 "/api/auth/oauth/**",
                                                 "/api/auth/refresh")

@@ -139,6 +139,7 @@ public class SwaggerConfig {
 
         put(statuses, ApiImplementationStatus.LIVE, "POST", "/api/auth/oauth/{provider}");
         put(statuses, ApiImplementationStatus.LIVE, "POST", "/api/auth/oauth/exchange");
+        put(statuses, ApiImplementationStatus.LIVE, "GET", "/api/auth/email/check");
         put(statuses, ApiImplementationStatus.LIVE, "POST", "/api/auth/signup/email");
         put(statuses, ApiImplementationStatus.LIVE, "POST", "/api/auth/login/email");
         put(statuses, ApiImplementationStatus.LIVE, "POST", "/api/auth/logout");
