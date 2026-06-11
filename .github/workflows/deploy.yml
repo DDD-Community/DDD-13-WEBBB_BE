@@ -167,7 +167,7 @@ jobs:
 
           echo "Waiting for application to start..."
           for i in \$(seq 1 30); do
-            if curl -sf http://localhost:8080/actuator/health > /dev/null 2>&1; then
+            if curl -sf http://localhost:80/actuator/health > /dev/null 2>&1; then
               echo "Application is healthy!"
               exit 0
             fi
