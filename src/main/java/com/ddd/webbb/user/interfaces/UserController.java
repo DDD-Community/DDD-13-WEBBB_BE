@@ -104,38 +104,33 @@ public class UserController {
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "200",
-                description = "사용 가능한 닉네임",
+                description = "중복 확인 성공 (available: true=사용 가능, false=이미 사용 중)",
                 content =
                         @Content(
-                                examples =
-                                        @ExampleObject(
-                                                name = "사용 가능",
-                                                value =
-                                                        """
+                                examples = {
+                                    @ExampleObject(
+                                            name = "사용 가능",
+                                            value =
+                                                    """
                         {
                           "success": true,
                           "message": "요청이 성공했습니다.",
                           "data": { "available": true },
                           "timestamp": "2026-06-12T12:00:00"
                         }
-                        """))),
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "200",
-                description = "이미 사용 중인 닉네임",
-                content =
-                        @Content(
-                                examples =
-                                        @ExampleObject(
-                                                name = "사용 불가",
-                                                value =
-                                                        """
+                        """),
+                                    @ExampleObject(
+                                            name = "사용 불가",
+                                            value =
+                                                    """
                         {
                           "success": true,
                           "message": "요청이 성공했습니다.",
                           "data": { "available": false },
                           "timestamp": "2026-06-12T12:00:00"
                         }
-                        """)))
+                        """)
+                                }))
     })
     @GetMapping("/nickname/check")
     public ApiResponse<NicknameCheckResponse> checkNickname(
