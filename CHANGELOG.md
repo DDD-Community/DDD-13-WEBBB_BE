@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.11.0](https://github.com/DDD-Community/DDD-13-WEBBB_BE/compare/v1.10.0...v1.11.0) (2026-06-11)
+
+
+### Features
+
+* 게시글 목록 직군·경력 필터링 추가 ([#87](https://github.com/DDD-Community/DDD-13-WEBBB_BE/issues/87)) ([df9b95b](https://github.com/DDD-Community/DDD-13-WEBBB_BE/commit/df9b95bfa847f8ae174150dbf417254b707188a7))
+
 ## [1.10.0](https://github.com/DDD-Community/DDD-13-WEBBB_BE/compare/v1.9.0...v1.10.0) (2026-06-11)
 
 
