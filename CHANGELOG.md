@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.10.0](https://github.com/DDD-Community/DDD-13-WEBBB_BE/compare/v1.9.0...v1.10.0) (2026-06-11)
+
+
+### Features
+
+* **cicd:** 릴리즈 시 운영 자동 배포 및 HTTP 포트 80 변경 ([#84](https://github.com/DDD-Community/DDD-13-WEBBB_BE/issues/84)) ([f654836](https://github.com/DDD-Community/DDD-13-WEBBB_BE/commit/f654836cd5ff9e22e3d45331c43944b8e6b096d6)), closes [#83](https://github.com/DDD-Community/DDD-13-WEBBB_BE/issues/83)
+
 ## [1.9.0](https://github.com/DDD-Community/DDD-13-WEBBB_BE/compare/v1.8.0...v1.9.0) (2026-06-10)
 
 
