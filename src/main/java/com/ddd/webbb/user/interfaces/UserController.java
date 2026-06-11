@@ -2,6 +2,7 @@ package com.ddd.webbb.user.interfaces;
 
 import com.ddd.webbb.global.common.response.ApiResponse;
 import com.ddd.webbb.user.application.UserService;
+import com.ddd.webbb.user.interfaces.dto.NicknameCheckResponse;
 import com.ddd.webbb.user.interfaces.dto.UserCreateRequest;
 import com.ddd.webbb.user.interfaces.dto.UserListResponse;
 import com.ddd.webbb.user.interfaces.dto.UserMeResponse;
@@ -97,6 +98,31 @@ public class UserController {
             @RequestBody @Valid UserCreateRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.ok("회원이 생성되었습니다.", userService.createUser(request)));
+    }
+
+    @Operation(summary = "닉네임 중복 확인")
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "200",
+                description = "중복 확인 성공",
+                content =
+                        @Content(
+                                examples =
+                                        @ExampleObject(
+                                                value =
+                                                        """
+                        {
+                          "success": true,
+                          "message": "요청이 성공했습니다.",
+                          "data": { "available": true },
+                          "timestamp": "2026-05-03T12:00:00"
+                        }
+                        """)))
+    })
+    @GetMapping("/nickname/check")
+    public ApiResponse<NicknameCheckResponse> checkNickname(
+            @Parameter(description = "확인할 닉네임") @RequestParam String value) {
+        return ApiResponse.ok(NicknameCheckResponse.of(userService.isNicknameAvailable(value)));
     }
 
     @Operation(summary = "회원 단건 조회")

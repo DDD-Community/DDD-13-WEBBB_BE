@@ -35,6 +35,10 @@ public class UserService {
         return UserResponse.from(userRepository.save(user));
     }
 
+    public boolean isNicknameAvailable(String nickname) {
+        return !userRepository.existsByNicknameAndDeletedAtIsNull(nickname);
+    }
+
     public UserResponse getUser(UUID publicId) {
         return UserResponse.from(getUserEntity(publicId));
     }
