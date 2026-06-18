@@ -139,6 +139,7 @@ public class SwaggerConfig {
 
         put(statuses, ApiImplementationStatus.LIVE, "POST", "/api/auth/oauth/{provider}");
         put(statuses, ApiImplementationStatus.LIVE, "POST", "/api/auth/oauth/exchange");
+        put(statuses, ApiImplementationStatus.LIVE, "GET", "/api/auth/email/check");
         put(statuses, ApiImplementationStatus.LIVE, "POST", "/api/auth/signup/email");
         put(statuses, ApiImplementationStatus.LIVE, "POST", "/api/auth/login/email");
         put(statuses, ApiImplementationStatus.LIVE, "POST", "/api/auth/logout");
@@ -146,6 +147,7 @@ public class SwaggerConfig {
         put(statuses, ApiImplementationStatus.LIVE, "POST", "/api/auth/link/{provider}");
         put(statuses, ApiImplementationStatus.LIVE, "DELETE", "/api/auth/link/{provider}");
 
+        put(statuses, ApiImplementationStatus.LIVE, "GET", "/api/users/nickname/check");
         put(statuses, ApiImplementationStatus.STUB, "GET", "/api/users/me");
         put(statuses, ApiImplementationStatus.STUB, "PATCH", "/api/users/me/profile");
 
@@ -175,7 +177,7 @@ public class SwaggerConfig {
 
         put(statuses, ApiImplementationStatus.LIVE, "GET", "/api/me/posts");
         put(statuses, ApiImplementationStatus.LIVE, "GET", "/api/me/comments");
-        put(statuses, ApiImplementationStatus.STUB, "GET", "/api/me/monster-stats");
+        put(statuses, ApiImplementationStatus.LIVE, "GET", "/api/me/monster-stats");
 
         return Map.copyOf(statuses);
     }

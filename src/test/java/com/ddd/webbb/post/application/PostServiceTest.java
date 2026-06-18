@@ -28,9 +28,11 @@ import com.ddd.webbb.post.interfaces.dto.PostCreateResponse;
 import com.ddd.webbb.user.application.UserService;
 import com.ddd.webbb.user.domain.User;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.test.util.ReflectionTestUtils;
 
 class PostServiceTest {
@@ -65,6 +67,22 @@ class PostServiceTest {
                         monsterService,
                         postEmotionService,
                         commentService);
+    }
+
+    @Test
+    void 게시글_목록_조회_필터_조건을_레포지토리에_전달한다() {
+        PostSearchCondition condition =
+                new PostSearchCondition(List.of("PLANNING", "DESIGN"), List.of("YEAR_3"));
+        given(postRepositoryImpl.findByCursor(eq(null), eq(20), any(PostSearchCondition.class)))
+                .willReturn(List.of());
+
+        postService.getPosts(null, 20, condition);
+
+        ArgumentCaptor<PostSearchCondition> conditionCaptor =
+                ArgumentCaptor.forClass(PostSearchCondition.class);
+        verify(postRepositoryImpl).findByCursor(eq(null), eq(20), conditionCaptor.capture());
+        assertThat(conditionCaptor.getValue().jobRoles()).containsExactly("PLANNING", "DESIGN");
+        assertThat(conditionCaptor.getValue().careerYears()).containsExactly("YEAR_3");
     }
 
     @Test

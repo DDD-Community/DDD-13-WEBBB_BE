@@ -35,6 +35,10 @@ public class UserService {
         return UserResponse.from(userRepository.save(user));
     }
 
+    public boolean isNicknameAvailable(String nickname) {
+        return !userRepository.existsByNicknameAndDeletedAtIsNull(nickname);
+    }
+
     public UserResponse getUser(UUID publicId) {
         return UserResponse.from(getUserEntity(publicId));
     }
@@ -59,7 +63,10 @@ public class UserService {
                 userRepository
                         .findByPublicIdAndDeletedAtIsNull(publicId)
                         .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
-        user.update(request.nickname(), request.jobType(), request.careerLevel());
+        user.update(
+                request.nickname(),
+                request.jobType() != null ? request.jobType().name() : null,
+                request.careerLevel() != null ? request.careerLevel().name() : null);
         return UserResponse.from(user);
     }
 

@@ -10,4 +10,6 @@ public interface MonsterRepository extends JpaRepository<Monster, Long> {
     Optional<Monster> findByPost_Id(Long postId);
 
     List<Monster> findByPost_IdIn(List<Long> postIds);
+
+    List<Monster> findByPost_UserIdAndPost_IsDeletedFalse(Long userId);
 }

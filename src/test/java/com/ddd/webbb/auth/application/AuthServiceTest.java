@@ -15,6 +15,8 @@ import com.ddd.webbb.config.TestRedisConfig;
 import com.ddd.webbb.global.auth.JwtProvider;
 import com.ddd.webbb.global.common.exception.AppException;
 import com.ddd.webbb.global.common.exception.ErrorCode;
+import com.ddd.webbb.user.domain.CareerLevel;
+import com.ddd.webbb.user.domain.JobType;
 import com.ddd.webbb.user.domain.User;
 import com.ddd.webbb.user.domain.UserRepository;
 import java.util.UUID;
@@ -42,12 +44,11 @@ class AuthServiceTest {
     class SignupEmail {
 
         @Test
-        @DisplayName("정상 회원가입 → 사용자 생성 + 토큰 발급")
+        @DisplayName("닉네임 없이 정상 회원가입 → 사용자 생성 + 토큰 발급")
         void success() {
             // Given
             EmailSignupRequest request =
-                    new EmailSignupRequest(
-                            "new@test.com", "password123!", "테스터", "DEVELOPMENT", "NEWCOMER");
+                    new EmailSignupRequest("new@test.com", "password123", null, null, null);
 
             // When
             AuthResponse response = authService.signupEmail(request);
@@ -55,12 +56,18 @@ class AuthServiceTest {
             // Then
             assertThat(response.isNewUser()).isTrue();
             assertThat(response.user().email()).isEqualTo("new@test.com");
-            assertThat(response.user().nickname()).isEqualTo("테스터");
-            assertThat(response.user().jobRole()).isEqualTo("DEVELOPMENT");
-            assertThat(response.user().careerYear()).isEqualTo("NEWCOMER");
+            assertThat(response.user().nickname()).isNull();
+            assertThat(response.user().jobRole()).isNull();
+            assertThat(response.user().careerYear()).isNull();
             assertThat(response.tokens().accessToken()).isNotBlank();
             assertThat(response.tokens().refreshToken()).isNotBlank();
             assertThat(userRepository.existsByEmailAndDeletedAtIsNull("new@test.com")).isTrue();
+
+            User savedUser =
+                    userRepository.findByEmailAndDeletedAtIsNull("new@test.com").orElseThrow();
+            assertThat(savedUser.getNickname()).isNull();
+            assertThat(savedUser.getJobType()).isNull();
+            assertThat(savedUser.getCareerLevel()).isNull();
         }
 
         @Test
@@ -77,6 +84,17 @@ class AuthServiceTest {
             User user = userRepository.findByEmailAndDeletedAtIsNull("hash@test.com").orElseThrow();
             assertThat(user.getPasswordHash()).isNotEqualTo("plain123!");
             assertThat(user.getPasswordHash()).startsWith("$2a$");
+        }
+
+        @Test
+        @DisplayName("이메일 사용 가능 여부를 조회한다")
+        void emailAvailable() {
+            // Given
+            createUser("existing-check@test.com", "기존유저");
+
+            // When / Then
+            assertThat(authService.isEmailAvailable("available-check@test.com")).isTrue();
+            assertThat(authService.isEmailAvailable("existing-check@test.com")).isFalse();
         }
 
         @Test
@@ -97,20 +115,24 @@ class AuthServiceTest {
         }
 
         @Test
-        @DisplayName("이미 존재하는 닉네임 → DUPLICATED_NICKNAME 예외")
-        void duplicatedNickname() {
+        @DisplayName("닉네임을 함께 보내면 기존처럼 저장한다")
+        void optionalNickname() {
             // Given
-            createUser("other@test.com", "중복닉네임");
             EmailSignupRequest request =
-                    new EmailSignupRequest("new@test.com", "password123!", "중복닉네임", null, null);
+                    new EmailSignupRequest(
+                            "with-nickname@test.com",
+                            "password123",
+                            "테스터",
+                            JobType.DEVELOPMENT,
+                            CareerLevel.NEWCOMER);
 
-            // When / Then
-            assertThatThrownBy(() -> authService.signupEmail(request))
-                    .isInstanceOf(AppException.class)
-                    .satisfies(
-                            e ->
-                                    assertThat(((AppException) e).getErrorCode())
-                                            .isEqualTo(ErrorCode.DUPLICATED_NICKNAME));
+            // When
+            AuthResponse response = authService.signupEmail(request);
+
+            // Then
+            assertThat(response.user().nickname()).isEqualTo("테스터");
+            assertThat(response.user().jobRole()).isEqualTo("DEVELOPMENT");
+            assertThat(response.user().careerYear()).isEqualTo("NEWCOMER");
         }
     }
 

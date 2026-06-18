@@ -2,6 +2,7 @@ package com.ddd.webbb.user.interfaces;
 
 import com.ddd.webbb.global.common.response.ApiResponse;
 import com.ddd.webbb.user.application.UserService;
+import com.ddd.webbb.user.interfaces.dto.NicknameCheckResponse;
 import com.ddd.webbb.user.interfaces.dto.UserCreateRequest;
 import com.ddd.webbb.user.interfaces.dto.UserListResponse;
 import com.ddd.webbb.user.interfaces.dto.UserMeResponse;
@@ -99,6 +100,44 @@ public class UserController {
                 .body(ApiResponse.ok("회원이 생성되었습니다.", userService.createUser(request)));
     }
 
+    @Operation(summary = "닉네임 중복 확인", description = "닉네임 사용 가능 여부를 확인합니다. 인증 없이 호출 가능합니다.")
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "200",
+                description = "중복 확인 성공 (available: true=사용 가능, false=이미 사용 중)",
+                content =
+                        @Content(
+                                examples = {
+                                    @ExampleObject(
+                                            name = "사용 가능",
+                                            value =
+                                                    """
+                        {
+                          "success": true,
+                          "message": "요청이 성공했습니다.",
+                          "data": { "available": true },
+                          "timestamp": "2026-06-12T12:00:00"
+                        }
+                        """),
+                                    @ExampleObject(
+                                            name = "사용 불가",
+                                            value =
+                                                    """
+                        {
+                          "success": true,
+                          "message": "요청이 성공했습니다.",
+                          "data": { "available": false },
+                          "timestamp": "2026-06-12T12:00:00"
+                        }
+                        """)
+                                }))
+    })
+    @GetMapping("/nickname/check")
+    public ApiResponse<NicknameCheckResponse> checkNickname(
+            @Parameter(description = "확인할 닉네임 (최대 10자)") @RequestParam String value) {
+        return ApiResponse.ok(NicknameCheckResponse.of(userService.isNicknameAvailable(value)));
+    }
+
     @Operation(summary = "회원 단건 조회")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -117,8 +156,8 @@ public class UserController {
                             "id": 1,
                             "email": "test@test.com",
                             "nickname": "ogu",
-                            "jobType": "BACKEND",
-                            "careerLevel": "3년차",
+                            "jobType": "DEVELOPMENT",
+                            "careerLevel": "YEAR_3",
                             "isActive": true,
                             "createdAt": "2026-05-03T12:00:00"
                           },
@@ -183,7 +222,17 @@ public class UserController {
         return ApiResponse.ok(userService.getUsers(cursor, size));
     }
 
-    @Operation(summary = "회원 정보 수정")
+    @Operation(
+            summary = "회원 정보 수정",
+            description =
+                    "회원 닉네임, 직군(jobType), 경력(careerLevel)을 수정합니다. "
+                            + "직군/경력은 게시글 목록 필터링 기준으로 사용되므로 아래 코드값만 입력할 수 있습니다.\n\n"
+                            + "직군 허용 값: PLANNING(기획), DESIGN(디자인), DEVELOPMENT(개발), MARKETING(마케팅), "
+                            + "SALES(영업), HR(인사), GENERAL_AFFAIRS(총무), PRODUCTION(생산), "
+                            + "ACCOUNTING(회계), OTHER(기타)\n"
+                            + "경력 허용 값: NEWCOMER(신입), YEAR_1(1년차), YEAR_2(2년차), YEAR_3(3년차), "
+                            + "YEAR_4(4년차), YEAR_5(5년차), YEAR_6(6년차), YEAR_7_PLUS(7년차 이상)\n\n"
+                            + "허용 값 외 문자열을 보내면 400 Bad Request를 반환합니다.")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "200",
@@ -201,8 +250,8 @@ public class UserController {
                             "id": 1,
                             "email": "test@test.com",
                             "nickname": "newname",
-                            "jobType": "BACKEND",
-                            "careerLevel": "3년차",
+                            "jobType": "DEVELOPMENT",
+                            "careerLevel": "YEAR_3",
                             "isActive": true,
                             "createdAt": "2026-05-03T12:00:00"
                           },
@@ -276,8 +325,8 @@ public class UserController {
                             "id": "550e8400-e29b-41d4-a716-446655440000",
                             "email": "test@test.com",
                             "nickname": "ogu",
-                            "jobType": "BACKEND",
-                            "careerLevel": "3년차",
+                            "jobType": "DEVELOPMENT",
+                            "careerLevel": "YEAR_3",
                             "isActive": true,
                             "createdAt": "2026-05-03T12:00:00"
                           },
@@ -308,13 +357,23 @@ public class UserController {
                         UUID.fromString("550e8400-e29b-41d4-a716-446655440000"),
                         "test@test.com",
                         "ogu",
-                        "BACKEND",
-                        "3년차",
+                        "DEVELOPMENT",
+                        "YEAR_3",
                         true,
                         LocalDateTime.of(2026, 5, 3, 12, 0)));
     }
 
-    @Operation(summary = "내 프로필 수정")
+    @Operation(
+            summary = "내 프로필 수정",
+            description =
+                    "내 닉네임, 직군(jobType), 경력(careerLevel)을 수정합니다. "
+                            + "직군/경력은 게시글 목록 필터링 기준으로 사용되므로 아래 코드값만 입력할 수 있습니다.\n\n"
+                            + "직군 허용 값: PLANNING(기획), DESIGN(디자인), DEVELOPMENT(개발), MARKETING(마케팅), "
+                            + "SALES(영업), HR(인사), GENERAL_AFFAIRS(총무), PRODUCTION(생산), "
+                            + "ACCOUNTING(회계), OTHER(기타)\n"
+                            + "경력 허용 값: NEWCOMER(신입), YEAR_1(1년차), YEAR_2(2년차), YEAR_3(3년차), "
+                            + "YEAR_4(4년차), YEAR_5(5년차), YEAR_6(6년차), YEAR_7_PLUS(7년차 이상)\n\n"
+                            + "허용 값 외 문자열을 보내면 400 Bad Request를 반환합니다.")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "200",
@@ -333,7 +392,7 @@ public class UserController {
                             "email": "test@test.com",
                             "nickname": "newogu",
                             "jobType": "PLANNING",
-                            "careerLevel": "5년차",
+                            "careerLevel": "YEAR_5",
                             "isActive": true,
                             "createdAt": "2026-05-03T12:00:00"
                           },
@@ -365,8 +424,8 @@ public class UserController {
                         UUID.fromString("550e8400-e29b-41d4-a716-446655440000"),
                         "test@test.com",
                         request.nickname() != null ? request.nickname() : "ogu",
-                        request.jobType() != null ? request.jobType() : "BACKEND",
-                        request.careerLevel() != null ? request.careerLevel() : "3년차",
+                        request.jobType() != null ? request.jobType().name() : "DEVELOPMENT",
+                        request.careerLevel() != null ? request.careerLevel().name() : "YEAR_3",
                         true,
                         LocalDateTime.of(2026, 5, 3, 12, 0)));
     }

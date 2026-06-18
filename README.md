@@ -30,6 +30,10 @@ cp src/main/resources/application-local.yml.example src/main/resources/applicati
 
 필요하면 `src/main/resources/application-local.yml`에서 로컬 DB, Redis, JWT 값을 수정한 뒤 실행합니다.
 
+> **Flyway 마이그레이션:** 앱 실행 시 Flyway가 자동으로 DB 스키마를 초기화합니다.
+> 엔티티를 변경할 때는 반드시 마이그레이션 파일을 함께 추가해야 합니다.
+> 자세한 내용은 [docs/flyway/README.md](docs/flyway/README.md)를 참고하세요.
+
 ```bash
 ./gradlew bootRun
 ```
@@ -71,6 +75,7 @@ docker-compose down -v
 
 > 레이어 의존 방향 및 각 패키지별 파일 목록은 [docs/architecture.md](docs/architecture.md)를 참고하세요.
 > AI 감정 분석 기능 연동 방법은 [docs/ai-integration.md](docs/ai-integration.md)를 참고하세요.
+> DB 스키마 버전 관리 방법은 [docs/flyway/README.md](docs/flyway/README.md)를 참고하세요.
 
 DDD 스타일 레이어드 아키텍처를 적용합니다. 도메인(Feature) 기반으로 모듈을 분리하고, 각 모듈 내부에 `domain / application / infrastructure / interfaces` 4-레이어를 적용합니다.
 

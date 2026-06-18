@@ -1,5 +1,54 @@
 # Changelog
 
+## [1.12.1](https://github.com/DDD-Community/DDD-13-WEBBB_BE/compare/v1.12.0...v1.12.1) (2026-06-11)
+
+
+### Bug Fixes
+
+* **auth:** OAuthLoginRequest 중복 record 정의 제거 ([#94](https://github.com/DDD-Community/DDD-13-WEBBB_BE/issues/94)) ([11e75d9](https://github.com/DDD-Community/DDD-13-WEBBB_BE/commit/11e75d9605f1b53db50f083346250a671d138a7b))
+
+## [1.12.0](https://github.com/DDD-Community/DDD-13-WEBBB_BE/compare/v1.11.0...v1.12.0) (2026-06-11)
+
+
+### Features
+
+* **user:** 닉네임 중복 확인 API 추가 및 OAuth 닉네임 검증 보완 ([#92](https://github.com/DDD-Community/DDD-13-WEBBB_BE/issues/92)) ([811035a](https://github.com/DDD-Community/DDD-13-WEBBB_BE/commit/811035a4c1541e7734fcfe17e6bf6a895e8f9dbb))
+
+## [1.11.0](https://github.com/DDD-Community/DDD-13-WEBBB_BE/compare/v1.10.0...v1.11.0) (2026-06-11)
+
+
+### Features
+
+* 게시글 목록 직군·경력 필터링 추가 ([#87](https://github.com/DDD-Community/DDD-13-WEBBB_BE/issues/87)) ([df9b95b](https://github.com/DDD-Community/DDD-13-WEBBB_BE/commit/df9b95bfa847f8ae174150dbf417254b707188a7))
+
+## [1.10.0](https://github.com/DDD-Community/DDD-13-WEBBB_BE/compare/v1.9.0...v1.10.0) (2026-06-11)
+
+
+### Features
+
+* **cicd:** 릴리즈 시 운영 자동 배포 및 HTTP 포트 80 변경 ([#84](https://github.com/DDD-Community/DDD-13-WEBBB_BE/issues/84)) ([f654836](https://github.com/DDD-Community/DDD-13-WEBBB_BE/commit/f654836cd5ff9e22e3d45331c43944b8e6b096d6)), closes [#83](https://github.com/DDD-Community/DDD-13-WEBBB_BE/issues/83)
+
+## [1.9.0](https://github.com/DDD-Community/DDD-13-WEBBB_BE/compare/v1.8.0...v1.9.0) (2026-06-10)
+
+
+### Features
+
+* **mypage:** 몬스터 통계 API 구현 ([#81](https://github.com/DDD-Community/DDD-13-WEBBB_BE/issues/81)) ([7656c70](https://github.com/DDD-Community/DDD-13-WEBBB_BE/commit/7656c70e1f44d5039aeb5b8de58b834f959e0450))
+
+## [1.8.0](https://github.com/DDD-Community/DDD-13-WEBBB_BE/compare/v1.7.0...v1.8.0) (2026-06-08)
+
+
+### Features
+
+* **comment:** 댓글 CRUD 및 댓글 공감 기능 구현 ([fc98647](https://github.com/DDD-Community/DDD-13-WEBBB_BE/commit/fc98647c5d3d567953ed3f95f53857a73fa5acfe))
+* **comment:** 댓글 CRUD 및 댓글 공감 기능 구현 ([d9ca155](https://github.com/DDD-Community/DDD-13-WEBBB_BE/commit/d9ca155dfe841e18effce4917dc39c7334c8887c))
+* Flyway 마이그레이션 도입 ([#80](https://github.com/DDD-Community/DDD-13-WEBBB_BE/issues/80)) ([490727a](https://github.com/DDD-Community/DDD-13-WEBBB_BE/commit/490727a4fb53255533bccb3cdfc87cd9db8af28f))
+
+
+### Bug Fixes
+
+* main 브랜치 머지 충돌 해결 및 코파일럿 리뷰 반영 ([0458816](https://github.com/DDD-Community/DDD-13-WEBBB_BE/commit/04588164abd316a8f649cfeea9f866dd16059129))
+
 ## [1.7.0](https://github.com/DDD-Community/DDD-13-WEBBB_BE/compare/v1.6.1...v1.7.0) (2026-05-31)
 
 

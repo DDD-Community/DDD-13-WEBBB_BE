@@ -27,7 +27,7 @@ public class User extends BaseEntity {
     @Column(length = 255)
     private String passwordHash;
 
-    @Column(unique = true, nullable = false, length = 50)
+    @Column(unique = true, length = 50)
     private String nickname;
 
     @Column(length = 50)

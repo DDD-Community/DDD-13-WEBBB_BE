@@ -7,6 +7,7 @@ import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.verify;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -23,16 +24,19 @@ import com.ddd.webbb.global.common.exception.AppException;
 import com.ddd.webbb.global.common.exception.ErrorCode;
 import com.ddd.webbb.global.config.SecurityConfig;
 import com.ddd.webbb.global.security.CustomUserPrincipal;
+import com.ddd.webbb.post.application.PostSearchCondition;
 import com.ddd.webbb.post.application.PostService;
 import com.ddd.webbb.post.domain.CommentTone;
 import com.ddd.webbb.post.interfaces.dto.PostCreateRequest;
 import com.ddd.webbb.post.interfaces.dto.PostCreateResponse;
+import com.ddd.webbb.post.interfaces.dto.PostListResponse;
 import com.ddd.webbb.user.application.UserService;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
@@ -56,6 +60,31 @@ class PostControllerTest {
     @MockitoBean private OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
     @MockitoBean private OAuth2LoginFailureHandler oAuth2LoginFailureHandler;
     @MockitoBean private RedisOAuth2AuthorizationRequestRepository authorizationRequestRepository;
+
+    @Test
+    void 게시글_목록_조회는_직군과_경력_다중_필터를_서비스에_전달한다() throws Exception {
+        given(postService.getPosts(eq(null), eq(20), any(PostSearchCondition.class)))
+                .willReturn(new PostListResponse(List.of(), null));
+
+        mockMvc.perform(
+                        get("/api/posts")
+                                .param("jobRole", "PLANNING", "DESIGN")
+                                .param("careerYear", "YEAR_3")
+                                .param("size", "20"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.message").value("게시글 목록을 조회했습니다."));
+
+        ArgumentCaptor<PostSearchCondition> conditionCaptor =
+                ArgumentCaptor.forClass(PostSearchCondition.class);
+        verify(postService).getPosts(eq(null), eq(20), conditionCaptor.capture());
+
+        PostSearchCondition condition = conditionCaptor.getValue();
+        org.assertj.core.api.Assertions.assertThat(condition.jobRoles())
+                .containsExactly("PLANNING", "DESIGN");
+        org.assertj.core.api.Assertions.assertThat(condition.careerYears())
+                .containsExactly("YEAR_3");
+    }
 
     @Test
     void 정상_글_작성은_201을_반환한다() throws Exception {

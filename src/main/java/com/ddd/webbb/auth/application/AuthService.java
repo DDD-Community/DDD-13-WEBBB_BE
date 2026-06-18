@@ -61,7 +61,9 @@ public class AuthService {
         if (userRepository.existsByEmailAndDeletedAtIsNull(request.email())) {
             throw new AppException(ErrorCode.DUPLICATED_EMAIL);
         }
-        if (userRepository.existsByNicknameAndDeletedAtIsNull(request.nickname())) {
+
+        String nickname = normalizeNullable(request.nickname());
+        if (nickname != null && userRepository.existsByNicknameAndDeletedAtIsNull(nickname)) {
             throw new AppException(ErrorCode.DUPLICATED_NICKNAME);
         }
 
@@ -69,14 +71,18 @@ public class AuthService {
         User user =
                 User.createWithPassword(
                         request.email(),
-                        request.nickname(),
+                        nickname,
                         encodedPassword,
-                        request.jobRole(),
-                        request.careerYear());
+                        request.jobRole() != null ? request.jobRole().name() : null,
+                        request.careerYear() != null ? request.careerYear().name() : null);
         userRepository.save(user);
 
         AuthToken authToken = issueTokens(user.getPublicId());
         return new AuthResponse(UserInfo.from(user), TokenInfo.from(authToken), true);
+    }
+
+    public boolean isEmailAvailable(String email) {
+        return !userRepository.existsByEmailAndDeletedAtIsNull(email);
     }
 
     public AuthResponse loginEmail(EmailLoginRequest request) {
@@ -129,7 +135,10 @@ public class AuthService {
 
         User user =
                 User.createOAuthUser(
-                        oauthUserInfo.email(), nickname, request.jobRole(), request.careerYear());
+                        oauthUserInfo.email(),
+                        nickname,
+                        request.jobRole() != null ? request.jobRole().name() : null,
+                        request.careerYear() != null ? request.careerYear().name() : null);
         userRepository.save(user);
 
         UserOauth userOauth =
@@ -286,5 +295,12 @@ public class AuthService {
         String refreshToken = jwtProvider.createRefreshToken(publicId);
         refreshTokenStore.save(publicId, refreshToken);
         return new AuthToken(accessToken, refreshToken);
+    }
+
+    private String normalizeNullable(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        return value;
     }
 }
