@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.13.1](https://github.com/DDD-Community/DDD-13-WEBBB_BE/compare/v1.13.0...v1.13.1) (2026-06-21)
+
+
+### Bug Fixes
+
+* **comment:** 댓글 작성 시 몬스터 HP 감소량 변경 ([#100](https://github.com/DDD-Community/DDD-13-WEBBB_BE/issues/100)) ([d0785a2](https://github.com/DDD-Community/DDD-13-WEBBB_BE/commit/d0785a234f74e5a649d997e9e07ae4d4702e174a))
+
 ## [1.13.0](https://github.com/DDD-Community/DDD-13-WEBBB_BE/compare/v1.12.1...v1.13.0) (2026-06-21)
 
 
