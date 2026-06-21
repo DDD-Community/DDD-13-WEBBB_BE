@@ -15,7 +15,10 @@ import com.ddd.webbb.config.TestRedisConfig;
 import com.ddd.webbb.emotion.domain.EmotionType;
 import com.ddd.webbb.global.common.exception.AppException;
 import com.ddd.webbb.global.common.exception.ErrorCode;
+import com.ddd.webbb.monster.domain.HpActionType;
 import com.ddd.webbb.monster.domain.Monster;
+import com.ddd.webbb.monster.domain.MonsterHpLog;
+import com.ddd.webbb.monster.domain.MonsterHpLogRepository;
 import com.ddd.webbb.monster.domain.MonsterRepository;
 import com.ddd.webbb.post.domain.CommentTone;
 import com.ddd.webbb.post.domain.Post;
@@ -41,6 +44,7 @@ class CommentServiceTest {
     @Autowired private UserRepository userRepository;
     @Autowired private PostRepository postRepository;
     @Autowired private MonsterRepository monsterRepository;
+    @Autowired private MonsterHpLogRepository monsterHpLogRepository;
     @Autowired private BoardCategoryRepository boardCategoryRepository;
 
     private User user;
@@ -79,7 +83,12 @@ class CommentServiceTest {
             assertThat(response.postId()).isEqualTo(post.getId());
             assertThat(response.parentCommentId()).isNull();
             assertThat(response.content()).isEqualTo("힘내세요!");
-            assertThat(response.monster().hp()).isEqualTo(29);
+            MonsterHpLog hpLog = monsterHpLogRepository.findAll().get(0);
+            assertThat(hpLog.getActionType()).isEqualTo(HpActionType.COMMENT);
+            assertThat(hpLog.getHpDelta()).isEqualTo(3);
+            assertThat(hpLog.getBeforeHp()).isEqualTo(30);
+            assertThat(hpLog.getAfterHp()).isEqualTo(27);
+            assertThat(response.monster().hp()).isEqualTo(27);
             assertThat(post.getCommentCount()).isEqualTo(1);
         }
 
@@ -97,6 +106,7 @@ class CommentServiceTest {
 
             // Then
             assertThat(response.parentCommentId()).isEqualTo(parent.getId());
+            assertThat(response.monster().hp()).isEqualTo(27);
         }
 
         @Test

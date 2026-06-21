@@ -113,7 +113,7 @@ class CommentControllerTest {
                             1L,
                             null,
                             "힘내세요!",
-                            new CommentResponse.MonsterInfo(29, 30, "ALIVE"),
+                            new CommentResponse.MonsterInfo(27, 30, "ALIVE"),
                             LocalDateTime.of(2026, 4, 27, 21, 30));
 
             given(commentService.addComment(eq(userId), eq(1L), any(CommentCreateRequest.class)))
@@ -133,7 +133,7 @@ class CommentControllerTest {
                     .andExpect(status().isCreated())
                     .andExpect(jsonPath("$.success").value(true))
                     .andExpect(jsonPath("$.data.commentId").value(1L))
-                    .andExpect(jsonPath("$.data.monster.hp").value(29));
+                    .andExpect(jsonPath("$.data.monster.hp").value(27));
         }
 
         @Test

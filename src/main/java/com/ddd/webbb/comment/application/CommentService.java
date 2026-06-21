@@ -28,7 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class CommentService {
 
-    private static final int COMMENT_HP_DELTA = 1;
+    private static final int COMMENT_HP_DELTA = 3;
 
     private final CommentRepository commentRepository;
     private final CommentQueryRepository commentQueryRepository;
