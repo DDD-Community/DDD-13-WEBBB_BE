@@ -17,7 +17,7 @@ public record MyPostResponse(List<MyPost> posts, Long nextCursor) {
             LocalDateTime createdAt) {
 
         public static MyPost of(Post post, Monster monster) {
-            String content = post.getContent();
+            String content = post.getContent() == null ? "" : post.getContent();
             String preview =
                     content.length() <= CONTENT_PREVIEW_LENGTH
                             ? content

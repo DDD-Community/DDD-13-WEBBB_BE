@@ -1,18 +1,16 @@
 package com.ddd.webbb.mypage.application;
 
 import com.ddd.webbb.comment.domain.Comment;
-import com.ddd.webbb.comment.domain.CommentQueryRepository;
 import com.ddd.webbb.emotion.domain.EmotionType;
 import com.ddd.webbb.global.common.exception.AppException;
 import com.ddd.webbb.global.common.exception.ErrorCode;
-import com.ddd.webbb.monster.application.MonsterService;
 import com.ddd.webbb.monster.domain.Monster;
 import com.ddd.webbb.monster.domain.MonsterStatus;
+import com.ddd.webbb.mypage.domain.MyPageReadRepository;
 import com.ddd.webbb.mypage.interfaces.dto.MonsterStatsResponse;
 import com.ddd.webbb.mypage.interfaces.dto.MyCommentResponse;
 import com.ddd.webbb.mypage.interfaces.dto.MyPostResponse;
 import com.ddd.webbb.post.domain.Post;
-import com.ddd.webbb.post.domain.PostQueryRepository;
 import com.ddd.webbb.user.application.UserService;
 import com.ddd.webbb.user.domain.User;
 import java.util.Collections;
@@ -29,21 +27,21 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class MyPageService {
 
-    private final MonsterService monsterService;
+    private static final int MAX_PAGE_SIZE = 100;
+
     private final UserService userService;
-    private final PostQueryRepository postQueryRepository;
-    private final CommentQueryRepository commentQueryRepository;
+    private final MyPageReadRepository myPageReadRepository;
 
     public MyPostResponse getMyPosts(UUID userPublicId, Long cursor, int size) {
         validateSize(size);
         User user = userService.getUserEntity(userPublicId);
-        List<Post> fetched = postQueryRepository.findByUserWithCursor(user, cursor, size);
+        List<Post> fetched = myPageReadRepository.findMyPosts(user, cursor, size);
         boolean hasNext = fetched.size() > size;
         List<Post> posts = hasNext ? fetched.subList(0, size) : fetched;
 
         List<Long> postIds = posts.stream().map(Post::getId).toList();
         Map<Long, Monster> monsterByPostId =
-                monsterService.findByPostIds(postIds).stream()
+                myPageReadRepository.findMonstersByPostIds(postIds).stream()
                         .collect(Collectors.toMap(m -> m.getPost().getId(), m -> m));
 
         List<MyPostResponse.MyPost> myPosts =
@@ -61,7 +59,7 @@ public class MyPageService {
     public MyCommentResponse getMyComments(UUID userPublicId, Long cursor, int size) {
         validateSize(size);
         User user = userService.getUserEntity(userPublicId);
-        List<Comment> fetched = commentQueryRepository.findByUserWithCursor(user, cursor, size);
+        List<Comment> fetched = myPageReadRepository.findMyComments(user, cursor, size);
         boolean hasNext = fetched.size() > size;
         List<Comment> comments = hasNext ? fetched.subList(0, size) : fetched;
 
@@ -74,7 +72,7 @@ public class MyPageService {
 
     public MonsterStatsResponse getMonsterStats(UUID publicId) {
         User user = userService.getUserEntity(publicId);
-        List<Monster> monsters = monsterService.findByUserId(user.getId());
+        List<Monster> monsters = myPageReadRepository.findMonstersByUserId(user.getId());
 
         int total = monsters.size();
         int defeated =
@@ -102,7 +100,7 @@ public class MyPageService {
     }
 
     private void validateSize(int size) {
-        if (size <= 0) {
+        if (size <= 0 || size > MAX_PAGE_SIZE) {
             throw new AppException(ErrorCode.INVALID_INPUT);
         }
     }
