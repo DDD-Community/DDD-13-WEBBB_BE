@@ -2,15 +2,17 @@ package com.ddd.webbb.post.infrastructure;
 
 import com.ddd.webbb.post.application.PostSearchCondition;
 import com.ddd.webbb.post.domain.Post;
+import com.ddd.webbb.post.domain.PostQueryRepository;
 import com.ddd.webbb.post.domain.QPost;
 import com.ddd.webbb.user.domain.QUser;
+import com.ddd.webbb.user.domain.User;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.util.List;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public class PostRepositoryImpl {
+public class PostRepositoryImpl implements PostQueryRepository {
 
     private final JPAQueryFactory queryFactory;
 
@@ -34,6 +36,20 @@ public class PostRepositoryImpl {
                         cursorCondition(post, cursor),
                         jobRoleCondition(user, condition),
                         careerYearCondition(user, condition))
+                .orderBy(post.id.desc())
+                .limit(size + 1L)
+                .fetch();
+    }
+
+    @Override
+    public List<Post> findByUserWithCursor(User user, Long cursor, int size) {
+        QPost post = QPost.post;
+        QUser queryUser = QUser.user;
+        return queryFactory
+                .selectFrom(post)
+                .join(post.user, queryUser)
+                .fetchJoin()
+                .where(post.user.eq(user), post.isDeleted.isFalse(), cursorCondition(post, cursor))
                 .orderBy(post.id.desc())
                 .limit(size + 1L)
                 .fetch();

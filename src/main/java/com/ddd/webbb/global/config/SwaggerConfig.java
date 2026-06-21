@@ -175,8 +175,8 @@ public class SwaggerConfig {
         put(statuses, ApiImplementationStatus.STUB, "POST", "/api/posts/{postId}/likes");
         put(statuses, ApiImplementationStatus.STUB, "DELETE", "/api/posts/{postId}/likes/me");
 
-        put(statuses, ApiImplementationStatus.STUB, "GET", "/api/me/posts");
-        put(statuses, ApiImplementationStatus.STUB, "GET", "/api/me/comments");
+        put(statuses, ApiImplementationStatus.LIVE, "GET", "/api/me/posts");
+        put(statuses, ApiImplementationStatus.LIVE, "GET", "/api/me/comments");
         put(statuses, ApiImplementationStatus.LIVE, "GET", "/api/me/monster-stats");
 
         return Map.copyOf(statuses);
