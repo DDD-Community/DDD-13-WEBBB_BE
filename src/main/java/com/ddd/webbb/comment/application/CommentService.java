@@ -50,7 +50,7 @@ public class CommentService {
     }
 
     public List<Comment> findCommentsByPost(Long postId) {
-        return commentRepository.findByPost_IdAndIsDeletedFalseOrderByCreatedAtAsc(postId);
+        return commentQueryRepository.findByPostIdWithUser(postId);
     }
 
     public CommentListResponse getComments(Long postId, Long cursor, int size) {

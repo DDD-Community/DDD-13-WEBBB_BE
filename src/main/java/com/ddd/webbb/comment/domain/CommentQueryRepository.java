@@ -8,5 +8,7 @@ public interface CommentQueryRepository {
 
     List<Comment> findRepliesByParentIds(List<Long> parentIds);
 
+    List<Comment> findByPostIdWithUser(Long postId);
+
     List<Comment> findByUserWithCursor(User user, Long cursor, int size);
 }

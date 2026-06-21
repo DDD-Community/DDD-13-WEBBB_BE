@@ -51,6 +51,26 @@ public class CommentRepositoryImpl implements CommentQueryRepository {
     }
 
     @Override
+    public List<Comment> findByPostIdWithUser(Long postId) {
+        QComment comment = QComment.comment;
+        QUser user = QUser.user;
+        QPost post = QPost.post;
+
+        return queryFactory
+                .selectFrom(comment)
+                .join(comment.user, user)
+                .fetchJoin()
+                .join(comment.post, post)
+                .fetchJoin()
+                .where(
+                        comment.post.id.eq(postId),
+                        comment.isDeleted.isFalse(),
+                        post.isDeleted.isFalse())
+                .orderBy(comment.createdAt.asc(), comment.id.asc())
+                .fetch();
+    }
+
+    @Override
     public List<Comment> findByUserWithCursor(User user, Long cursor, int size) {
         QComment comment = QComment.comment;
         QPost post = QPost.post;

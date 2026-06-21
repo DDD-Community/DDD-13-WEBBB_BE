@@ -24,11 +24,13 @@ import com.ddd.webbb.global.common.exception.AppException;
 import com.ddd.webbb.global.common.exception.ErrorCode;
 import com.ddd.webbb.global.config.SecurityConfig;
 import com.ddd.webbb.global.security.CustomUserPrincipal;
-import com.ddd.webbb.post.application.PostSearchCondition;
 import com.ddd.webbb.post.application.PostService;
 import com.ddd.webbb.post.domain.CommentTone;
+import com.ddd.webbb.post.domain.PostOrder;
+import com.ddd.webbb.post.domain.PostSearchCondition;
 import com.ddd.webbb.post.interfaces.dto.PostCreateRequest;
 import com.ddd.webbb.post.interfaces.dto.PostCreateResponse;
+import com.ddd.webbb.post.interfaces.dto.PostDetailResponse;
 import com.ddd.webbb.post.interfaces.dto.PostListResponse;
 import com.ddd.webbb.user.application.UserService;
 import java.time.LocalDateTime;
@@ -62,12 +64,19 @@ class PostControllerTest {
     @MockitoBean private RedisOAuth2AuthorizationRequestRepository authorizationRequestRepository;
 
     @Test
-    void 게시글_목록_조회는_직군과_경력_다중_필터를_서비스에_전달한다() throws Exception {
-        given(postService.getPosts(eq(null), eq(20), any(PostSearchCondition.class)))
+    void 게시글_목록_조회는_정렬과_필터를_서비스에_전달한다() throws Exception {
+        UUID userId = UUID.randomUUID();
+        CustomUserPrincipal principal = new CustomUserPrincipal(userId, "ogu@test.com", "ogu");
+        given(postService.getPosts(eq(userId), eq(null), eq(20), any(PostSearchCondition.class)))
                 .willReturn(new PostListResponse(List.of(), null));
 
         mockMvc.perform(
                         get("/api/posts")
+                                .with(
+                                        authentication(
+                                                new UsernamePasswordAuthenticationToken(
+                                                        principal, null, List.of())))
+                                .param("order", "popular")
                                 .param("jobRole", "PLANNING", "DESIGN")
                                 .param("careerYear", "YEAR_3")
                                 .param("size", "20"))
@@ -77,13 +86,63 @@ class PostControllerTest {
 
         ArgumentCaptor<PostSearchCondition> conditionCaptor =
                 ArgumentCaptor.forClass(PostSearchCondition.class);
-        verify(postService).getPosts(eq(null), eq(20), conditionCaptor.capture());
+        verify(postService).getPosts(eq(userId), eq(null), eq(20), conditionCaptor.capture());
 
         PostSearchCondition condition = conditionCaptor.getValue();
         org.assertj.core.api.Assertions.assertThat(condition.jobRoles())
                 .containsExactly("PLANNING", "DESIGN");
         org.assertj.core.api.Assertions.assertThat(condition.careerYears())
                 .containsExactly("YEAR_3");
+        org.assertj.core.api.Assertions.assertThat(condition.order()).isEqualTo(PostOrder.POPULAR);
+    }
+
+    @Test
+    void 게시글_상세_조회는_좋아요_여부와_댓글_작성자_메타를_반환한다() throws Exception {
+        UUID userId = UUID.randomUUID();
+        UUID commentAuthorId = UUID.randomUUID();
+        CustomUserPrincipal principal = new CustomUserPrincipal(userId, "ogu@test.com", "ogu");
+        PostDetailResponse response =
+                new PostDetailResponse(
+                        1L,
+                        new PostDetailResponse.AuthorInfo(
+                                userId.toString(), "ogu", "DEVELOPMENT", "YEAR_3"),
+                        "면접에서 계속 떨어져서 점점 자신감이 사라져요.",
+                        "COMFORT_ME",
+                        new PostDetailResponse.EmotionInfo("ANXIETY", "불안"),
+                        new PostDetailResponse.MonsterInfo("ANXIETY_MONSTER", 30, 30, "ALIVE"),
+                        3,
+                        true,
+                        1,
+                        List.of(
+                                new PostDetailResponse.CommentInfo(
+                                        10L,
+                                        commentAuthorId.toString(),
+                                        "helper",
+                                        "PLANNING",
+                                        "YEAR_1",
+                                        "힘내세요!",
+                                        2,
+                                        false,
+                                        LocalDateTime.of(2026, 5, 20, 22, 30))),
+                        LocalDateTime.of(2026, 5, 20, 22, 0));
+
+        given(postService.getPostDetail(userId, 1L)).willReturn(response);
+
+        mockMvc.perform(
+                        get("/api/posts/{postId}", 1L)
+                                .with(
+                                        authentication(
+                                                new UsernamePasswordAuthenticationToken(
+                                                        principal, null, List.of()))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.likedByMe").value(true))
+                .andExpect(
+                        jsonPath("$.data.comments[0].authorId").value(commentAuthorId.toString()))
+                .andExpect(jsonPath("$.data.comments[0].jobRole").value("PLANNING"))
+                .andExpect(jsonPath("$.data.comments[0].careerYear").value("YEAR_1"))
+                .andExpect(jsonPath("$.data.comments[0].likedByMe").value(false));
+
+        verify(postService).getPostDetail(userId, 1L);
     }
 
     @Test

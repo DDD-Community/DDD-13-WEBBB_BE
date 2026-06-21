@@ -14,6 +14,7 @@ public record PostListResponse(List<PostSummary> posts, Long nextCursor) {
             String emotionType,
             MonsterInfo monster,
             int likeCount,
+            boolean likedByMe,
             int commentCount,
             LocalDateTime createdAt) {}
 

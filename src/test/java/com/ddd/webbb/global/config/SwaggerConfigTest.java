@@ -41,19 +41,6 @@ class SwaggerConfigTest {
     }
 
     @Test
-    void 스텁_api는_stub_prefix를_붙인다() throws Exception {
-        OperationCustomizer customizer = swaggerConfig.apiStatusOperationCustomizer();
-        HandlerMethod handlerMethod =
-                new HandlerMethod(
-                        new UserController(null), UserController.class.getMethod("getMe"));
-        Operation operation = new Operation().summary("내 정보 조회");
-
-        Operation customized = customizer.customize(operation, handlerMethod);
-
-        assertThat(customized.getSummary()).isEqualTo("[STUB] 내 정보 조회");
-    }
-
-    @Test
     void 테스트_api는_test_prefix를_붙인다() throws Exception {
         OperationCustomizer customizer = swaggerConfig.apiStatusOperationCustomizer();
         HandlerMethod handlerMethod =

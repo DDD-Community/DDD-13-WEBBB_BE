@@ -7,9 +7,11 @@ public enum ErrorCode {
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 회원입니다."),
     POST_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 게시글입니다."),
     COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 댓글입니다."),
+    POST_LIKE_NOT_FOUND(HttpStatus.NOT_FOUND, "좋아요 기록이 존재하지 않습니다."),
     COMMENT_LIKE_NOT_FOUND(HttpStatus.NOT_FOUND, "공감 기록이 존재하지 않습니다."),
     MONSTER_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 몬스터입니다."),
     RESOURCE_NOT_FOUND(HttpStatus.NOT_FOUND, "요청한 리소스를 찾을 수 없습니다."),
+    ALREADY_LIKED_POST(HttpStatus.CONFLICT, "이미 좋아요한 게시글입니다."),
     ALREADY_LIKED_COMMENT(HttpStatus.CONFLICT, "이미 공감한 댓글입니다."),
     DUPLICATED_EMAIL(HttpStatus.CONFLICT, "이미 사용 중인 이메일입니다."),
     EMAIL_ALREADY_EXISTS_LINK_REQUIRED(
