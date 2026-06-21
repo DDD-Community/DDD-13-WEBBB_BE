@@ -2,8 +2,9 @@ package com.ddd.webbb.post.interfaces;
 
 import com.ddd.webbb.global.common.response.ApiResponse;
 import com.ddd.webbb.global.security.CustomUserPrincipal;
-import com.ddd.webbb.post.application.PostSearchCondition;
 import com.ddd.webbb.post.application.PostService;
+import com.ddd.webbb.post.domain.PostOrder;
+import com.ddd.webbb.post.domain.PostSearchCondition;
 import com.ddd.webbb.post.interfaces.dto.PostCreateRequest;
 import com.ddd.webbb.post.interfaces.dto.PostCreateResponse;
 import com.ddd.webbb.post.interfaces.dto.PostDetailResponse;
@@ -163,6 +164,7 @@ public class PostController {
             summary = "게시글 목록 조회",
             description =
                     "게시글 목록을 커서 기반으로 조회합니다. "
+                            + "order로 최신순(LATEST) 또는 인기순(POPULAR)을 선택할 수 있습니다. "
                             + "jobRole과 careerYear는 반복 쿼리 파라미터로 다중 선택을 지원하며, "
                             + "작성자의 현재 프로필 정보(users.job_type, users.career_level)를 기준으로 필터링합니다. "
                             + "같은 필터 그룹 안에서는 OR 조건, 직군과 경력 조건 사이에서는 AND 조건으로 조합합니다. "
@@ -191,6 +193,7 @@ public class PostController {
                                 "emotionType": "ANXIETY",
                                 "monster": { "type": "ANXIETY_MONSTER", "hp": 80, "maxHp": 100, "status": "ALIVE" },
                                 "likeCount": 3,
+                                "likedByMe": true,
                                 "commentCount": 5,
                                 "createdAt": "2026-04-27T21:00:00"
                               }
@@ -203,8 +206,12 @@ public class PostController {
     })
     @GetMapping
     public ApiResponse<PostListResponse> getPosts(
+            @AuthenticationPrincipal CustomUserPrincipal principal,
             @Parameter(description = "커서 (마지막 postId)") @RequestParam(required = false) Long cursor,
             @Parameter(description = "페이지 크기") @RequestParam(defaultValue = "20") int size,
+            @Parameter(description = "정렬 방식. LATEST=최신순, POPULAR=인기순")
+                    @RequestParam(defaultValue = "LATEST")
+                    String order,
             @Parameter(
                             description =
                                     "직군 필터. 반복 파라미터로 다중 선택 가능. "
@@ -225,10 +232,14 @@ public class PostController {
                     List<String> careerYear) {
         return ApiResponse.ok(
                 "게시글 목록을 조회했습니다.",
-                postService.getPosts(cursor, size, new PostSearchCondition(jobRole, careerYear)));
+                postService.getPosts(
+                        principal != null ? principal.publicId() : null,
+                        cursor,
+                        size,
+                        new PostSearchCondition(jobRole, careerYear, PostOrder.from(order))));
     }
 
-    @Operation(summary = "게시글 상세 조회")
+    @Operation(summary = "게시글 상세 조회", description = "게시글 본문과 댓글 목록을 함께 조회합니다.")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "200",
@@ -250,9 +261,20 @@ public class PostController {
                             "emotion": { "type": "ANXIETY", "displayName": "불안" },
                             "monster": { "type": "ANXIETY_MONSTER", "hp": 80, "maxHp": 100, "status": "ALIVE" },
                             "likeCount": 3,
+                            "likedByMe": true,
                             "commentCount": 1,
                             "comments": [
-                              { "commentId": 1, "authorNickname": "anonymous", "content": "힘내세요!", "createdAt": "2026-04-27T21:30:00" }
+                              {
+                                "commentId": 1,
+                                "authorId": "01939b10-7b0f-7c8f-9a2b-222222222222",
+                                "authorNickname": "anonymous",
+                                "jobRole": "PLANNING",
+                                "careerYear": "YEAR_1",
+                                "content": "힘내세요!",
+                                "likeCount": 2,
+                                "likedByMe": false,
+                                "createdAt": "2026-04-27T21:30:00"
+                              }
                             ],
                             "createdAt": "2026-04-27T21:00:00"
                           },
@@ -261,8 +283,11 @@ public class PostController {
                         """)))
     })
     @GetMapping("/{postId}")
-    public ApiResponse<PostDetailResponse> getPost(@PathVariable Long postId) {
-        return ApiResponse.ok("게시글을 조회했습니다.", postService.getPostDetail(postId));
+    public ApiResponse<PostDetailResponse> getPost(
+            @AuthenticationPrincipal CustomUserPrincipal principal, @PathVariable Long postId) {
+        return ApiResponse.ok(
+                "게시글을 조회했습니다.",
+                postService.getPostDetail(principal != null ? principal.publicId() : null, postId));
     }
 
     @Operation(summary = "게시글 수정")

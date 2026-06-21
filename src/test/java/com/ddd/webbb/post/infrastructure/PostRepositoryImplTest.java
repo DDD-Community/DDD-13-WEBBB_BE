@@ -4,9 +4,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.ddd.webbb.category.domain.BoardCategory;
 import com.ddd.webbb.global.config.JpaConfig;
-import com.ddd.webbb.post.application.PostSearchCondition;
 import com.ddd.webbb.post.domain.CommentTone;
 import com.ddd.webbb.post.domain.Post;
+import com.ddd.webbb.post.domain.PostOrder;
+import com.ddd.webbb.post.domain.PostSearchCondition;
 import com.ddd.webbb.user.domain.User;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -37,7 +38,10 @@ class PostRepositoryImplTest {
                 postRepositoryImpl.findByCursor(
                         null,
                         10,
-                        new PostSearchCondition(List.of("PLANNING", "DESIGN"), List.of("YEAR_3")));
+                        new PostSearchCondition(
+                                List.of("PLANNING", "DESIGN"),
+                                List.of("YEAR_3"),
+                                PostOrder.LATEST));
 
         assertThat(posts)
                 .extracting(Post::getId)
@@ -56,7 +60,7 @@ class PostRepositoryImplTest {
                 postRepositoryImpl.findByCursor(
                         second.getId(),
                         10,
-                        new PostSearchCondition(List.of("PLANNING"), List.of()));
+                        new PostSearchCondition(List.of("PLANNING"), List.of(), PostOrder.LATEST));
 
         assertThat(posts).extracting(Post::getId).containsExactly(first.getId());
     }
@@ -71,6 +75,53 @@ class PostRepositoryImplTest {
         List<Post> posts = postRepositoryImpl.findByCursor(null, 10, PostSearchCondition.empty());
 
         assertThat(posts).extracting(Post::getId).containsExactly(second.getId(), first.getId());
+    }
+
+    @Test
+    void 인기순으로_좋아요수와_id_기준_정렬한다() {
+        BoardCategory category = persistCategory();
+        Post low = persistPost("low@test.com", "낮음", "PLANNING", "YEAR_1", category);
+        Post middle = persistPost("middle@test.com", "중간", "DESIGN", "YEAR_3", category);
+        Post high = persistPost("high@test.com", "높음", "DEVELOPMENT", "YEAR_5", category);
+        incrementLikes(low, 1);
+        incrementLikes(middle, 3);
+        incrementLikes(high, 3);
+        flushAndClear();
+
+        List<Post> posts =
+                postRepositoryImpl.findByCursor(
+                        null,
+                        null,
+                        10,
+                        new PostSearchCondition(List.of(), List.of(), PostOrder.POPULAR));
+
+        assertThat(posts)
+                .extracting(Post::getId)
+                .containsExactly(high.getId(), middle.getId(), low.getId());
+    }
+
+    @Test
+    void 인기순_커서는_좋아요수와_id를_함께_사용한다() {
+        BoardCategory category = persistCategory();
+        Post highest = persistPost("highest@test.com", "최상", "PLANNING", "YEAR_1", category);
+        Post middleOlder = persistPost("middle-old@test.com", "중간옛날", "DESIGN", "YEAR_3", category);
+        Post middleNewer =
+                persistPost("middle-new@test.com", "중간최신", "DEVELOPMENT", "YEAR_5", category);
+        Post low = persistPost("low2@test.com", "낮음2", "MARKETING", "YEAR_2", category);
+        incrementLikes(highest, 5);
+        incrementLikes(middleOlder, 3);
+        incrementLikes(middleNewer, 3);
+        incrementLikes(low, 1);
+        flushAndClear();
+
+        List<Post> posts =
+                postRepositoryImpl.findByCursor(
+                        middleNewer.getId(),
+                        3,
+                        10,
+                        new PostSearchCondition(List.of(), List.of(), PostOrder.POPULAR));
+
+        assertThat(posts).extracting(Post::getId).containsExactly(middleOlder.getId(), low.getId());
     }
 
     private BoardCategory persistCategory() {
@@ -97,5 +148,11 @@ class PostRepositoryImplTest {
     private void flushAndClear() {
         entityManager.flush();
         entityManager.clear();
+    }
+
+    private void incrementLikes(Post post, int count) {
+        for (int i = 0; i < count; i++) {
+            post.incrementLikeCount();
+        }
     }
 }

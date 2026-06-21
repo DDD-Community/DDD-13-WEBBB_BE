@@ -59,10 +59,8 @@ public class UserService {
 
     @Transactional
     public UserResponse updateUser(UUID publicId, UserUpdateRequest request) {
-        User user =
-                userRepository
-                        .findByPublicIdAndDeletedAtIsNull(publicId)
-                        .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+        User user = getUserEntity(publicId);
+        validateNicknameForUpdate(user, request.nickname());
         user.update(
                 request.nickname(),
                 request.jobType() != null ? request.jobType().name() : null,
@@ -71,11 +69,25 @@ public class UserService {
     }
 
     @Transactional
+    public User updateProfile(UUID publicId, String nickname, String jobType, String careerLevel) {
+        User user = getUserEntity(publicId);
+        validateNicknameForUpdate(user, nickname);
+        user.update(nickname, jobType, careerLevel);
+        return user;
+    }
+
+    @Transactional
     public void withdrawUser(UUID publicId) {
-        User user =
-                userRepository
-                        .findByPublicIdAndDeletedAtIsNull(publicId)
-                        .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+        User user = getUserEntity(publicId);
         user.withdraw();
+    }
+
+    private void validateNicknameForUpdate(User user, String nickname) {
+        if (nickname == null || nickname.equals(user.getNickname())) {
+            return;
+        }
+        if (userRepository.existsByNicknameAndDeletedAtIsNull(nickname)) {
+            throw new AppException(ErrorCode.DUPLICATED_NICKNAME);
+        }
     }
 }

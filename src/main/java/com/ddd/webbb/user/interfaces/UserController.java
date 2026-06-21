@@ -1,6 +1,7 @@
 package com.ddd.webbb.user.interfaces;
 
 import com.ddd.webbb.global.common.response.ApiResponse;
+import com.ddd.webbb.global.security.CustomUserPrincipal;
 import com.ddd.webbb.user.application.UserService;
 import com.ddd.webbb.user.interfaces.dto.NicknameCheckResponse;
 import com.ddd.webbb.user.interfaces.dto.UserCreateRequest;
@@ -19,10 +20,10 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
-import java.time.LocalDateTime;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -350,17 +351,9 @@ public class UserController {
                         """)))
     })
     @GetMapping("/me")
-    public ApiResponse<UserMeResponse> getMe() {
-        // TODO: 실제 서비스 연동
-        return ApiResponse.ok(
-                new UserMeResponse(
-                        UUID.fromString("550e8400-e29b-41d4-a716-446655440000"),
-                        "test@test.com",
-                        "ogu",
-                        "DEVELOPMENT",
-                        "YEAR_3",
-                        true,
-                        LocalDateTime.of(2026, 5, 3, 12, 0)));
+    public ApiResponse<UserMeResponse> getMe(
+            @AuthenticationPrincipal CustomUserPrincipal principal) {
+        return ApiResponse.ok(UserMeResponse.from(userService.getUserEntity(principal.publicId())));
     }
 
     @Operation(
@@ -417,16 +410,16 @@ public class UserController {
     })
     @PatchMapping("/me/profile")
     public ApiResponse<UserMeResponse> updateMyProfile(
+            @AuthenticationPrincipal CustomUserPrincipal principal,
             @RequestBody @Valid UserProfileUpdateRequest request) {
-        // TODO: 실제 서비스 연동
         return ApiResponse.ok(
-                new UserMeResponse(
-                        UUID.fromString("550e8400-e29b-41d4-a716-446655440000"),
-                        "test@test.com",
-                        request.nickname() != null ? request.nickname() : "ogu",
-                        request.jobType() != null ? request.jobType().name() : "DEVELOPMENT",
-                        request.careerLevel() != null ? request.careerLevel().name() : "YEAR_3",
-                        true,
-                        LocalDateTime.of(2026, 5, 3, 12, 0)));
+                UserMeResponse.from(
+                        userService.updateProfile(
+                                principal.publicId(),
+                                request.nickname(),
+                                request.jobType() != null ? request.jobType().name() : null,
+                                request.careerLevel() != null
+                                        ? request.careerLevel().name()
+                                        : null)));
     }
 }

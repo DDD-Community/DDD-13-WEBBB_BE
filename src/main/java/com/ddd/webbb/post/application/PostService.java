@@ -7,6 +7,7 @@ import com.ddd.webbb.category.domain.BoardCategory;
 import com.ddd.webbb.category.domain.BoardCategoryRepository;
 import com.ddd.webbb.comment.application.CommentService;
 import com.ddd.webbb.comment.domain.Comment;
+import com.ddd.webbb.comment.domain.CommentLikeRepository;
 import com.ddd.webbb.emotion.application.PostEmotionService;
 import com.ddd.webbb.emotion.domain.EmotionType;
 import com.ddd.webbb.emotion.domain.PostEmotion;
@@ -15,8 +16,11 @@ import com.ddd.webbb.global.common.exception.ErrorCode;
 import com.ddd.webbb.monster.application.MonsterService;
 import com.ddd.webbb.monster.domain.Monster;
 import com.ddd.webbb.post.domain.Post;
+import com.ddd.webbb.post.domain.PostLikeRepository;
+import com.ddd.webbb.post.domain.PostOrder;
+import com.ddd.webbb.post.domain.PostQueryRepository;
 import com.ddd.webbb.post.domain.PostRepository;
-import com.ddd.webbb.post.infrastructure.PostRepositoryImpl;
+import com.ddd.webbb.post.domain.PostSearchCondition;
 import com.ddd.webbb.post.interfaces.dto.PostCreateRequest;
 import com.ddd.webbb.post.interfaces.dto.PostCreateResponse;
 import com.ddd.webbb.post.interfaces.dto.PostDetailResponse;
@@ -28,6 +32,7 @@ import com.ddd.webbb.user.application.UserService;
 import com.ddd.webbb.user.domain.User;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
@@ -41,31 +46,37 @@ public class PostService {
     private static final int CONTENT_PREVIEW_LENGTH = 50;
 
     private final PostRepository postRepository;
-    private final PostRepositoryImpl postRepositoryImpl;
+    private final PostQueryRepository postQueryRepository;
+    private final PostLikeRepository postLikeRepository;
     private final BoardCategoryRepository boardCategoryRepository;
     private final UserService userService;
     private final AiAnalysisService aiAnalysisService;
     private final MonsterService monsterService;
     private final PostEmotionService postEmotionService;
     private final CommentService commentService;
+    private final CommentLikeRepository commentLikeRepository;
 
     public PostService(
             PostRepository postRepository,
-            PostRepositoryImpl postRepositoryImpl,
+            PostQueryRepository postQueryRepository,
+            PostLikeRepository postLikeRepository,
             BoardCategoryRepository boardCategoryRepository,
             UserService userService,
             AiAnalysisService aiAnalysisService,
             MonsterService monsterService,
             PostEmotionService postEmotionService,
-            CommentService commentService) {
+            CommentService commentService,
+            CommentLikeRepository commentLikeRepository) {
         this.postRepository = postRepository;
-        this.postRepositoryImpl = postRepositoryImpl;
+        this.postQueryRepository = postQueryRepository;
+        this.postLikeRepository = postLikeRepository;
         this.boardCategoryRepository = boardCategoryRepository;
         this.userService = userService;
         this.aiAnalysisService = aiAnalysisService;
         this.monsterService = monsterService;
         this.postEmotionService = postEmotionService;
         this.commentService = commentService;
+        this.commentLikeRepository = commentLikeRepository;
     }
 
     public Post getPostEntity(Long postId) {
@@ -95,12 +106,21 @@ public class PostService {
 
     @Transactional(readOnly = true)
     public PostListResponse getPosts(Long cursor, int size) {
-        return getPosts(cursor, size, PostSearchCondition.empty());
+        return getPosts(null, cursor, size, PostSearchCondition.empty());
     }
 
     @Transactional(readOnly = true)
     public PostListResponse getPosts(Long cursor, int size, PostSearchCondition condition) {
-        List<Post> fetched = postRepositoryImpl.findByCursor(cursor, size, condition);
+        return getPosts(null, cursor, size, condition);
+    }
+
+    @Transactional(readOnly = true)
+    public PostListResponse getPosts(
+            UUID userPublicId, Long cursor, int size, PostSearchCondition condition) {
+        User currentUser = getCurrentUserOrNull(userPublicId);
+        Integer cursorLikeCount = resolveCursorLikeCount(cursor, condition);
+        List<Post> fetched =
+                postQueryRepository.findByCursor(cursor, cursorLikeCount, size, condition);
         boolean hasNext = fetched.size() > size;
         List<Post> posts = hasNext ? fetched.subList(0, size) : fetched;
 
@@ -111,6 +131,7 @@ public class PostService {
         Map<Long, Monster> monsterMap =
                 monsterService.findByPostIds(postIds).stream()
                         .collect(Collectors.toMap(m -> m.getPost().getId(), m -> m));
+        Set<Long> likedPostIds = findLikedPostIds(postIds, currentUser);
 
         List<PostSummary> summaries =
                 posts.stream()
@@ -119,14 +140,19 @@ public class PostService {
                                         toPostSummary(
                                                 post,
                                                 emotionMap.get(post.getId()),
-                                                monsterMap.get(post.getId())))
+                                                monsterMap.get(post.getId()),
+                                                likedPostIds.contains(post.getId())))
                         .toList();
 
-        Long nextCursor = hasNext ? posts.get(posts.size() - 1).getId() : null;
+        Long nextCursor = hasNext && !posts.isEmpty() ? posts.get(posts.size() - 1).getId() : null;
         return new PostListResponse(summaries, nextCursor);
     }
 
     public PostDetailResponse getPostDetail(Long postId) {
+        return getPostDetail(null, postId);
+    }
+
+    public PostDetailResponse getPostDetail(UUID userPublicId, Long postId) {
         Post post =
                 postRepository
                         .findByIdAndIsDeletedFalse(postId)
@@ -136,6 +162,9 @@ public class PostService {
         PostEmotion postEmotion = postEmotionService.findByPost(postId);
         Monster monster = monsterService.findByPost(postId);
         List<Comment> comments = commentService.findCommentsByPost(postId);
+        User currentUser = getCurrentUserOrNull(userPublicId);
+        Set<Long> likedCommentIds =
+                findLikedCommentIds(comments.stream().map(Comment::getId).toList(), currentUser);
 
         EmotionType emotionType = postEmotion.getEmotionType();
         return new PostDetailResponse(
@@ -155,14 +184,20 @@ public class PostService {
                         monster.getMaxHp(),
                         monster.getStatus().name()),
                 post.getLikeCount(),
+                currentUser != null && postLikeRepository.existsByPostAndUser(post, currentUser),
                 post.getCommentCount(),
                 comments.stream()
                         .map(
                                 c ->
                                         new PostDetailResponse.CommentInfo(
                                                 c.getId(),
+                                                toPublicId(c.getUser()),
                                                 c.getUser().getNickname(),
+                                                c.getUser().getJobType(),
+                                                c.getUser().getCareerLevel(),
                                                 c.getContent(),
+                                                c.getLikeCount(),
+                                                likedCommentIds.contains(c.getId()),
                                                 c.getCreatedAt()))
                         .toList(),
                 post.getCreatedAt());
@@ -209,7 +244,8 @@ public class PostService {
         post.delete();
     }
 
-    private PostSummary toPostSummary(Post post, PostEmotion postEmotion, Monster monster) {
+    private PostSummary toPostSummary(
+            Post post, PostEmotion postEmotion, Monster monster, boolean likedByMe) {
         EmotionType emotionType = postEmotion != null ? postEmotion.getEmotionType() : null;
         String emotionTypeName = emotionType != null ? emotionType.name() : null;
         MonsterInfo monsterInfo =
@@ -233,8 +269,45 @@ public class PostService {
                 emotionTypeName,
                 monsterInfo,
                 post.getLikeCount(),
+                likedByMe,
                 post.getCommentCount(),
                 post.getCreatedAt());
+    }
+
+    private User getCurrentUserOrNull(UUID userPublicId) {
+        return userPublicId == null ? null : userService.getUserEntity(userPublicId);
+    }
+
+    private Integer resolveCursorLikeCount(Long cursor, PostSearchCondition condition) {
+        if (cursor == null || condition.order() != PostOrder.POPULAR) {
+            return null;
+        }
+        return getPostEntity(cursor).getLikeCount();
+    }
+
+    private Set<Long> findLikedPostIds(List<Long> postIds, User user) {
+        if (user == null || postIds.isEmpty()) {
+            return Set.of();
+        }
+
+        return postLikeRepository.findByPost_IdInAndUser(postIds, user).stream()
+                .map(postLike -> postLike.getPost().getId())
+                .collect(Collectors.toSet());
+    }
+
+    private Set<Long> findLikedCommentIds(List<Long> commentIds, User user) {
+        if (user == null || commentIds.isEmpty()) {
+            return Set.of();
+        }
+
+        return commentLikeRepository.findByComment_IdInAndUser(commentIds, user).stream()
+                .map(commentLike -> commentLike.getComment().getId())
+                .collect(Collectors.toSet());
+    }
+
+    private String toPublicId(User user) {
+        UUID publicId = user.getPublicId();
+        return publicId != null ? publicId.toString() : null;
     }
 
     private BoardCategory resolveDefaultCategory() {

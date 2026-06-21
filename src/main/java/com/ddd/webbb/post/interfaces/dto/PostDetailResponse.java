@@ -11,6 +11,7 @@ public record PostDetailResponse(
         EmotionInfo emotion,
         MonsterInfo monster,
         int likeCount,
+        boolean likedByMe,
         int commentCount,
         List<CommentInfo> comments,
         LocalDateTime createdAt) {
@@ -22,5 +23,13 @@ public record PostDetailResponse(
     public record MonsterInfo(String type, int hp, int maxHp, String status) {}
 
     public record CommentInfo(
-            Long commentId, String authorNickname, String content, LocalDateTime createdAt) {}
+            Long commentId,
+            String authorId,
+            String authorNickname,
+            String jobRole,
+            String careerYear,
+            String content,
+            int likeCount,
+            boolean likedByMe,
+            LocalDateTime createdAt) {}
 }
