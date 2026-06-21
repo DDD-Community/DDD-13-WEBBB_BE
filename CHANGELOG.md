@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.13.0](https://github.com/DDD-Community/DDD-13-WEBBB_BE/compare/v1.12.1...v1.13.0) (2026-06-21)
+
+
+### Features
+
+* **mypage:** 내 글/내 댓글 조회 API 구현 ([cc9952b](https://github.com/DDD-Community/DDD-13-WEBBB_BE/commit/cc9952b435ac7a8c032c3e1b1b5b328fde4f636f))
+* 마이페이지 내 글/내 댓글 조회 API 구현 ([6020757](https://github.com/DDD-Community/DDD-13-WEBBB_BE/commit/6020757c92a75cf9b8814e8c865a36d67aff002b))
+* 스텁 API 실구현 및 게시글 조회 응답 보강 ([8df0d5e](https://github.com/DDD-Community/DDD-13-WEBBB_BE/commit/8df0d5eb144336e06905f76f4557ff125010466b))
+
+
+### Bug Fixes
+
+* DDD 계층 위반 수정, 머지 충돌 해결, STUB 테스트 제거 ([1bdc132](https://github.com/DDD-Community/DDD-13-WEBBB_BE/commit/1bdc1328044a4189f6274fbb8a468899fe535505))
+* **mypage:** 리뷰 코멘트 반영 ([9547f63](https://github.com/DDD-Community/DDD-13-WEBBB_BE/commit/9547f639c3b0f1bec4b437a8be6552025188bde0))
+
 ## [1.12.1](https://github.com/DDD-Community/DDD-13-WEBBB_BE/compare/v1.12.0...v1.12.1) (2026-06-11)
 
 
