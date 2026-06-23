@@ -177,6 +177,7 @@ public class SwaggerConfig {
 
         put(statuses, ApiImplementationStatus.LIVE, "GET", "/api/me/posts");
         put(statuses, ApiImplementationStatus.LIVE, "GET", "/api/me/comments");
+        put(statuses, ApiImplementationStatus.LIVE, "GET", "/api/me/liked-posts");
         put(statuses, ApiImplementationStatus.LIVE, "GET", "/api/me/monster-stats");
 
         put(statuses, ApiImplementationStatus.LIVE, "GET", "/api/notifications/subscribe");

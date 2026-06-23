@@ -9,8 +9,10 @@ import com.ddd.webbb.monster.domain.MonsterStatus;
 import com.ddd.webbb.mypage.domain.MyPageReadRepository;
 import com.ddd.webbb.mypage.interfaces.dto.MonsterStatsResponse;
 import com.ddd.webbb.mypage.interfaces.dto.MyCommentResponse;
+import com.ddd.webbb.mypage.interfaces.dto.MyLikedPostResponse;
 import com.ddd.webbb.mypage.interfaces.dto.MyPostResponse;
 import com.ddd.webbb.post.domain.Post;
+import com.ddd.webbb.post.domain.PostLike;
 import com.ddd.webbb.user.application.UserService;
 import com.ddd.webbb.user.domain.User;
 import java.util.Collections;
@@ -54,6 +56,32 @@ public class MyPageService {
 
         Long nextCursor = hasNext ? posts.get(posts.size() - 1).getId() : null;
         return new MyPostResponse(myPosts, nextCursor);
+    }
+
+    public MyLikedPostResponse getLikedPosts(UUID userPublicId, Long cursor, int size) {
+        validateSize(size);
+        User user = userService.getUserEntity(userPublicId);
+        List<PostLike> fetched = myPageReadRepository.findLikedPosts(user, cursor, size);
+
+        boolean hasNext = fetched.size() > size;
+        List<PostLike> likes = hasNext ? fetched.subList(0, size) : fetched;
+
+        List<Long> postIds = likes.stream().map(pl -> pl.getPost().getId()).toList();
+        Map<Long, Monster> monsterByPostId =
+                myPageReadRepository.findMonstersByPostIds(postIds).stream()
+                        .collect(Collectors.toMap(m -> m.getPost().getId(), m -> m));
+
+        List<MyLikedPostResponse.LikedPost> posts =
+                likes.stream()
+                        .map(
+                                pl ->
+                                        MyLikedPostResponse.LikedPost.of(
+                                                pl.getPost(),
+                                                monsterByPostId.get(pl.getPost().getId())))
+                        .toList();
+
+        Long nextCursor = hasNext ? likes.get(likes.size() - 1).getId() : null;
+        return new MyLikedPostResponse(posts, nextCursor);
     }
 
     public MyCommentResponse getMyComments(UUID userPublicId, Long cursor, int size) {
