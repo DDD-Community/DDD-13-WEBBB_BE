@@ -5,6 +5,7 @@ import com.ddd.webbb.global.security.CustomUserPrincipal;
 import com.ddd.webbb.mypage.application.MyPageService;
 import com.ddd.webbb.mypage.interfaces.dto.MonsterStatsResponse;
 import com.ddd.webbb.mypage.interfaces.dto.MyCommentResponse;
+import com.ddd.webbb.mypage.interfaces.dto.MyLikedPostResponse;
 import com.ddd.webbb.mypage.interfaces.dto.MyPostResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -27,7 +28,24 @@ public class MyPageController {
 
     private final MyPageService myPageService;
 
-    @Operation(summary = "내가 작성한 게시글 목록 조회")
+    @Operation(
+            summary = "내가 작성한 게시글 목록 조회",
+            description =
+                    "로그인한 사용자가 작성한 게시글 목록을 최신순으로 반환합니다.\n\n"
+                            + "**emotionType** — 게시글에 생성된 몬스터의 감정 유형\n"
+                            + "- `ANXIETY`: 불안\n"
+                            + "- `LETHARGY`: 무기력\n"
+                            + "- `LONELINESS`: 외로움\n"
+                            + "- `SELF_DEPRECATION`: 자기비하\n"
+                            + "- `IRRITATION`: 짜증\n"
+                            + "- `null`: 몬스터가 아직 생성되지 않은 경우\n\n"
+                            + "**monsterStatus** — 몬스터의 현재 상태\n"
+                            + "- `ALIVE`: 몬스터가 살아있음 (HP > 0)\n"
+                            + "- `DEAD`: 공감·댓글로 HP가 0이 되어 처치됨\n"
+                            + "- `null`: 몬스터가 아직 생성되지 않은 경우\n\n"
+                            + "**커서 페이지네이션**: `nextCursor`가 null이면 마지막 페이지입니다.\n"
+                            + "다음 페이지 조회 시 `cursor` 파라미터에 `nextCursor` 값을 전달하세요.\n\n"
+                            + "인증 필요: Authorization 헤더에 Bearer Access Token을 포함해야 합니다.")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "200",
@@ -64,6 +82,72 @@ public class MyPageController {
             @Parameter(description = "페이지 크기") @RequestParam(defaultValue = "20") int size) {
         MyPostResponse response = myPageService.getMyPosts(principal.publicId(), cursor, size);
         return ApiResponse.ok("내 게시글 목록을 조회했습니다.", response);
+    }
+
+    @Operation(
+            summary = "내가 공감한 게시글 목록 조회",
+            description =
+                    "로그인한 사용자가 공감(좋아요)한 게시글 목록을 최근 공감 순으로 반환합니다.\n\n"
+                            + "**emotionType** — 게시글에 생성된 몬스터의 감정 유형\n"
+                            + "- `ANXIETY`: 불안\n"
+                            + "- `LETHARGY`: 무기력\n"
+                            + "- `LONELINESS`: 외로움\n"
+                            + "- `SELF_DEPRECATION`: 자기비하\n"
+                            + "- `IRRITATION`: 짜증\n"
+                            + "- `null`: 몬스터가 아직 생성되지 않은 경우\n\n"
+                            + "**monsterStatus** — 몬스터의 현재 상태\n"
+                            + "- `ALIVE`: 몬스터가 살아있음 (HP > 0)\n"
+                            + "- `DEAD`: 공감·댓글로 HP가 0이 되어 처치됨\n"
+                            + "- `null`: 몬스터가 아직 생성되지 않은 경우\n\n"
+                            + "**커서 페이지네이션**: `nextCursor`가 null이면 마지막 페이지입니다.\n"
+                            + "다음 페이지 조회 시 `cursor` 파라미터에 `nextCursor` 값을 전달하세요.\n\n"
+                            + "인증 필요: Authorization 헤더에 Bearer Access Token을 포함해야 합니다.")
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "200",
+                description = "공감한 게시글 목록 조회 성공",
+                content =
+                        @Content(
+                                examples =
+                                        @ExampleObject(
+                                                value =
+                                                        """
+                        {
+                          "success": true,
+                          "message": "공감한 게시글 목록을 조회했습니다.",
+                          "data": {
+                            "posts": [
+                              {
+                                "postId": 1,
+                                "contentPreview": "이직 준비 시작하는 게 진짜 힘들다...",
+                                "authorNickname": "오오",
+                                "authorJobType": "개발",
+                                "authorCareerLevel": "1년차",
+                                "emotionType": "LETHARGY",
+                                "monsterStatus": "ALIVE",
+                                "currentHp": 20,
+                                "maxHp": 30,
+                                "likeCount": 4,
+                                "commentCount": 4,
+                                "commentTone": "COMFORT_ME",
+                                "createdAt": "2026-06-22T12:00:00"
+                              }
+                            ],
+                            "nextCursor": 42
+                          },
+                          "timestamp": "2026-06-23T10:00:00"
+                        }
+                        """)))
+    })
+    @GetMapping("/liked-posts")
+    public ApiResponse<MyLikedPostResponse> getMyLikedPosts(
+            @AuthenticationPrincipal CustomUserPrincipal principal,
+            @Parameter(description = "커서 (마지막 postLikeId)") @RequestParam(required = false)
+                    Long cursor,
+            @Parameter(description = "페이지 크기") @RequestParam(defaultValue = "20") int size) {
+        MyLikedPostResponse response =
+                myPageService.getLikedPosts(principal.publicId(), cursor, size);
+        return ApiResponse.ok("공감한 게시글 목록을 조회했습니다.", response);
     }
 
     @Operation(summary = "내가 작성한 댓글 목록 조회")

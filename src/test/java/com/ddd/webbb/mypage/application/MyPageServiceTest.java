@@ -15,9 +15,11 @@ import com.ddd.webbb.monster.domain.Monster;
 import com.ddd.webbb.mypage.domain.MyPageReadRepository;
 import com.ddd.webbb.mypage.interfaces.dto.MonsterStatsResponse;
 import com.ddd.webbb.mypage.interfaces.dto.MyCommentResponse;
+import com.ddd.webbb.mypage.interfaces.dto.MyLikedPostResponse;
 import com.ddd.webbb.mypage.interfaces.dto.MyPostResponse;
 import com.ddd.webbb.post.domain.CommentTone;
 import com.ddd.webbb.post.domain.Post;
+import com.ddd.webbb.post.domain.PostLike;
 import com.ddd.webbb.user.application.UserService;
 import com.ddd.webbb.user.domain.User;
 import java.time.LocalDateTime;
@@ -125,6 +127,104 @@ class MyPageServiceTest {
         assertThat(response.comments()).hasSize(1);
         assertThat(response.comments().get(0).commentId()).isEqualTo(2L);
         assertThat(response.nextCursor()).isEqualTo(2L);
+    }
+
+    @Test
+    @DisplayName("공감한 글 목록은 공감 순(postLike.id 내림차순)으로 nextCursor를 계산한다")
+    void likedPosts_returnsNextCursorWhenHasNext() {
+        Post postA =
+                Post.create(user, post.getCategory(), "titleA", "첫 번째 글", CommentTone.COMFORT_ME);
+        ReflectionTestUtils.setField(postA, "id", 10L);
+        ReflectionTestUtils.setField(postA, "createdAt", LocalDateTime.of(2026, 6, 20, 10, 0));
+
+        Post postB =
+                Post.create(user, post.getCategory(), "titleB", "두 번째 글", CommentTone.VENT_WITH_ME);
+        ReflectionTestUtils.setField(postB, "id", 11L);
+        ReflectionTestUtils.setField(postB, "createdAt", LocalDateTime.of(2026, 6, 21, 10, 0));
+
+        PostLike likeA = PostLike.create(postA, user);
+        ReflectionTestUtils.setField(likeA, "id", 2L);
+
+        PostLike likeB = PostLike.create(postB, user);
+        ReflectionTestUtils.setField(likeB, "id", 1L);
+
+        Monster monsterA = Monster.create(postA, EmotionType.LETHARGY, 30);
+        ReflectionTestUtils.setField(monsterA, "hp", 20);
+
+        given(userService.getUserEntity(any(UUID.class))).willReturn(user);
+        given(myPageReadRepository.findLikedPosts(user, null, 1)).willReturn(List.of(likeA, likeB));
+        given(myPageReadRepository.findMonstersByPostIds(List.of(10L)))
+                .willReturn(List.of(monsterA));
+
+        MyLikedPostResponse response = myPageService.getLikedPosts(UUID.randomUUID(), null, 1);
+
+        assertThat(response.posts()).hasSize(1);
+        assertThat(response.posts().get(0).postId()).isEqualTo(10L);
+        assertThat(response.nextCursor()).isEqualTo(2L);
+    }
+
+    @Test
+    @DisplayName("공감한 글이 마지막 페이지면 nextCursor가 null이다")
+    void likedPosts_returnsNullCursorOnLastPage() {
+        Post postA =
+                Post.create(user, post.getCategory(), "titleA", "유일한 글", CommentTone.COMFORT_ME);
+        ReflectionTestUtils.setField(postA, "id", 10L);
+        ReflectionTestUtils.setField(postA, "createdAt", LocalDateTime.of(2026, 6, 20, 10, 0));
+
+        PostLike likeA = PostLike.create(postA, user);
+        ReflectionTestUtils.setField(likeA, "id", 1L);
+
+        given(userService.getUserEntity(any(UUID.class))).willReturn(user);
+        given(myPageReadRepository.findLikedPosts(user, null, 20)).willReturn(List.of(likeA));
+        given(myPageReadRepository.findMonstersByPostIds(List.of(10L))).willReturn(List.of());
+
+        MyLikedPostResponse response = myPageService.getLikedPosts(UUID.randomUUID(), null, 20);
+
+        assertThat(response.posts()).hasSize(1);
+        assertThat(response.nextCursor()).isNull();
+    }
+
+    @Test
+    @DisplayName("공감한 글 DTO에 작성자 정보와 몬스터 HP가 포함된다")
+    void likedPosts_includesAuthorAndMonsterFields() {
+        ReflectionTestUtils.setField(user, "nickname", "오오");
+        ReflectionTestUtils.setField(user, "jobType", "개발");
+        ReflectionTestUtils.setField(user, "careerLevel", "1년차");
+
+        Post postA =
+                Post.create(
+                        user,
+                        post.getCategory(),
+                        "titleA",
+                        "내용 미리보기 테스트 글입니다",
+                        CommentTone.COMFORT_ME);
+        ReflectionTestUtils.setField(postA, "id", 10L);
+        ReflectionTestUtils.setField(postA, "likeCount", 4);
+        ReflectionTestUtils.setField(postA, "commentCount", 3);
+        ReflectionTestUtils.setField(postA, "createdAt", LocalDateTime.of(2026, 6, 20, 10, 0));
+
+        PostLike likeA = PostLike.create(postA, user);
+        ReflectionTestUtils.setField(likeA, "id", 1L);
+
+        Monster monster = Monster.create(postA, EmotionType.LETHARGY, 30);
+        ReflectionTestUtils.setField(monster, "hp", 20);
+
+        given(userService.getUserEntity(any(UUID.class))).willReturn(user);
+        given(myPageReadRepository.findLikedPosts(user, null, 20)).willReturn(List.of(likeA));
+        given(myPageReadRepository.findMonstersByPostIds(List.of(10L)))
+                .willReturn(List.of(monster));
+
+        MyLikedPostResponse response = myPageService.getLikedPosts(UUID.randomUUID(), null, 20);
+
+        MyLikedPostResponse.LikedPost likedPost = response.posts().get(0);
+        assertThat(likedPost.authorNickname()).isEqualTo("오오");
+        assertThat(likedPost.authorJobType()).isEqualTo("개발");
+        assertThat(likedPost.authorCareerLevel()).isEqualTo("1년차");
+        assertThat(likedPost.emotionType()).isEqualTo("LETHARGY");
+        assertThat(likedPost.currentHp()).isEqualTo(20);
+        assertThat(likedPost.maxHp()).isEqualTo(30);
+        assertThat(likedPost.likeCount()).isEqualTo(4);
+        assertThat(likedPost.commentTone()).isEqualTo("COMFORT_ME");
     }
 
     @Test
