@@ -1,172 +1,115 @@
-# WEBBB BE
+# WEBBB BE (오구오구)
 
-## 로컬 개발 환경 설정
+## 🤩 감정을 나누고 함께 이겨내는 서비스, 오구오구를 소개합니다!
 
-### 사전 요구사항
+오구오구는 혼자 삼키기 어려운 고민과 감정을 익명으로 남기고,<br>
+AI 감정 분석과 커뮤니티 반응을 통해 서로의 마음을 가볍게 만들어가는 서비스예요.
 
-- Java 21+
-- Docker & Docker Compose
+### 고민을 남기면
 
-### 1. 인프라 실행
+오늘의 고민을 게시글로 남기면 AI가 글 속 감정을 분석해 대표 감정과 몬스터를 생성해요.<br>
+불안, 무기력, 외로움처럼 말로 정리하기 어려운 마음도 한눈에 확인할 수 있습니다.
 
-```bash
-docker-compose up -d
+### 함께 반응하며
+
+댓글과 공감으로 서로를 응원할 수 있어요.<br>
+사용자들의 반응이 쌓이면 감정 몬스터의 HP가 줄어들고, 함께 고민을 이겨내는 경험을 만들 수 있습니다.
+
+### 나의 감정을 돌아보며
+
+마이페이지에서 내가 작성한 글, 공감한 글, 댓글, 감정 통계를 확인할 수 있어요.<br>
+실시간 알림으로 댓글과 몬스터 처치 소식도 놓치지 않고 받아볼 수 있습니다.
+
+## ⚙️ 기술 스택
+
+### Backend
+
+| 구분 | 사용 기술 |
+| --- | --- |
+| Language | Java 21 |
+| Framework | Spring Boot 3.4.5 |
+| Web | Spring MVC, Spring Validation |
+| Persistence | Spring Data JPA, QueryDSL, Flyway |
+| Database | MySQL, H2(Test) |
+| Cache / Event | Redis, Server-Sent Events(SSE) |
+| Security / Auth | Spring Security, OAuth2 Client, JWT |
+| AI | Spring AI, OpenAI, Resilience4j Retry / Circuit Breaker |
+| API Docs | Springdoc OpenAPI, Swagger UI |
+| Monitoring | Spring Boot Actuator, Micrometer, Prometheus |
+| Build / Format | Gradle, Spotless, Google Java Format(AOSP) |
+| Test | JUnit 5, Spring Boot Test, Spring Security Test |
+
+### Infrastructure
+
+| 구분 | 사용 기술 |
+| --- | --- |
+| Runtime | Docker, Docker Compose |
+| Image Registry | GitHub Container Registry(GHCR) |
+| Deployment | GitHub Actions, EC2 |
+| Database | AWS RDS MySQL |
+| Cache | Redis 7.0 |
+| Release | release-please, Conventional Commits |
+| Health Check | `/actuator/health` |
+
+## 🧩 시스템 구조
+
+```mermaid
+flowchart LR
+    Client[Client] --> API[Spring Boot API]
+    API --> Auth[Auth / OAuth / JWT]
+    API --> Post[Post / Comment / Like]
+    API --> AI[AI Emotion Analysis]
+    API --> Notify[Notification SSE]
+    API --> MyPage[MyPage]
+
+    Post --> Emotion[Emotion]
+    Post --> Monster[Monster]
+    Comment --> Monster
+    AI --> OpenAI[OpenAI]
+
+    API --> MySQL[(MySQL)]
+    API --> Redis[(Redis)]
 ```
 
-| 서비스 | 포트 | 계정 |
-|--------|------|------|
-| MySQL  | 3306 | webbb / webbb |
-| Redis  | 6379 | - |
+오구오구 백엔드는 도메인별 패키지를 `interfaces`, `application`, `domain`, `infrastructure` 레이어로 나눕니다.<br>
+컨트롤러는 서비스 유스케이스를 호출하고, 서비스는 도메인 모델과 Repository 인터페이스를 통해 게시글, 댓글, 감정, 몬스터, 알림 데이터를 처리합니다.
 
-DB명: `webbb`
+## 🏗️ 인프라 구조
 
-### 2. 애플리케이션 실행
-
-기본 프로필은 `local`입니다. 처음 실행할 때는 로컬 설정 파일을 템플릿에서 복사해 만듭니다.
-
-```bash
-cp src/main/resources/application-local.yml.example src/main/resources/application-local.yml
+```mermaid
+flowchart LR
+    User[User] --> FE[Frontend]
+    FE --> EC2[EC2 / Docker Compose]
+    EC2 --> App[webbb-prod-app]
+    App --> RDS[(AWS RDS MySQL)]
+    App --> Redis[(webbb-prod-redis)]
+    App --> OpenAI[OpenAI API]
+    App --> OAuth[Google / Kakao / Naver OAuth]
+    App --> Health[/actuator/health]
 ```
 
-필요하면 `src/main/resources/application-local.yml`에서 로컬 DB, Redis, JWT 값을 수정한 뒤 실행합니다.
+운영 환경은 GHCR에 업로드된 Docker 이미지를 EC2에서 Docker Compose로 실행합니다.<br>
+애플리케이션 컨테이너는 80번 포트로 외부 요청을 받고, Redis는 Docker 내부 네트워크에서만 통신합니다.<br>
+DB 접속 정보, OAuth Client Secret, JWT Secret, OpenAI API Key 같은 민감 정보는 GitHub Actions Secret과 환경변수로 주입합니다.
 
-> **Flyway 마이그레이션:** 앱 실행 시 Flyway가 자동으로 DB 스키마를 초기화합니다.
-> 엔티티를 변경할 때는 반드시 마이그레이션 파일을 함께 추가해야 합니다.
-> 자세한 내용은 [docs/flyway/README.md](docs/flyway/README.md)를 참고하세요.
+## 🔄 CI/CD
 
-```bash
-./gradlew bootRun
+```mermaid
+flowchart LR
+    PR[Pull Request] --> CI[Spotless Check / Test / Docker Build]
+    CI --> Main[Merge to main]
+    Main --> Release[release-please]
+    Release --> Image[Build & Push GHCR Image]
+    Image --> Deploy[Deploy to EC2]
+    Deploy --> Check[Health Check]
 ```
 
-또는 IntelliJ에서 `WebbbApplication.java` 실행
+- PR 단계에서 `spotlessCheck`, `test`, `docker build`를 실행해 머지 전 품질을 확인합니다.
+- `main` 브랜치 변경은 release-please가 릴리즈 PR과 태그를 관리합니다.
+- 릴리즈가 생성되면 GitHub Actions가 Docker 이미지를 GHCR에 push하고 EC2에 배포합니다.
+- 수동 배포 워크플로우로 `latest` 또는 특정 릴리즈 태그를 재배포할 수 있습니다.
 
-### 3. Swagger UI 접속
-
-애플리케이션 실행 후 브라우저에서 접속합니다.
-
-| 항목 | URL |
-|------|-----|
-| Swagger UI | http://localhost:8080/swagger-ui/index.html |
-| OpenAPI JSON | http://localhost:8080/v3/api-docs |
-
-> JWT 인증이 필요한 API는 Swagger UI 우측 상단 **Authorize** 버튼에서 `Bearer <토큰>` 형식으로 입력하세요.
-
-### 4. 빌드
-
-```bash
-./gradlew build
-```
-
-### 인프라 종료
-
-```bash
-docker-compose down
-```
-
-데이터까지 초기화하려면:
-
-```bash
-docker-compose down -v
-```
-
----
-
-## 패키지 구조
-
-> 레이어 의존 방향 및 각 패키지별 파일 목록은 [docs/architecture.md](docs/architecture.md)를 참고하세요.
-> AI 감정 분석 기능 연동 방법은 [docs/ai-integration.md](docs/ai-integration.md)를 참고하세요.
-> DB 스키마 버전 관리 방법은 [docs/flyway/README.md](docs/flyway/README.md)를 참고하세요.
-
-DDD 스타일 레이어드 아키텍처를 적용합니다. 도메인(Feature) 기반으로 모듈을 분리하고, 각 모듈 내부에 `domain / application / infrastructure / interfaces` 4-레이어를 적용합니다.
-
-```
-com.dnd.webbb/
-├── global/                          # 전역 공통 설정
-│   ├── config/                      # JPA, Security, Swagger 설정
-│   ├── common/
-│   │   ├── response/                # 공통 응답 래퍼 (ApiResponse)
-│   │   ├── exception/               # AppException, ErrorCode, GlobalExceptionHandler
-│   │   └── entity/                  # BaseEntity (createdAt, updatedAt 등)
-│   └── auth/                        # JWT 필터 및 유틸 (JwtProvider, JwtAuthFilter)
-│
-├── user/
-│   ├── domain/                      # User 엔티티, UserRepository 인터페이스, enum
-│   ├── application/                 # UserService, 서비스 내부 DTO
-│   ├── infrastructure/              # QueryDSL 등 복잡한 쿼리 구현체 (단순하면 생략)
-│   └── interfaces/
-│       ├── UserController.java
-│       └── dto/                     # UserRequest, UserResponse
-│
-├── auth/                            # Google OAuth + JWT 로그인 흐름
-│   ├── domain/
-│   ├── application/                 # AuthService
-│   ├── infrastructure/              # GoogleOAuthClient
-│   └── interfaces/
-│       └── dto/
-│
-└── cohort/
-    ├── domain/
-    ├── application/
-    ├── infrastructure/
-    └── interfaces/
-        └── dto/
-```
-
-### 핵심 설계 원칙
-
-1. **도메인 엔티티와 인터페이스 DTO 분리** — `User.java` ≠ `UserResponse.java`
-2. **Repository 인터페이스는 domain 레이어에** — 인프라 의존 방향 역전
-3. **Service는 application 레이어에만** — 컨트롤러에서 직접 레포지토리 접근 금지
-4. **단순한 쿼리는 infrastructure/ 생략 가능** — Spring Data JPA 인터페이스만으로 충분할 때
-
----
-
-## 커밋 메시지 규칙
-
-이 저장소는 GitHub Actions에서 `release-please`를 사용해 릴리즈와 배포를 자동화합니다.
-`main` 브랜치에 반영되는 커밋 메시지는 반드시 Conventional Commit 형식을 따라야 합니다.
-
-### 기본 형식
-
-```text
-type: 제목
-```
-
-scope가 필요하면 아래 형식을 사용합니다.
-
-```text
-type(scope): 제목
-```
-
-브레이킹 체인지가 있으면 `!`를 붙입니다.
-
-```text
-type!: 제목
-type(scope)!: 제목
-```
-
-### 사용 가능한 type 예시
-
-- `feat`: 새로운 기능
-- `fix`: 버그 수정
-- `refactor`: 리팩토링
-- `docs`: 문서 수정
-- `test`: 테스트 추가/수정
-- `chore`: 빌드, 설정, 포맷 등 기타 작업
-
-### 권장 예시
-
-```text
-feat: AI 공통 감정 분석 서비스 추가
-fix(auth): JWT 예외 처리 수정
-chore: AI 코드 포맷 정리
-docs(cicd): 배포 흐름 문서화
-test(ai): 감정 분석 서비스 테스트 보강
-```
-
-### 주의사항
-
-- 커밋 제목 앞에 `[BE]` 같은 접두사는 붙이지 않습니다.
-- `로깅 설정 추가`, `OpenAPI 설정 보강`처럼 `type:` 없이 시작하면 안 됩니다.
-- PR 번호는 붙어도 되지만, 제목 시작은 반드시 `feat:`, `fix:` 같은 Conventional Commit 형식이어야 합니다.
-- 자동 배포와 직접 연결되는 변경은 가능하면 `feat:` 또는 `fix:`를 우선 사용합니다.
+## 🌐 Backend 구성원
+|                        [정다연](https://github.com/al1kite)                         |  [장현호](https://github.com/hyunolike)  |
+|:------------------------------------------------------------------------------------:|  :--------:  |
+| <img src="https://avatars.githubusercontent.com/al1kite" width=200px alt="황현지"/> | <img src="https://avatars.githubusercontent.com/hyunolike" width=200px alt="장현호"/> |
