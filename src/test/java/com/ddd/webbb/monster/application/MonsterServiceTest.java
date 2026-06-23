@@ -15,6 +15,7 @@ import com.ddd.webbb.post.domain.Post;
 import com.ddd.webbb.user.domain.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.context.ApplicationEventPublisher;
 
 class MonsterServiceTest {
 
@@ -26,7 +27,9 @@ class MonsterServiceTest {
     void setUp() {
         monsterRepository = mock(MonsterRepository.class);
         monsterHpLogRepository = mock(MonsterHpLogRepository.class);
-        monsterService = new MonsterService(monsterRepository, monsterHpLogRepository);
+        ApplicationEventPublisher eventPublisher = mock(ApplicationEventPublisher.class);
+        monsterService =
+                new MonsterService(monsterRepository, monsterHpLogRepository, eventPublisher);
     }
 
     @Test

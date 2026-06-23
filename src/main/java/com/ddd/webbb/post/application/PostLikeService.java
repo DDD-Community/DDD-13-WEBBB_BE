@@ -5,6 +5,7 @@ import com.ddd.webbb.global.common.exception.ErrorCode;
 import com.ddd.webbb.monster.application.MonsterService;
 import com.ddd.webbb.monster.domain.HpActionType;
 import com.ddd.webbb.monster.domain.Monster;
+import com.ddd.webbb.notification.domain.event.PostLikeNotificationEvent;
 import com.ddd.webbb.post.domain.Post;
 import com.ddd.webbb.post.domain.PostLike;
 import com.ddd.webbb.post.domain.PostLikeRepository;
@@ -13,6 +14,7 @@ import com.ddd.webbb.post.interfaces.dto.LikeResponse;
 import com.ddd.webbb.user.application.UserService;
 import com.ddd.webbb.user.domain.User;
 import java.util.UUID;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,16 +29,19 @@ public class PostLikeService {
     private final PostRepository postRepository;
     private final UserService userService;
     private final MonsterService monsterService;
+    private final ApplicationEventPublisher eventPublisher;
 
     public PostLikeService(
             PostLikeRepository postLikeRepository,
             PostRepository postRepository,
             UserService userService,
-            MonsterService monsterService) {
+            MonsterService monsterService,
+            ApplicationEventPublisher eventPublisher) {
         this.postLikeRepository = postLikeRepository;
         this.postRepository = postRepository;
         this.userService = userService;
         this.monsterService = monsterService;
+        this.eventPublisher = eventPublisher;
     }
 
     @Transactional
@@ -55,6 +60,7 @@ public class PostLikeService {
         monsterService.decreaseMonsterHp(
                 monster, user, post, null, HpActionType.POST_LIKE, POST_LIKE_HP_DELTA);
 
+        eventPublisher.publishEvent(new PostLikeNotificationEvent(post.getUser(), user, post));
         return LikeResponse.of(post, monster);
     }
 
