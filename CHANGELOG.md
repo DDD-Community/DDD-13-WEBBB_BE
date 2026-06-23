@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.14.0](https://github.com/DDD-Community/DDD-13-WEBBB_BE/compare/v1.13.1...v1.14.0) (2026-06-23)
+
+
+### Features
+
+* **notification:** 실시간 알림 기능 구현 (SSE) ([#104](https://github.com/DDD-Community/DDD-13-WEBBB_BE/issues/104)) ([2c95363](https://github.com/DDD-Community/DDD-13-WEBBB_BE/commit/2c95363a9b03d032bc9508cdcecaac95b84f9ce0))
+
 ## [1.13.1](https://github.com/DDD-Community/DDD-13-WEBBB_BE/compare/v1.13.0...v1.13.1) (2026-06-21)
 
 
