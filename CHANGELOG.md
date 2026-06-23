@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.15.0](https://github.com/DDD-Community/DDD-13-WEBBB_BE/compare/v1.14.0...v1.15.0) (2026-06-23)
+
+
+### Features
+
+* **mypage:** 마이페이지 공감한 글 목록 조회 API 추가 ([#107](https://github.com/DDD-Community/DDD-13-WEBBB_BE/issues/107)) ([a3a625e](https://github.com/DDD-Community/DDD-13-WEBBB_BE/commit/a3a625e1ad42cf52387d4a0d977033af76d28496)), closes [#106](https://github.com/DDD-Community/DDD-13-WEBBB_BE/issues/106)
+
 ## [1.14.0](https://github.com/DDD-Community/DDD-13-WEBBB_BE/compare/v1.13.1...v1.14.0) (2026-06-23)
 
 
