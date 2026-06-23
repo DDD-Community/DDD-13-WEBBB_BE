@@ -85,7 +85,7 @@ flowchart LR
     App --> Redis[(webbb-prod-redis)]
     App --> OpenAI[OpenAI API]
     App --> OAuth[Google / Kakao / Naver OAuth]
-    App --> Health[/actuator/health]
+    App --> Health[/actuator/health/]
 ```
 
 운영 환경은 GHCR에 업로드된 Docker 이미지를 EC2에서 Docker Compose로 실행합니다.<br>
