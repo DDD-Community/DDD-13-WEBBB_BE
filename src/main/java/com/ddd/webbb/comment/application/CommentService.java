@@ -12,6 +12,7 @@ import com.ddd.webbb.global.common.exception.ErrorCode;
 import com.ddd.webbb.monster.application.MonsterService;
 import com.ddd.webbb.monster.domain.HpActionType;
 import com.ddd.webbb.monster.domain.Monster;
+import com.ddd.webbb.notification.domain.event.CommentNotificationEvent;
 import com.ddd.webbb.post.application.PostService;
 import com.ddd.webbb.post.domain.Post;
 import com.ddd.webbb.user.application.UserService;
@@ -20,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,18 +37,21 @@ public class CommentService {
     private final PostService postService;
     private final UserService userService;
     private final MonsterService monsterService;
+    private final ApplicationEventPublisher eventPublisher;
 
     public CommentService(
             CommentRepository commentRepository,
             CommentQueryRepository commentQueryRepository,
             @Lazy PostService postService,
             UserService userService,
-            MonsterService monsterService) {
+            MonsterService monsterService,
+            ApplicationEventPublisher eventPublisher) {
         this.commentRepository = commentRepository;
         this.commentQueryRepository = commentQueryRepository;
         this.postService = postService;
         this.userService = userService;
         this.monsterService = monsterService;
+        this.eventPublisher = eventPublisher;
     }
 
     public List<Comment> findCommentsByPost(Long postId) {
@@ -110,6 +115,7 @@ public class CommentService {
         monsterService.decreaseMonsterHp(
                 monster, user, post, comment, HpActionType.COMMENT, COMMENT_HP_DELTA);
 
+        eventPublisher.publishEvent(new CommentNotificationEvent(post.getUser(), user, post));
         return CommentResponse.of(comment, monster);
     }
 

@@ -9,9 +9,12 @@ import com.ddd.webbb.monster.domain.Monster;
 import com.ddd.webbb.monster.domain.MonsterHpLog;
 import com.ddd.webbb.monster.domain.MonsterHpLogRepository;
 import com.ddd.webbb.monster.domain.MonsterRepository;
+import com.ddd.webbb.monster.domain.MonsterStatus;
+import com.ddd.webbb.notification.domain.event.MonsterDefeatedNotificationEvent;
 import com.ddd.webbb.post.domain.Post;
 import com.ddd.webbb.user.domain.User;
 import java.util.List;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,11 +28,15 @@ public class MonsterService {
 
     private final MonsterRepository monsterRepository;
     private final MonsterHpLogRepository monsterHpLogRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     public MonsterService(
-            MonsterRepository monsterRepository, MonsterHpLogRepository monsterHpLogRepository) {
+            MonsterRepository monsterRepository,
+            MonsterHpLogRepository monsterHpLogRepository,
+            ApplicationEventPublisher eventPublisher) {
         this.monsterRepository = monsterRepository;
         this.monsterHpLogRepository = monsterHpLogRepository;
+        this.eventPublisher = eventPublisher;
     }
 
     public Monster getMonsterByPostId(Long postId) {
@@ -71,6 +78,10 @@ public class MonsterService {
         monsterHpLogRepository.save(
                 MonsterHpLog.create(
                         monster, user, post, comment, actionType, delta, beforeHp, afterHp));
+
+        if (monster.getStatus() == MonsterStatus.DEAD && beforeHp > 0) {
+            eventPublisher.publishEvent(new MonsterDefeatedNotificationEvent(post.getUser(), post));
+        }
     }
 
     @Transactional
