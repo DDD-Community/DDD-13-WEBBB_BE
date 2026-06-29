@@ -1,14 +1,9 @@
 package com.ddd.webbb.ai.interfaces;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.ddd.webbb.ai.application.AiAnalysisResponse;
 import com.ddd.webbb.ai.application.AiAnalysisService;
-import com.ddd.webbb.ai.domain.PostContent;
 import com.ddd.webbb.comment.application.CommentSummaryService;
 import com.ddd.webbb.global.auth.JwtAuthFilter;
 import org.junit.jupiter.api.Test;
@@ -34,11 +29,7 @@ class AiTestControllerProdProfileTest {
     @MockitoBean private JwtAuthFilter jwtAuthFilter;
 
     @Test
-    void prod_프로필에서도_감정_분석_요청을_처리한다() throws Exception {
-        AiAnalysisResponse mockResponse =
-                new AiAnalysisResponse("ANXIETY", 30, 0.9, "불안 표현이 강함", false, "OPENAI");
-        given(aiAnalysisService.analyze(any(PostContent.class))).willReturn(mockResponse);
-
+    void prod_프로필에서는_ai_test_api를_사용할_수_없다() throws Exception {
         mockMvc.perform(
                         post("/api/ai/test/analyze")
                                 .contentType(MediaType.APPLICATION_JSON)
@@ -46,8 +37,6 @@ class AiTestControllerProdProfileTest {
                                         """
                     {"content": "프로덕션에서도 테스트하고 싶어요"}
                     """))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.usedProvider").value("OPENAI"));
+                .andExpect(status().isNotFound());
     }
 }

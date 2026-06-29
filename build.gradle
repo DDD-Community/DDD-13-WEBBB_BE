@@ -91,6 +91,9 @@ dependencies {
     // AOP (Resilience4j 어노테이션 동작에 필요)
     implementation 'org.springframework.boot:spring-boot-starter-aop'
 
+    // Mail
+    implementation 'org.springframework.boot:spring-boot-starter-mail'
+
     // Micrometer Prometheus
     implementation 'io.micrometer:micrometer-registry-prometheus'
 

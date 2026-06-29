@@ -22,7 +22,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(AiTestController.class)
 @AutoConfigureMockMvc(addFilters = false)
-@ActiveProfiles("test")
+@ActiveProfiles("ai-test")
 class AiTestControllerTest {
 
     @Autowired private MockMvc mockMvc;

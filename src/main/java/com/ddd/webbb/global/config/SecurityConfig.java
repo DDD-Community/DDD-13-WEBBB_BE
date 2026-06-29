@@ -79,7 +79,9 @@ public class SecurityConfig {
                                                 "/api/auth/email/check",
                                                 "/api/auth/login/email",
                                                 "/api/auth/oauth/**",
-                                                "/api/auth/refresh")
+                                                "/api/auth/refresh",
+                                                "/api/auth/password-reset/request",
+                                                "/api/auth/password-reset/confirm")
                                         .permitAll()
                                         // /api/users/me 는 인증 필요 (wildcard 보다 먼저 선언)
                                         .requestMatchers("/api/users/me")
