@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.16.0](https://github.com/DDD-Community/DDD-13-WEBBB_BE/compare/v1.15.0...v1.16.0) (2026-06-29)
+
+
+### Features
+
+* **auth:** 비밀번호 찾기 API 구현 ([#111](https://github.com/DDD-Community/DDD-13-WEBBB_BE/issues/111)) ([34335a6](https://github.com/DDD-Community/DDD-13-WEBBB_BE/commit/34335a6b18bd749204941612fd97d3fa3ecc71c9))
+
 ## [1.15.0](https://github.com/DDD-Community/DDD-13-WEBBB_BE/compare/v1.14.0...v1.15.0) (2026-06-23)
 
 
