@@ -93,6 +93,10 @@ public class User extends BaseEntity {
         }
     }
 
+    public void updatePassword(String passwordHash) {
+        this.passwordHash = passwordHash;
+    }
+
     public void withdraw() {
         this.isActive = false;
         this.deletedAt = LocalDateTime.now();

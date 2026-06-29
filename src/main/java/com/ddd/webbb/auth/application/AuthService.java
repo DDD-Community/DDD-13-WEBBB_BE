@@ -3,6 +3,8 @@ package com.ddd.webbb.auth.application;
 import com.ddd.webbb.auth.domain.AuthToken;
 import com.ddd.webbb.auth.infrastructure.OAuthClient;
 import com.ddd.webbb.auth.infrastructure.OAuthUserInfo;
+import com.ddd.webbb.auth.infrastructure.PasswordResetEmailSender;
+import com.ddd.webbb.auth.infrastructure.PasswordResetStore;
 import com.ddd.webbb.auth.infrastructure.RefreshTokenStore;
 import com.ddd.webbb.auth.interfaces.dto.AuthResponse;
 import com.ddd.webbb.auth.interfaces.dto.AuthResponse.TokenInfo;
@@ -18,6 +20,7 @@ import com.ddd.webbb.user.domain.User;
 import com.ddd.webbb.user.domain.UserOauth;
 import com.ddd.webbb.user.domain.UserOauthRepository;
 import com.ddd.webbb.user.domain.UserRepository;
+import java.security.SecureRandom;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -37,6 +40,8 @@ public class AuthService {
     private final JwtProvider jwtProvider;
     private final PasswordEncoder passwordEncoder;
     private final RefreshTokenStore refreshTokenStore;
+    private final PasswordResetStore passwordResetStore;
+    private final PasswordResetEmailSender passwordResetEmailSender;
     private final Map<OAuthProvider, OAuthClient> oauthClients;
 
     public AuthService(
@@ -45,12 +50,16 @@ public class AuthService {
             JwtProvider jwtProvider,
             PasswordEncoder passwordEncoder,
             RefreshTokenStore refreshTokenStore,
+            PasswordResetStore passwordResetStore,
+            PasswordResetEmailSender passwordResetEmailSender,
             List<OAuthClient> oauthClientList) {
         this.userRepository = userRepository;
         this.userOauthRepository = userOauthRepository;
         this.jwtProvider = jwtProvider;
         this.passwordEncoder = passwordEncoder;
         this.refreshTokenStore = refreshTokenStore;
+        this.passwordResetStore = passwordResetStore;
+        this.passwordResetEmailSender = passwordResetEmailSender;
         this.oauthClients =
                 oauthClientList.stream()
                         .collect(Collectors.toMap(OAuthClient::getProvider, Function.identity()));
@@ -250,6 +259,39 @@ public class AuthService {
 
     public void logout(UUID publicId) {
         refreshTokenStore.delete(publicId);
+    }
+
+    public void requestPasswordReset(String email) {
+        Optional<User> userOpt = userRepository.findByEmailAndDeletedAtIsNull(email);
+        if (userOpt.isEmpty()) {
+            return;
+        }
+
+        User user = userOpt.get();
+        if (user.getPasswordHash() == null) {
+            throw new AppException(ErrorCode.NO_PASSWORD_ACCOUNT);
+        }
+
+        String code = generateOtp();
+        passwordResetStore.save(email, code);
+        passwordResetEmailSender.send(email, code);
+    }
+
+    @Transactional
+    public void confirmPasswordReset(String email, String code, String newPassword) {
+        if (!passwordResetStore.verifyAndDelete(email, code)) {
+            throw new AppException(ErrorCode.INVALID_RESET_CODE);
+        }
+
+        User user =
+                userRepository
+                        .findByEmailAndDeletedAtIsNull(email)
+                        .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+        user.updatePassword(passwordEncoder.encode(newPassword));
+    }
+
+    private String generateOtp() {
+        return String.format("%06d", new SecureRandom().nextInt(1_000_000));
     }
 
     private void validateOAuthUserInfo(OAuthUserInfo oauthUserInfo) {

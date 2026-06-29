@@ -10,6 +10,8 @@ import com.ddd.webbb.auth.interfaces.dto.EmailSignupRequest;
 import com.ddd.webbb.auth.interfaces.dto.OAuthCodeExchangeRequest;
 import com.ddd.webbb.auth.interfaces.dto.OAuthLinkRequest;
 import com.ddd.webbb.auth.interfaces.dto.OAuthLoginRequest;
+import com.ddd.webbb.auth.interfaces.dto.PasswordResetConfirmRequest;
+import com.ddd.webbb.auth.interfaces.dto.PasswordResetRequest;
 import com.ddd.webbb.global.common.exception.AppException;
 import com.ddd.webbb.global.common.exception.ErrorCode;
 import com.ddd.webbb.global.common.response.ApiResponse;
@@ -516,6 +518,88 @@ public class AuthController {
         UUID publicId = UUID.fromString(principal.getName());
         authService.linkOAuth(publicId, provider, request.oauthAccessToken());
         return ApiResponse.ok("OAuth 계정이 연동되었습니다.", null);
+    }
+
+    @Operation(summary = "비밀번호 재설정 코드 요청")
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "200",
+                description = "코드 발송 성공 (미가입 이메일도 동일 응답)",
+                content =
+                        @Content(
+                                examples =
+                                        @ExampleObject(
+                                                value =
+                                                        """
+                        {
+                          "success": true,
+                          "message": "입력하신 이메일로 인증 코드를 발송했습니다.",
+                          "data": null,
+                          "timestamp": "2026-06-29T12:00:00"
+                        }
+                        """))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "400",
+                description = "소셜 로그인 전용 계정",
+                content =
+                        @Content(
+                                examples =
+                                        @ExampleObject(
+                                                value =
+                                                        """
+                        {
+                          "success": false,
+                          "message": "소셜 로그인으로 가입된 계정입니다. Google/Kakao/Naver 로그인을 이용해 주세요.",
+                          "timestamp": "2026-06-29T12:00:00"
+                        }
+                        """)))
+    })
+    @PostMapping("/password-reset/request")
+    public ApiResponse<Void> requestPasswordReset(
+            @RequestBody @Valid PasswordResetRequest request) {
+        authService.requestPasswordReset(request.email());
+        return ApiResponse.ok("입력하신 이메일로 인증 코드를 발송했습니다.", null);
+    }
+
+    @Operation(summary = "비밀번호 재설정 확인")
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "200",
+                description = "비밀번호 변경 성공",
+                content =
+                        @Content(
+                                examples =
+                                        @ExampleObject(
+                                                value =
+                                                        """
+                        {
+                          "success": true,
+                          "message": "비밀번호가 변경됐습니다.",
+                          "data": null,
+                          "timestamp": "2026-06-29T12:00:00"
+                        }
+                        """))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "400",
+                description = "인증 코드 불일치 또는 만료",
+                content =
+                        @Content(
+                                examples =
+                                        @ExampleObject(
+                                                value =
+                                                        """
+                        {
+                          "success": false,
+                          "message": "인증 코드가 유효하지 않거나 만료됐습니다.",
+                          "timestamp": "2026-06-29T12:00:00"
+                        }
+                        """)))
+    })
+    @PostMapping("/password-reset/confirm")
+    public ApiResponse<Void> confirmPasswordReset(
+            @RequestBody @Valid PasswordResetConfirmRequest request) {
+        authService.confirmPasswordReset(request.email(), request.code(), request.newPassword());
+        return ApiResponse.ok("비밀번호가 변경됐습니다.", null);
     }
 
     @Operation(summary = "OAuth 계정 연동 해제")
