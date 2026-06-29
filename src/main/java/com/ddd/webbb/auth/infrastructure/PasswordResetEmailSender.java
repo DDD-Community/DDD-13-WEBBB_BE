@@ -21,7 +21,7 @@ public class PasswordResetEmailSender {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setFrom(from);
         message.setTo(to);
-        message.setSubject("[WEBBB] 비밀번호 재설정 인증 코드");
+        message.setSubject("[오구오구] 비밀번호 재설정 인증 코드");
         message.setText(
                 """
                 안녕하세요.
