@@ -21,6 +21,8 @@ services:
       NAVER_CLIENT_ID: ${NAVER_CLIENT_ID:?NAVER_CLIENT_ID is required}
       NAVER_CLIENT_SECRET: ${NAVER_CLIENT_SECRET:?NAVER_CLIENT_SECRET is required}
       FRONTEND_URL: ${FRONTEND_URL:?FRONTEND_URL is required}
+      MAIL_USERNAME: ${MAIL_USERNAME:?MAIL_USERNAME is required}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:?MAIL_PASSWORD is required}
       TZ: Asia/Seoul
       JAVA_TOOL_OPTIONS: -XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -XX:InitialRAMPercentage=25.0 -Duser.timezone=Asia/Seoul
       REDIS_HOST: redis

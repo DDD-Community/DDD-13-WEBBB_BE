@@ -112,6 +112,8 @@ jobs:
           NAVER_CLIENT_ID: ${{ secrets.NAVER_CLIENT_ID }}
           NAVER_CLIENT_SECRET: ${{ secrets.NAVER_CLIENT_SECRET }}
           FRONTEND_URL: ${{ secrets.FRONTEND_URL }}
+          MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}
+          MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
         run: |
           {
             printf 'GHCR_TOKEN=%s\n' "$GHCR_TOKEN"
@@ -130,6 +132,8 @@ jobs:
             printf 'NAVER_CLIENT_ID=%s\n' "$NAVER_CLIENT_ID"
             printf 'NAVER_CLIENT_SECRET=%s\n' "$NAVER_CLIENT_SECRET"
             printf 'FRONTEND_URL=%s\n' "$FRONTEND_URL"
+            printf 'MAIL_USERNAME=%s\n' "$MAIL_USERNAME"
+            printf 'MAIL_PASSWORD=%s\n' "$MAIL_PASSWORD"
           } > .env
 
       - name: Deploy to EC2
@@ -177,4 +181,3 @@ jobs:
           DEPLOY_EOF
 
           rm -f ~/.ssh/deploy_key
-
