@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.16.1](https://github.com/DDD-Community/DDD-13-WEBBB_BE/compare/v1.16.0...v1.16.1) (2026-06-29)
+
+
+### Bug Fixes
+
+* 테스트 메일 설정 추가 ([#113](https://github.com/DDD-Community/DDD-13-WEBBB_BE/issues/113)) ([114bf1b](https://github.com/DDD-Community/DDD-13-WEBBB_BE/commit/114bf1bed98cc0bc0422d2abe0cfbaa7706a1738))
+
 ## [1.16.0](https://github.com/DDD-Community/DDD-13-WEBBB_BE/compare/v1.15.0...v1.16.0) (2026-06-29)
 
 
