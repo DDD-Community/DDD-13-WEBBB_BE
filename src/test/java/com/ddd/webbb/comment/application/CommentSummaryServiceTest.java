@@ -7,8 +7,11 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
+import com.ddd.webbb.ai.application.AiResponseParser;
 import com.ddd.webbb.ai.domain.AiGateway;
 import com.ddd.webbb.ai.domain.AiGatewayResult;
+import com.ddd.webbb.ai.domain.exception.AiErrorCode;
+import com.ddd.webbb.ai.domain.exception.RetryableAiException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -21,7 +24,9 @@ class CommentSummaryServiceTest {
     @BeforeEach
     void setUp() {
         aiGateway = mock(AiGateway.class);
-        service = new CommentSummaryService(aiGateway, new ObjectMapper(), "댓글: {content}");
+        service =
+                new CommentSummaryService(
+                        aiGateway, new AiResponseParser(new ObjectMapper()), "댓글: {content}");
     }
 
     @Test
@@ -50,7 +55,7 @@ class CommentSummaryServiceTest {
     @Test
     void 유효하지_않은_응답도_기본값을_반환한다() {
         String invalidJson = "{\"summary\":\"\",\"tone\":\"CALM\"}";
-        given(aiGateway.call(anyString())).willReturn(new AiGatewayResult(invalidJson, "STATIC"));
+        given(aiGateway.call(anyString())).willReturn(new AiGatewayResult(invalidJson, "OPENAI"));
 
         CommentSummaryResponse response = service.summarize(3L, "댓글");
 
@@ -58,23 +63,25 @@ class CommentSummaryServiceTest {
     }
 
     @Test
+    void 게이트웨이_호출_실패시_STATIC_폴백을_반환한다() {
+        given(aiGateway.call(anyString()))
+                .willThrow(
+                        new RetryableAiException(AiErrorCode.SERVICE_UNAVAILABLE, "모든 프로바이더 실패"));
+
+        CommentSummaryResponse response = service.summarize(4L, "댓글");
+
+        assertThat(response.summary()).isEqualTo("요약 실패");
+        assertThat(response.tone()).isEqualTo("NEUTRAL");
+        assertThat(response.usedProvider()).isEqualTo("STATIC");
+    }
+
+    @Test
     void 프롬프트에_댓글_텍스트가_치환되어_전달된다() {
         String json = "{\"summary\":\"요약\",\"tone\":\"NEUTRAL\"}";
         given(aiGateway.call(contains("실제 댓글 내용"))).willReturn(new AiGatewayResult(json, "OPENAI"));
 
-        service.summarize(4L, "실제 댓글 내용");
+        service.summarize(5L, "실제 댓글 내용");
 
         verify(aiGateway).call(contains("실제 댓글 내용"));
-    }
-
-    @Test
-    void Static_폴백_결과도_정상_파싱된다() {
-        String staticJson = "{\"summary\":\"기본 요약\",\"tone\":\"NEUTRAL\"}";
-        given(aiGateway.call(anyString())).willReturn(new AiGatewayResult(staticJson, "STATIC"));
-
-        CommentSummaryResponse response = service.summarize(5L, "댓글");
-
-        assertThat(response.usedProvider()).isEqualTo("STATIC");
-        assertThat(response.summary()).isEqualTo("기본 요약");
     }
 }

@@ -1,7 +1,7 @@
 package com.ddd.webbb.ai.infrastructure.config;
 
+import com.ddd.webbb.ai.domain.CrisisFilter;
 import com.ddd.webbb.ai.infrastructure.gateway.OpenAiAiProvider;
-import com.ddd.webbb.ai.infrastructure.gateway.StaticAiProvider;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import org.springframework.ai.chat.client.ChatClient;
@@ -27,9 +27,8 @@ public class AiConfig {
     }
 
     @Bean
-    @Order(Integer.MAX_VALUE)
-    public StaticAiProvider staticAiProvider() {
-        return new StaticAiProvider();
+    public CrisisFilter crisisFilter() {
+        return new CrisisFilter();
     }
 
     @Bean

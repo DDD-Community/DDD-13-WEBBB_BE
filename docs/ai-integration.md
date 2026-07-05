@@ -128,23 +128,17 @@ application/json
 - `crisisDetected=true`
 - `usedProvider=CRISIS_FILTER`
 
-### 2. AI provider 순차 호출
+### 2. AI provider 호출
 
-위기 표현이 없으면 아래 순서로 호출합니다.
-
-1. `OpenAI`
-2. `Static fallback`
-
-각 provider는 동일한 프롬프트 규칙에 따라 JSON 응답을 반환해야 합니다.
+위기 표현이 없으면 `OpenAI` provider를 호출합니다.
+provider는 동일한 프롬프트 규칙에 따라 JSON 응답을 반환해야 합니다.
 
 ### 3. fallback 처리
 
-OpenAI 호출 실패, 타임아웃, 파싱 오류가 발생하면 Static fallback으로 넘어갑니다.
+fallback은 서비스 레이어에서 기능별 안전 기본값으로 처리합니다.
 
-모든 AI provider가 실패하면:
-
-- 안전 기본값을 반환합니다.
-- `usedProvider=STATIC`
+- OpenAI 호출 실패·타임아웃: 게이트웨이가 예외를 던지고, 서비스가 안전 기본값을 반환합니다 (`usedProvider=STATIC`).
+- 파싱 오류·유효하지 않은 응답: 공통 `AiResponseParser`가 안전 기본값을 반환합니다 (`usedProvider`는 실제 응답 주체 유지).
 
 ---
 
@@ -387,9 +381,9 @@ switch (aiResponse.emotionType()) {
 
 ### 게이트웨이 인프라
 
-- `src/main/java/com/ddd/webbb/ai/infrastructure/gateway/DefaultAiGateway.java` — OpenAI→Static 폴백 체인
+- `src/main/java/com/ddd/webbb/ai/infrastructure/gateway/DefaultAiGateway.java` — provider 순차 호출, 전부 실패 시 예외
+- `src/main/java/com/ddd/webbb/ai/application/AiResponseParser.java` — 공통 파싱(코드블록 제거·유효성 검사·폴백)
 - `src/main/java/com/ddd/webbb/ai/infrastructure/gateway/OpenAiAiProvider.java`
-- `src/main/java/com/ddd/webbb/ai/infrastructure/gateway/StaticAiProvider.java`
 
 ### 기능 레이어
 
