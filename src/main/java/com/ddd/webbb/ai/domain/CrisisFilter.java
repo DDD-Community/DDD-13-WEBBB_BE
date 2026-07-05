@@ -1,9 +1,7 @@
 package com.ddd.webbb.ai.domain;
 
 import java.util.List;
-import org.springframework.stereotype.Component;
 
-@Component
 public class CrisisFilter {
 
     private static final List<String> CRISIS_KEYWORDS =

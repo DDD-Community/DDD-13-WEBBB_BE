@@ -10,10 +10,12 @@ import static org.mockito.Mockito.verify;
 
 import com.ddd.webbb.ai.domain.AiGateway;
 import com.ddd.webbb.ai.domain.AiGatewayResult;
+import com.ddd.webbb.ai.domain.AiMetricsRecorder;
 import com.ddd.webbb.ai.domain.CrisisDetectionResult;
 import com.ddd.webbb.ai.domain.CrisisFilter;
 import com.ddd.webbb.ai.domain.PostContent;
-import com.ddd.webbb.ai.infrastructure.observability.AiMetricsLogger;
+import com.ddd.webbb.ai.domain.exception.AiErrorCode;
+import com.ddd.webbb.ai.domain.exception.RetryableAiException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.function.Supplier;
 import org.junit.jupiter.api.BeforeEach;
@@ -23,15 +25,15 @@ class AiAnalysisServiceTest {
 
     private AiGateway aiGateway;
     private CrisisFilter crisisFilter;
-    private AiMetricsLogger metricsLogger;
+    private AiMetricsRecorder metricsRecorder;
     private AiAnalysisService service;
 
     @BeforeEach
     void setUp() {
         aiGateway = mock(AiGateway.class);
         crisisFilter = mock(CrisisFilter.class);
-        metricsLogger = mock(AiMetricsLogger.class);
-        given(metricsLogger.recordAndLog(any(), any()))
+        metricsRecorder = mock(AiMetricsRecorder.class);
+        given(metricsRecorder.recordAndLog(any(), any(), any()))
                 .willAnswer(
                         inv -> {
                             Supplier<AiAnalysisResponse> supplier = inv.getArgument(1);
@@ -41,8 +43,8 @@ class AiAnalysisServiceTest {
                 new AiAnalysisService(
                         aiGateway,
                         crisisFilter,
-                        metricsLogger,
-                        new ObjectMapper(),
+                        metricsRecorder,
+                        new AiResponseParser(new ObjectMapper()),
                         "게시글: {content}");
     }
 
@@ -88,16 +90,31 @@ class AiAnalysisServiceTest {
     }
 
     @Test
-    void Static_폴백_결과도_정상_파싱된다() {
+    void 유효하지_않은_응답도_예외_대신_safeDefault를_사용한다() {
         PostContent content = new PostContent(1L, "힘들어요");
-        String staticJson =
-                "{\"emotionType\":\"LETHARGY\",\"hp\":10,\"confidence\":0.0,\"reason\":\"fallback\"}";
+        String invalidJson =
+                "{\"emotionType\":\"ANXIETY\",\"hp\":99,\"confidence\":0.9,\"reason\":\"범위 밖 hp\"}";
         given(crisisFilter.check(content.text())).willReturn(CrisisDetectionResult.safe());
-        given(aiGateway.call(anyString())).willReturn(new AiGatewayResult(staticJson, "STATIC"));
+        given(aiGateway.call(anyString())).willReturn(new AiGatewayResult(invalidJson, "OPENAI"));
 
         AiAnalysisResponse response = service.analyze(content);
 
         assertThat(response.emotionType()).isEqualTo("LETHARGY");
+        assertThat(response.hp()).isEqualTo(10);
+    }
+
+    @Test
+    void 게이트웨이_호출_실패시_STATIC_폴백을_반환한다() {
+        PostContent content = new PostContent(1L, "힘들어요");
+        given(crisisFilter.check(content.text())).willReturn(CrisisDetectionResult.safe());
+        given(aiGateway.call(anyString()))
+                .willThrow(
+                        new RetryableAiException(AiErrorCode.SERVICE_UNAVAILABLE, "모든 프로바이더 실패"));
+
+        AiAnalysisResponse response = service.analyze(content);
+
+        assertThat(response.emotionType()).isEqualTo("LETHARGY");
+        assertThat(response.hp()).isEqualTo(10);
         assertThat(response.usedProvider()).isEqualTo("STATIC");
     }
 }

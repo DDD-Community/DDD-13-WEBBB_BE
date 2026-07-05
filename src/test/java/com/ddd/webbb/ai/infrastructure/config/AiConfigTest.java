@@ -2,8 +2,8 @@ package com.ddd.webbb.ai.infrastructure.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.ddd.webbb.ai.domain.CrisisFilter;
 import com.ddd.webbb.ai.infrastructure.gateway.OpenAiAiProvider;
-import com.ddd.webbb.ai.infrastructure.gateway.StaticAiProvider;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.ai.model.openai.autoconfigure.OpenAiChatAutoConfiguration;
@@ -29,22 +29,22 @@ class AiConfigTest {
                             "spring.ai.openai.api-key=test-dummy-key");
 
     @Test
-    void OpenAI_모델이_있으면_OpenAI와_Static만_등록된다() {
+    void OpenAI_모델이_있으면_OpenAI_프로바이더가_등록된다() {
         contextRunner
                 .withBean(OpenAiChatModel.class, () -> Mockito.mock(OpenAiChatModel.class))
                 .run(
                         context -> {
                             assertThat(context).hasSingleBean(OpenAiAiProvider.class);
-                            assertThat(context).hasSingleBean(StaticAiProvider.class);
+                            assertThat(context).hasSingleBean(CrisisFilter.class);
                         });
     }
 
     @Test
-    void OpenAI_모델이_없으면_Static만_남는다() {
+    void OpenAI_모델이_없으면_프로바이더가_등록되지_않는다() {
         contextRunner.run(
                 context -> {
                     assertThat(context).doesNotHaveBean(OpenAiAiProvider.class);
-                    assertThat(context).hasSingleBean(StaticAiProvider.class);
+                    assertThat(context).hasSingleBean(CrisisFilter.class);
                 });
     }
 
@@ -54,7 +54,6 @@ class AiConfigTest {
                 context -> {
                     assertThat(context).hasSingleBean(OpenAiChatModel.class);
                     assertThat(context).hasSingleBean(OpenAiAiProvider.class);
-                    assertThat(context).hasSingleBean(StaticAiProvider.class);
                 });
     }
 }

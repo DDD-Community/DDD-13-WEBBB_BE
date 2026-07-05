@@ -2,14 +2,12 @@ package com.ddd.webbb.ai.application;
 
 import com.ddd.webbb.ai.domain.AiGateway;
 import com.ddd.webbb.ai.domain.AiGatewayResult;
+import com.ddd.webbb.ai.domain.AiMetricsRecorder;
+import com.ddd.webbb.ai.domain.AiMetricsTags;
 import com.ddd.webbb.ai.domain.CrisisDetectionResult;
 import com.ddd.webbb.ai.domain.CrisisFilter;
 import com.ddd.webbb.ai.domain.EmotionAnalysisResult;
 import com.ddd.webbb.ai.domain.PostContent;
-import com.ddd.webbb.ai.domain.exception.AiErrorCode;
-import com.ddd.webbb.ai.domain.exception.PermanentAiException;
-import com.ddd.webbb.ai.infrastructure.observability.AiMetricsLogger;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -19,23 +17,24 @@ import org.springframework.stereotype.Service;
 public class AiAnalysisService {
 
     private static final Logger log = LoggerFactory.getLogger(AiAnalysisService.class);
+    private static final String FALLBACK_PROVIDER = "STATIC";
 
     private final AiGateway aiGateway;
     private final CrisisFilter crisisFilter;
-    private final AiMetricsLogger metricsLogger;
-    private final ObjectMapper objectMapper;
+    private final AiMetricsRecorder metricsRecorder;
+    private final AiResponseParser responseParser;
     private final String promptTemplate;
 
     public AiAnalysisService(
             AiGateway aiGateway,
             CrisisFilter crisisFilter,
-            AiMetricsLogger metricsLogger,
-            ObjectMapper objectMapper,
+            AiMetricsRecorder metricsRecorder,
+            AiResponseParser responseParser,
             @Qualifier("emotionPromptTemplate") String promptTemplate) {
         this.aiGateway = aiGateway;
         this.crisisFilter = crisisFilter;
-        this.metricsLogger = metricsLogger;
-        this.objectMapper = objectMapper;
+        this.metricsRecorder = metricsRecorder;
+        this.responseParser = responseParser;
         this.promptTemplate = promptTemplate;
     }
 
@@ -44,31 +43,32 @@ public class AiAnalysisService {
         if (crisis.isCrisis()) {
             return crisisResponse(crisis);
         }
-        return metricsLogger.recordAndLog(content.postId(), () -> doAnalyze(content));
+        return metricsRecorder.recordAndLog(
+                content.postId(),
+                () -> doAnalyze(content),
+                response ->
+                        new AiMetricsTags(
+                                response.usedProvider(),
+                                response.emotionType(),
+                                response.hp(),
+                                response.crisisDetected()));
     }
 
     private AiAnalysisResponse doAnalyze(PostContent content) {
         String prompt = promptTemplate.replace("{content}", content.text());
-        AiGatewayResult gatewayResult = aiGateway.call(prompt);
-        EmotionAnalysisResult result = parseResponse(gatewayResult.rawResponse());
-        return toResponse(result, gatewayResult.providerName(), false);
-    }
-
-    private EmotionAnalysisResult parseResponse(String json) {
+        AiGatewayResult gatewayResult;
         try {
-            EmotionAnalysisResult result =
-                    objectMapper.readValue(json.trim(), EmotionAnalysisResult.class);
-            if (!result.isValid()) {
-                throw new PermanentAiException(
-                        AiErrorCode.INVALID_RESPONSE, "유효하지 않은 AI 응답: " + json);
-            }
-            return result;
-        } catch (PermanentAiException e) {
-            throw e;
+            gatewayResult = aiGateway.call(prompt);
         } catch (Exception e) {
-            log.warn("AI 응답 파싱 실패, 기본값 사용: {}", json);
-            return EmotionAnalysisResult.safeDefault();
+            log.warn("[AI] 게이트웨이 호출 실패, 기본값 사용: {}", e.getMessage());
+            return toResponse(EmotionAnalysisResult.safeDefault(), FALLBACK_PROVIDER, false);
         }
+        EmotionAnalysisResult result =
+                responseParser.parse(
+                        gatewayResult.rawResponse(),
+                        EmotionAnalysisResult.class,
+                        EmotionAnalysisResult::safeDefault);
+        return toResponse(result, gatewayResult.providerName(), false);
     }
 
     private AiAnalysisResponse toResponse(

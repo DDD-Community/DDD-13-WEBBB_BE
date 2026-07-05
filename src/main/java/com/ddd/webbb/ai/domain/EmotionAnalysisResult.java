@@ -7,7 +7,8 @@ public record EmotionAnalysisResult(
         @JsonProperty("emotionType") EmotionType emotionType,
         @JsonProperty("hp") int hp,
         @JsonProperty("confidence") double confidence,
-        @JsonProperty("reason") String reason) {
+        @JsonProperty("reason") String reason)
+        implements AiResult {
     private static final EmotionAnalysisResult SAFE_DEFAULT =
             new EmotionAnalysisResult(EmotionType.LETHARGY, 10, 0.0, "fallback");
 
@@ -15,6 +16,7 @@ public record EmotionAnalysisResult(
         return SAFE_DEFAULT;
     }
 
+    @Override
     public boolean isValid() {
         return emotionType != null && (hp == 10 || hp == 20 || hp == 30) && confidence >= 0.0;
     }

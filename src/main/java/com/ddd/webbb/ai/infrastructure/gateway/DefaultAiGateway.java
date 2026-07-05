@@ -2,7 +2,9 @@ package com.ddd.webbb.ai.infrastructure.gateway;
 
 import com.ddd.webbb.ai.domain.AiGateway;
 import com.ddd.webbb.ai.domain.AiGatewayResult;
+import com.ddd.webbb.ai.domain.exception.AiErrorCode;
 import com.ddd.webbb.ai.domain.exception.PermanentAiException;
+import com.ddd.webbb.ai.domain.exception.RetryableAiException;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,7 +39,6 @@ public class DefaultAiGateway implements AiGateway {
                         e.getMessage());
             }
         }
-        throw new IllegalStateException(
-                "All AI providers exhausted — StaticAiProvider should have prevented this");
+        throw new RetryableAiException(AiErrorCode.SERVICE_UNAVAILABLE, "모든 AI 프로바이더 호출 실패");
     }
 }

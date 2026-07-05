@@ -33,15 +33,15 @@ OpenAI 어댑터·resilience4j 설정은 `DefaultAiGateway` 안에 구성되어 
 
 ```
 XxxService.xxx()
-    ↓ aiGateway.call(prompt)
+    ↓ aiGateway.call(prompt)          ← 실패 시 예외 → 서비스가 자체 폴백 반환
 DefaultAiGateway
-    ├── OpenAiAiProvider.call()    ← 성공 시 바로 반환
-    └── StaticAiProvider.call()    ← 실패 시 JSON 기본값 반환
+    └── OpenAiAiProvider.call()       ← 성공 시 바로 반환
     ↓ AiGatewayResult(rawResponse, providerName)
-XxxService → ObjectMapper로 파싱 → XxxResponse 반환
+XxxService → AiResponseParser로 파싱(실패 시 폴백) → XxxResponse 반환
 ```
 
-기능별로 달라지는 것은 **프롬프트 내용**과 **파싱 로직**뿐입니다.
+기능별로 달라지는 것은 **프롬프트 내용**과 **결과 타입·폴백 값**뿐입니다.
+파싱(코드블록 제거, JSON 역직렬화, 유효성 검사, 폴백)은 공통 `AiResponseParser`가 처리합니다.
 
 ---
 
@@ -81,8 +81,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public record CommentSummaryResult(
         @JsonProperty("summary") String summary,
-        @JsonProperty("tone") String tone) {
+        @JsonProperty("tone") String tone) implements AiResult {
 
+    @Override
     public boolean isValid() {
         return summary != null && !summary.isBlank()
                 && tone != null && !tone.isBlank();
@@ -126,10 +127,10 @@ public String commentSummaryPromptTemplate(AiProperties properties) throws IOExc
 ```java
 package com.ddd.webbb.comment.application;
 
+import com.ddd.webbb.ai.application.AiResponseParser;
 import com.ddd.webbb.ai.domain.AiGateway;
 import com.ddd.webbb.ai.domain.AiGatewayResult;
 import com.ddd.webbb.ai.domain.CommentSummaryResult;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -139,37 +140,35 @@ import org.springframework.stereotype.Service;
 public class CommentSummaryService {
 
     private static final Logger log = LoggerFactory.getLogger(CommentSummaryService.class);
+    private static final String FALLBACK_PROVIDER = "STATIC";
+    private static final CommentSummaryResult FALLBACK =
+            new CommentSummaryResult("요약 실패", "NEUTRAL");
 
     private final AiGateway aiGateway;
-    private final ObjectMapper objectMapper;
+    private final AiResponseParser responseParser;
     private final String promptTemplate;
 
     public CommentSummaryService(
             AiGateway aiGateway,
-            ObjectMapper objectMapper,
+            AiResponseParser responseParser,
             @Qualifier("commentSummaryPromptTemplate") String promptTemplate) {
         this.aiGateway = aiGateway;
-        this.objectMapper = objectMapper;
+        this.responseParser = responseParser;
         this.promptTemplate = promptTemplate;
     }
 
     public CommentSummaryResponse summarize(String commentText) {
         String prompt = promptTemplate.replace("{content}", commentText);
-        AiGatewayResult gatewayResult = aiGateway.call(prompt);
-        CommentSummaryResult result = parseResponse(gatewayResult.rawResponse());
-        return new CommentSummaryResponse(result.summary(), result.tone(), gatewayResult.providerName());
-    }
-
-    private CommentSummaryResult parseResponse(String json) {
+        AiGatewayResult gatewayResult;
         try {
-            CommentSummaryResult result = objectMapper.readValue(json.trim(), CommentSummaryResult.class);
-            if (result.isValid()) {
-                return result;
-            }
+            gatewayResult = aiGateway.call(prompt);
         } catch (Exception e) {
-            log.warn("댓글 요약 파싱 실패, 기본값 사용: {}", json);
+            log.warn("[CommentSummary] 게이트웨이 호출 실패: {}", e.getMessage());
+            return new CommentSummaryResponse(FALLBACK.summary(), FALLBACK.tone(), FALLBACK_PROVIDER);
         }
-        return new CommentSummaryResult("요약 실패", "NEUTRAL");
+        CommentSummaryResult result =
+                responseParser.parse(gatewayResult.rawResponse(), CommentSummaryResult.class, () -> FALLBACK);
+        return new CommentSummaryResponse(result.summary(), result.tone(), gatewayResult.providerName());
     }
 }
 ```
@@ -181,12 +180,13 @@ public class CommentSummaryService {
 ```
 추가된 파일
 ├── resources/prompts/comment-summary-v1.st          ← 프롬프트
-├── ai/domain/CommentSummaryResult.java              ← 파싱 대상 타입
+├── ai/domain/CommentSummaryResult.java              ← 파싱 대상 타입 (AiResult 구현)
 ├── comment/application/CommentSummaryResponse.java  ← 외부 응답 타입
 ├── comment/application/CommentSummaryService.java   ← 진입점
 └── ai/infrastructure/config/AiConfig.java           ← 프롬프트 빈만 추가
 
 건드리지 않은 파일
+├── ai/application/AiResponseParser.java             ← 그대로 (공통 파서)
 ├── ai/infrastructure/gateway/OpenAiAiProvider.java  ← 그대로
 ├── ai/infrastructure/gateway/DefaultAiGateway.java  ← 그대로
 └── application.yml (resilience4j 설정)              ← 그대로
@@ -207,7 +207,8 @@ class CommentSummaryServiceTest {
     @BeforeEach
     void setUp() {
         aiGateway = mock(AiGateway.class);
-        service = new CommentSummaryService(aiGateway, new ObjectMapper(), "댓글: {content}");
+        service = new CommentSummaryService(
+                aiGateway, new AiResponseParser(new ObjectMapper()), "댓글: {content}");
     }
 
     @Test
@@ -252,9 +253,9 @@ class CommentSummaryServiceTest {
 ## 체크리스트
 
 - [ ] `resources/prompts/기능명-v1.st` 추가 (`{content}` 플레이스홀더 포함)
-- [ ] 결과 타입 (`XxxResult`) 정의 + `@JsonProperty` + `isValid()` 구현
+- [ ] 결과 타입 (`XxxResult`) 정의 + `@JsonProperty` + `AiResult` 구현(`isValid()`)
 - [ ] 응답 타입 (`XxxResponse`) 정의
 - [ ] `AiConfig`에 프롬프트 빈 등록 (`@Qualifier("xxxPromptTemplate")`)
-- [ ] application 서비스 작성 (`AiGateway` 주입 → 프롬프트 빌드 → gateway.call → 파싱)
-- [ ] 테스트 작성 (정상 파싱, 파싱 실패 기본값, 프롬프트 치환 확인)
+- [ ] application 서비스 작성 (`AiGateway`+`AiResponseParser` 주입 → 프롬프트 빌드 → gateway.call(실패 시 자체 폴백) → parser.parse)
+- [ ] 테스트 작성 (정상 파싱, 파싱 실패 기본값, 게이트웨이 실패 폴백, 프롬프트 치환 확인)
 - [ ] Swagger 또는 docs 문서화
