@@ -34,10 +34,11 @@ spring:
 
   ai:
     openai:
-      api-key: ${OPENAI_API_KEY:}
+      base-url: https://integrate.api.nvidia.com
+      api-key: ${NVIDIA_API_KEY:}
       chat:
         options:
-          model: gpt-4o-mini
+          model: qwen/qwen3-next-80b-a3b-instruct
           temperature: 0.1
           max-tokens: 200
     chat:
