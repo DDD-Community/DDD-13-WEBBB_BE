@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.17.0](https://github.com/DDD-Community/DDD-13-WEBBB_BE/compare/v1.16.1...v1.17.0) (2026-07-05)
+
+
+### Features
+
+* **ai:** AI 모델을 NVIDIA NIM 무료 API(qwen3-next-80b)로 전환 ([#119](https://github.com/DDD-Community/DDD-13-WEBBB_BE/issues/119)) ([df4ef26](https://github.com/DDD-Community/DDD-13-WEBBB_BE/commit/df4ef269fd3f78347d874651cc570453ab68cb06)), closes [#117](https://github.com/DDD-Community/DDD-13-WEBBB_BE/issues/117)
+
+
+### Bug Fixes
+
+* prod 메일 환경변수 전달 추가 ([eb2ee83](https://github.com/DDD-Community/DDD-13-WEBBB_BE/commit/eb2ee8377cfb3737ac996fd3dcc7a00c12ed5d0f))
+
 ## [1.16.1](https://github.com/DDD-Community/DDD-13-WEBBB_BE/compare/v1.16.0...v1.16.1) (2026-06-29)
 
 
