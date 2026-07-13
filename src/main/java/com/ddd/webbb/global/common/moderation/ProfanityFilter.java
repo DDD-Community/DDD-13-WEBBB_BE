@@ -2,6 +2,7 @@ package com.ddd.webbb.global.common.moderation;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 
 public class ProfanityFilter {
 
@@ -10,6 +11,7 @@ public class ProfanityFilter {
     private final List<String> bannedWords;
 
     public ProfanityFilter(List<String> bannedWords) {
+        Objects.requireNonNull(bannedWords, "bannedWords는 null일 수 없습니다");
         this.bannedWords =
                 bannedWords.stream()
                         .filter(word -> word != null && !word.isBlank())
