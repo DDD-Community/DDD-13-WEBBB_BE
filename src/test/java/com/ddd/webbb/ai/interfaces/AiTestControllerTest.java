@@ -11,6 +11,7 @@ import com.ddd.webbb.ai.application.AiAnalysisService;
 import com.ddd.webbb.ai.domain.PostContent;
 import com.ddd.webbb.comment.application.CommentSummaryService;
 import com.ddd.webbb.global.auth.JwtAuthFilter;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -34,7 +35,7 @@ class AiTestControllerTest {
     @Test
     void 감정_분석_요청을_처리한다() throws Exception {
         AiAnalysisResponse mockResponse =
-                new AiAnalysisResponse("ANXIETY", 30, 0.9, "불안 표현이 강함", false, "OPENAI");
+                new AiAnalysisResponse("ANXIETY", 30, 0.9, "불안 표현이 강함", List.of(), false, "OPENAI");
         given(aiAnalysisService.analyze(any(PostContent.class))).willReturn(mockResponse);
 
         mockMvc.perform(

@@ -246,7 +246,9 @@ class PostServiceTest {
                 .willReturn(java.util.Optional.of(category));
         given(postRepository.save(any(Post.class))).willReturn(savedPost);
         given(aiAnalysisService.analyze(any()))
-                .willReturn(new AiAnalysisResponse("ANXIETY", 30, 0.8, "불안", false, "OPENAI"));
+                .willReturn(
+                        new AiAnalysisResponse(
+                                "ANXIETY", 30, 0.8, "불안", List.of(), false, "OPENAI"));
         given(monsterService.addMonster(savedPost, EmotionType.ANXIETY, 30)).willReturn(monster);
 
         PostCreateResponse response =
@@ -284,7 +286,9 @@ class PostServiceTest {
                 .willReturn(Optional.of(category));
         given(postRepository.save(any(Post.class))).willReturn(savedPost);
         given(aiAnalysisService.analyze(any()))
-                .willReturn(new AiAnalysisResponse("ANXIETY", 30, 0.8, "불안", false, "OPENAI"));
+                .willReturn(
+                        new AiAnalysisResponse(
+                                "ANXIETY", 30, 0.8, "불안", List.of(), false, "OPENAI"));
         given(monsterService.addMonster(savedPost, EmotionType.ANXIETY, 30)).willReturn(monster);
 
         postService.addPost(userId, new PostCreateRequest("이 멍청이 같은 회사", CommentTone.COMFORT_ME));
@@ -312,7 +316,9 @@ class PostServiceTest {
         given(userService.getUserEntity(userId)).willReturn(user);
         given(postRepository.findByIdAndIsDeletedFalse(1L)).willReturn(Optional.of(post));
         given(aiAnalysisService.analyze(any()))
-                .willReturn(new AiAnalysisResponse("ANXIETY", 30, 0.8, "불안", false, "OPENAI"));
+                .willReturn(
+                        new AiAnalysisResponse(
+                                "ANXIETY", 30, 0.8, "불안", List.of(), false, "OPENAI"));
         given(postEmotionService.findByPost(1L)).willReturn(postEmotion);
         given(monsterService.findByPost(1L)).willReturn(monster);
 
@@ -343,7 +349,8 @@ class PostServiceTest {
         given(postRepository.save(any(Post.class))).willReturn(savedPost);
         given(aiAnalysisService.analyze(any()))
                 .willReturn(
-                        new AiAnalysisResponse("LETHARGY", 10, 0.0, "fallback", false, "STATIC"));
+                        new AiAnalysisResponse(
+                                "LETHARGY", 10, 0.0, "fallback", List.of(), false, "STATIC"));
         given(monsterService.addMonster(savedPost, EmotionType.LETHARGY, 10)).willReturn(monster);
 
         PostCreateResponse response =
