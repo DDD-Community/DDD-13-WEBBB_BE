@@ -100,6 +100,7 @@ public class PostService {
 
         AiAnalysisResponse analysis =
                 aiAnalysisService.analyze(new PostContent(post.getId(), post.getContent()));
+        applyAiProfanityMasking(post, analysis);
         EmotionType emotionType = EmotionType.valueOf(analysis.emotionType());
 
         Monster monster = monsterService.addMonster(post, emotionType, analysis.hp());
@@ -225,6 +226,7 @@ public class PostService {
         if (contentChanged) {
             AiAnalysisResponse analysis =
                     aiAnalysisService.analyze(new PostContent(post.getId(), post.getContent()));
+            applyAiProfanityMasking(post, analysis);
             EmotionType emotionType = EmotionType.valueOf(analysis.emotionType());
             postEmotionService.modifyPostEmotion(postId, emotionType);
             monsterService.resetMonster(postId, emotionType, analysis.hp());
@@ -331,5 +333,13 @@ public class PostService {
             return "고민글";
         }
         return normalized.substring(0, Math.min(normalized.length(), 30));
+    }
+
+    private void applyAiProfanityMasking(Post post, AiAnalysisResponse analysis) {
+        if (analysis.profanityWords().isEmpty()) {
+            return;
+        }
+        String masked = new ProfanityFilter(analysis.profanityWords()).mask(post.getContent());
+        post.update(masked, post.getCommentTone());
     }
 }

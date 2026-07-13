@@ -331,6 +331,66 @@ class PostServiceTest {
     }
 
     @Test
+    void AI가_찾은_욕설을_추가로_마스킹한다() {
+        UUID userId = UUID.randomUUID();
+        User user = User.create("ogu@test.com", "ogu");
+        ReflectionTestUtils.setField(user, "publicId", userId);
+        ReflectionTestUtils.setField(user, "jobType", "DEVELOPMENT");
+        ReflectionTestUtils.setField(user, "careerLevel", "YEAR_3");
+        BoardCategory category = BoardCategory.create("멘탈케어", "기본 글 작성 카테고리", 0);
+        Post savedPost =
+                Post.create(user, category, "이 ㅅㅂ 회사 때문에", "이 ㅅㅂ 회사 때문에", CommentTone.COMFORT_ME);
+        ReflectionTestUtils.setField(savedPost, "id", 1L);
+        ReflectionTestUtils.setField(savedPost, "createdAt", LocalDateTime.of(2026, 7, 13, 10, 0));
+        Monster monster = Monster.create(savedPost, EmotionType.IRRITATION, 20);
+
+        given(userService.getUserEntity(userId)).willReturn(user);
+        given(boardCategoryRepository.findFirstByIsActiveTrueOrderBySortOrderAsc())
+                .willReturn(Optional.of(category));
+        given(postRepository.save(any(Post.class))).willReturn(savedPost);
+        given(aiAnalysisService.analyze(any()))
+                .willReturn(
+                        new AiAnalysisResponse(
+                                "IRRITATION", 20, 0.9, "짜증", List.of("ㅅㅂ"), false, "OPENAI"));
+        given(monsterService.addMonster(savedPost, EmotionType.IRRITATION, 20)).willReturn(monster);
+
+        postService.addPost(userId, new PostCreateRequest("이 ㅅㅂ 회사 때문에", CommentTone.COMFORT_ME));
+
+        assertThat(savedPost.getContent()).isEqualTo("이 ** 회사 때문에");
+        assertThat(savedPost.getTitle()).isEqualTo("이 ** 회사 때문에");
+    }
+
+    @Test
+    void 게시글_수정시_AI가_찾은_욕설을_추가로_마스킹한다() {
+        UUID userId = UUID.randomUUID();
+        User user = User.create("ogu@test.com", "ogu");
+        ReflectionTestUtils.setField(user, "publicId", userId);
+        ReflectionTestUtils.setField(user, "jobType", "DEVELOPMENT");
+        ReflectionTestUtils.setField(user, "careerLevel", "YEAR_3");
+        BoardCategory category = BoardCategory.create("멘탈케어", "기본 글 작성 카테고리", 0);
+        Post post = Post.create(user, category, "제목", "원래 내용", CommentTone.COMFORT_ME);
+        ReflectionTestUtils.setField(post, "id", 1L);
+        ReflectionTestUtils.setField(post, "createdAt", LocalDateTime.of(2026, 7, 13, 10, 0));
+        PostEmotion postEmotion = PostEmotion.create(post, EmotionType.IRRITATION, user);
+        Monster monster = Monster.create(post, EmotionType.IRRITATION, 20);
+
+        given(userService.getUserEntity(userId)).willReturn(user);
+        given(postRepository.findByIdAndIsDeletedFalse(1L)).willReturn(Optional.of(post));
+        given(aiAnalysisService.analyze(any()))
+                .willReturn(
+                        new AiAnalysisResponse(
+                                "IRRITATION", 20, 0.9, "짜증", List.of("시1발"), false, "OPENAI"));
+        given(postEmotionService.findByPost(1L)).willReturn(postEmotion);
+        given(monsterService.findByPost(1L)).willReturn(monster);
+
+        postService.modifyPost(
+                userId, 1L, new PostCreateRequest("시1발 진짜 힘들다", CommentTone.COMFORT_ME));
+
+        assertThat(post.getContent()).isEqualTo("*** 진짜 힘들다");
+        assertThat(post.getTitle()).isEqualTo("*** 진짜 힘들다");
+    }
+
+    @Test
     void AI_폴백_결과도_정상적으로_반영한다() {
         UUID userId = UUID.randomUUID();
         User user = User.create("ogu@test.com", "ogu");
