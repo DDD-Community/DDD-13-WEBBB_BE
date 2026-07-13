@@ -180,6 +180,20 @@ class CommentServiceTest {
                                     assertThat(((AppException) e).getErrorCode())
                                             .isEqualTo(ErrorCode.INVALID_PARENT_COMMENT));
         }
+
+        @Test
+        @DisplayName("댓글 본문의 금칙어는 마스킹되어 저장된다")
+        void maskProfanity() {
+            // Given
+            CommentCreateRequest request = new CommentCreateRequest(null, "이 병신 같은 상황");
+
+            // When
+            CommentResponse response =
+                    commentService.addComment(user.getPublicId(), post.getId(), request);
+
+            // Then
+            assertThat(response.content()).isEqualTo("이 ** 같은 상황");
+        }
     }
 
     @Nested
@@ -297,6 +311,22 @@ class CommentServiceTest {
                             e ->
                                     assertThat(((AppException) e).getErrorCode())
                                             .isEqualTo(ErrorCode.COMMENT_NOT_FOUND));
+        }
+
+        @Test
+        @DisplayName("댓글 수정 시 금칙어는 마스킹되어 반영된다")
+        void maskProfanityOnModify() {
+            // Given
+            Comment comment =
+                    commentRepository.saveAndFlush(Comment.create(post, user, null, "원래 댓글"));
+            CommentUpdateRequest request = new CommentUpdateRequest("병신 같은 하루였다");
+
+            // When
+            CommentResponse response =
+                    commentService.modifyComment(user.getPublicId(), comment.getId(), request);
+
+            // Then
+            assertThat(response.content()).isEqualTo("** 같은 하루였다");
         }
     }
 
