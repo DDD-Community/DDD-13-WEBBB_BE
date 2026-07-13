@@ -18,8 +18,10 @@ import com.ddd.webbb.comment.domain.CommentLike;
 import com.ddd.webbb.comment.domain.CommentLikeRepository;
 import com.ddd.webbb.emotion.application.PostEmotionService;
 import com.ddd.webbb.emotion.domain.EmotionType;
+import com.ddd.webbb.emotion.domain.PostEmotion;
 import com.ddd.webbb.global.common.exception.AppException;
 import com.ddd.webbb.global.common.exception.ErrorCode;
+import com.ddd.webbb.global.common.moderation.ProfanityFilter;
 import com.ddd.webbb.monster.application.MonsterService;
 import com.ddd.webbb.monster.domain.Monster;
 import com.ddd.webbb.post.domain.CommentTone;
@@ -34,10 +36,12 @@ import com.ddd.webbb.post.interfaces.dto.PostCreateRequest;
 import com.ddd.webbb.post.interfaces.dto.PostCreateResponse;
 import com.ddd.webbb.post.interfaces.dto.PostDetailResponse;
 import com.ddd.webbb.post.interfaces.dto.PostListResponse;
+import com.ddd.webbb.post.interfaces.dto.PostResponse;
 import com.ddd.webbb.user.application.UserService;
 import com.ddd.webbb.user.domain.User;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -56,6 +60,7 @@ class PostServiceTest {
     private PostEmotionService postEmotionService;
     private CommentService commentService;
     private CommentLikeRepository commentLikeRepository;
+    private ProfanityFilter profanityFilter;
     private PostService postService;
 
     @BeforeEach
@@ -70,6 +75,7 @@ class PostServiceTest {
         postEmotionService = mock(PostEmotionService.class);
         commentService = mock(CommentService.class);
         commentLikeRepository = mock(CommentLikeRepository.class);
+        profanityFilter = new ProfanityFilter(List.of("멍청이"));
         postService =
                 new PostService(
                         postRepository,
@@ -81,7 +87,8 @@ class PostServiceTest {
                         monsterService,
                         postEmotionService,
                         commentService,
-                        commentLikeRepository);
+                        commentLikeRepository,
+                        profanityFilter);
     }
 
     @Test
@@ -256,6 +263,65 @@ class PostServiceTest {
 
         verify(monsterService).addMonster(savedPost, EmotionType.ANXIETY, 30);
         verify(postEmotionService).addPostEmotion(savedPost, EmotionType.ANXIETY, user);
+    }
+
+    @Test
+    void 게시글_본문과_제목의_금칙어를_마스킹하여_저장한다() {
+        UUID userId = UUID.randomUUID();
+        User user = User.create("ogu@test.com", "ogu");
+        ReflectionTestUtils.setField(user, "publicId", userId);
+        ReflectionTestUtils.setField(user, "jobType", "DEVELOPMENT");
+        ReflectionTestUtils.setField(user, "careerLevel", "YEAR_3");
+        BoardCategory category = BoardCategory.create("멘탈케어", "기본 글 작성 카테고리", 0);
+        Post savedPost =
+                Post.create(user, category, "이 *** 같은 회사", "이 *** 같은 회사", CommentTone.COMFORT_ME);
+        ReflectionTestUtils.setField(savedPost, "id", 1L);
+        ReflectionTestUtils.setField(savedPost, "createdAt", LocalDateTime.of(2026, 7, 12, 10, 0));
+        Monster monster = Monster.create(savedPost, EmotionType.ANXIETY, 30);
+
+        given(userService.getUserEntity(userId)).willReturn(user);
+        given(boardCategoryRepository.findFirstByIsActiveTrueOrderBySortOrderAsc())
+                .willReturn(Optional.of(category));
+        given(postRepository.save(any(Post.class))).willReturn(savedPost);
+        given(aiAnalysisService.analyze(any()))
+                .willReturn(new AiAnalysisResponse("ANXIETY", 30, 0.8, "불안", false, "OPENAI"));
+        given(monsterService.addMonster(savedPost, EmotionType.ANXIETY, 30)).willReturn(monster);
+
+        postService.addPost(userId, new PostCreateRequest("이 멍청이 같은 회사", CommentTone.COMFORT_ME));
+
+        ArgumentCaptor<Post> postCaptor = ArgumentCaptor.forClass(Post.class);
+        verify(postRepository).save(postCaptor.capture());
+        assertThat(postCaptor.getValue().getContent()).isEqualTo("이 *** 같은 회사");
+        assertThat(postCaptor.getValue().getTitle()).isEqualTo("이 *** 같은 회사");
+    }
+
+    @Test
+    void 게시글_수정시_금칙어를_마스킹하여_반영한다() {
+        UUID userId = UUID.randomUUID();
+        User user = User.create("ogu@test.com", "ogu");
+        ReflectionTestUtils.setField(user, "publicId", userId);
+        ReflectionTestUtils.setField(user, "jobType", "DEVELOPMENT");
+        ReflectionTestUtils.setField(user, "careerLevel", "YEAR_3");
+        BoardCategory category = BoardCategory.create("멘탈케어", "기본 글 작성 카테고리", 0);
+        Post post = Post.create(user, category, "제목", "원래 내용", CommentTone.COMFORT_ME);
+        ReflectionTestUtils.setField(post, "id", 1L);
+        ReflectionTestUtils.setField(post, "createdAt", LocalDateTime.of(2026, 7, 12, 10, 0));
+        PostEmotion postEmotion = PostEmotion.create(post, EmotionType.ANXIETY, user);
+        Monster monster = Monster.create(post, EmotionType.ANXIETY, 30);
+
+        given(userService.getUserEntity(userId)).willReturn(user);
+        given(postRepository.findByIdAndIsDeletedFalse(1L)).willReturn(Optional.of(post));
+        given(aiAnalysisService.analyze(any()))
+                .willReturn(new AiAnalysisResponse("ANXIETY", 30, 0.8, "불안", false, "OPENAI"));
+        given(postEmotionService.findByPost(1L)).willReturn(postEmotion);
+        given(monsterService.findByPost(1L)).willReturn(monster);
+
+        PostResponse response =
+                postService.modifyPost(
+                        userId, 1L, new PostCreateRequest("멍청이 회사 그만둘래", CommentTone.COMFORT_ME));
+
+        assertThat(post.getContent()).isEqualTo("*** 회사 그만둘래");
+        assertThat(response.content()).isEqualTo("*** 회사 그만둘래");
     }
 
     @Test
