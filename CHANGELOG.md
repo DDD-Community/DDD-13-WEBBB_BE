@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.19.0](https://github.com/DDD-Community/DDD-13-WEBBB_BE/compare/v1.18.0...v1.19.0) (2026-07-14)
+
+
+### Features
+
+* **ai:** 감정 분석 편승 AI 욕설 마스킹 추가 ([#122](https://github.com/DDD-Community/DDD-13-WEBBB_BE/issues/122)) ([c0e5f06](https://github.com/DDD-Community/DDD-13-WEBBB_BE/commit/c0e5f06be47b1fdd17f44d481a931f54c31c8d81))
+
 ## [1.18.0](https://github.com/DDD-Community/DDD-13-WEBBB_BE/compare/v1.17.0...v1.18.0) (2026-07-14)
 
 
