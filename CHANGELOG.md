@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.18.0](https://github.com/DDD-Community/DDD-13-WEBBB_BE/compare/v1.17.0...v1.18.0) (2026-07-14)
+
+
+### Features
+
+* 게시글·댓글 욕설 마스킹 기능 추가 ([#121](https://github.com/DDD-Community/DDD-13-WEBBB_BE/issues/121)) ([76b4eab](https://github.com/DDD-Community/DDD-13-WEBBB_BE/commit/76b4eab8753316509d997c8d05c11f105037adee))
+
 ## [1.17.0](https://github.com/DDD-Community/DDD-13-WEBBB_BE/compare/v1.16.1...v1.17.0) (2026-07-05)
 
 
