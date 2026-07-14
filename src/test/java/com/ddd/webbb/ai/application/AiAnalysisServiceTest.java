@@ -65,6 +65,33 @@ class AiAnalysisServiceTest {
     }
 
     @Test
+    void 욕설_단어_목록을_응답에_전달한다() {
+        PostContent content = new PostContent(1L, "진짜 ㅅㅂ하네 시1발");
+        String json =
+                "{\"emotionType\":\"IRRITATION\",\"hp\":20,\"confidence\":0.9,"
+                        + "\"reason\":\"짜증\",\"profanityWords\":[\"ㅅㅂ\",\"시1발\"]}";
+        given(crisisFilter.check(content.text())).willReturn(CrisisDetectionResult.safe());
+        given(aiGateway.call(anyString())).willReturn(new AiGatewayResult(json, "OPENAI"));
+
+        AiAnalysisResponse response = service.analyze(content);
+
+        assertThat(response.profanityWords()).containsExactly("ㅅㅂ", "시1발");
+    }
+
+    @Test
+    void 욕설_필드가_없는_v1_응답은_빈_목록으로_처리한다() {
+        PostContent content = new PostContent(1L, "불안해요");
+        String json =
+                "{\"emotionType\":\"ANXIETY\",\"hp\":30,\"confidence\":0.9,\"reason\":\"불안\"}";
+        given(crisisFilter.check(content.text())).willReturn(CrisisDetectionResult.safe());
+        given(aiGateway.call(anyString())).willReturn(new AiGatewayResult(json, "OPENAI"));
+
+        AiAnalysisResponse response = service.analyze(content);
+
+        assertThat(response.profanityWords()).isEmpty();
+    }
+
+    @Test
     void 위기_감지시_AiGateway를_호출하지_않는다() {
         PostContent content = new PostContent(1L, "죽고 싶어요");
         given(crisisFilter.check(content.text())).willReturn(CrisisDetectionResult.crisis("죽고 싶"));

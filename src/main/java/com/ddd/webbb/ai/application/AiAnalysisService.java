@@ -8,6 +8,7 @@ import com.ddd.webbb.ai.domain.CrisisDetectionResult;
 import com.ddd.webbb.ai.domain.CrisisFilter;
 import com.ddd.webbb.ai.domain.EmotionAnalysisResult;
 import com.ddd.webbb.ai.domain.PostContent;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -78,6 +79,7 @@ public class AiAnalysisService {
                 result.hp(),
                 result.confidence(),
                 result.reason(),
+                result.profanityWords(),
                 crisisDetected,
                 provider);
     }
@@ -89,6 +91,7 @@ public class AiAnalysisService {
                 fallback.hp(),
                 fallback.confidence(),
                 "위기 감지: " + crisis.matchedKeyword(),
+                List.of(),
                 true,
                 "CRISIS_FILTER");
     }

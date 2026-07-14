@@ -1,7 +1,7 @@
 app:
   frontend-url: http://localhost:3000
   ai:
-    prompt-version: v1
+    prompt-version: v2
     timeout: 5s
 
 jwt:

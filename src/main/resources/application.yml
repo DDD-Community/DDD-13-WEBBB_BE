@@ -54,7 +54,7 @@ jwt:
 app:
   frontend-url: ${FRONTEND_URL:http://localhost:3000}
   ai:
-    prompt-version: ${PROMPT_VERSION:v1}
+    prompt-version: ${PROMPT_VERSION:v2}
     timeout: ${AI_TIMEOUT:20s}
   auth:
     jwt:

@@ -246,7 +246,9 @@ class PostServiceTest {
                 .willReturn(java.util.Optional.of(category));
         given(postRepository.save(any(Post.class))).willReturn(savedPost);
         given(aiAnalysisService.analyze(any()))
-                .willReturn(new AiAnalysisResponse("ANXIETY", 30, 0.8, "불안", false, "OPENAI"));
+                .willReturn(
+                        new AiAnalysisResponse(
+                                "ANXIETY", 30, 0.8, "불안", List.of(), false, "OPENAI"));
         given(monsterService.addMonster(savedPost, EmotionType.ANXIETY, 30)).willReturn(monster);
 
         PostCreateResponse response =
@@ -343,7 +345,8 @@ class PostServiceTest {
         given(postRepository.save(any(Post.class))).willReturn(savedPost);
         given(aiAnalysisService.analyze(any()))
                 .willReturn(
-                        new AiAnalysisResponse("LETHARGY", 10, 0.0, "fallback", false, "STATIC"));
+                        new AiAnalysisResponse(
+                                "LETHARGY", 10, 0.0, "fallback", List.of(), false, "STATIC"));
         given(monsterService.addMonster(savedPost, EmotionType.LETHARGY, 10)).willReturn(monster);
 
         PostCreateResponse response =
