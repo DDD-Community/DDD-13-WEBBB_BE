@@ -9,6 +9,7 @@ import com.ddd.webbb.comment.interfaces.dto.CommentResponse;
 import com.ddd.webbb.comment.interfaces.dto.CommentUpdateRequest;
 import com.ddd.webbb.global.common.exception.AppException;
 import com.ddd.webbb.global.common.exception.ErrorCode;
+import com.ddd.webbb.global.common.moderation.ProfanityFilter;
 import com.ddd.webbb.monster.application.MonsterService;
 import com.ddd.webbb.monster.domain.HpActionType;
 import com.ddd.webbb.monster.domain.Monster;
@@ -38,6 +39,7 @@ public class CommentService {
     private final UserService userService;
     private final MonsterService monsterService;
     private final ApplicationEventPublisher eventPublisher;
+    private final ProfanityFilter profanityFilter;
 
     public CommentService(
             CommentRepository commentRepository,
@@ -45,13 +47,15 @@ public class CommentService {
             @Lazy PostService postService,
             UserService userService,
             MonsterService monsterService,
-            ApplicationEventPublisher eventPublisher) {
+            ApplicationEventPublisher eventPublisher,
+            ProfanityFilter profanityFilter) {
         this.commentRepository = commentRepository;
         this.commentQueryRepository = commentQueryRepository;
         this.postService = postService;
         this.userService = userService;
         this.monsterService = monsterService;
         this.eventPublisher = eventPublisher;
+        this.profanityFilter = profanityFilter;
     }
 
     public List<Comment> findCommentsByPost(Long postId) {
@@ -110,7 +114,9 @@ public class CommentService {
         }
 
         Comment comment =
-                commentRepository.save(Comment.create(post, user, parent, request.content()));
+                commentRepository.save(
+                        Comment.create(
+                                post, user, parent, profanityFilter.mask(request.content())));
         post.incrementCommentCount();
         monsterService.decreaseMonsterHp(
                 monster, user, post, comment, HpActionType.COMMENT, COMMENT_HP_DELTA);
@@ -132,7 +138,7 @@ public class CommentService {
             throw new AppException(ErrorCode.FORBIDDEN);
         }
 
-        comment.updateContent(request.content());
+        comment.updateContent(profanityFilter.mask(request.content()));
         Monster monster = monsterService.getMonsterByPostId(comment.getPost().getId());
         return CommentResponse.of(comment, monster);
     }

@@ -13,6 +13,7 @@ import com.ddd.webbb.emotion.domain.EmotionType;
 import com.ddd.webbb.emotion.domain.PostEmotion;
 import com.ddd.webbb.global.common.exception.AppException;
 import com.ddd.webbb.global.common.exception.ErrorCode;
+import com.ddd.webbb.global.common.moderation.ProfanityFilter;
 import com.ddd.webbb.monster.application.MonsterService;
 import com.ddd.webbb.monster.domain.Monster;
 import com.ddd.webbb.post.domain.Post;
@@ -55,6 +56,7 @@ public class PostService {
     private final PostEmotionService postEmotionService;
     private final CommentService commentService;
     private final CommentLikeRepository commentLikeRepository;
+    private final ProfanityFilter profanityFilter;
 
     public PostService(
             PostRepository postRepository,
@@ -66,7 +68,8 @@ public class PostService {
             MonsterService monsterService,
             PostEmotionService postEmotionService,
             CommentService commentService,
-            CommentLikeRepository commentLikeRepository) {
+            CommentLikeRepository commentLikeRepository,
+            ProfanityFilter profanityFilter) {
         this.postRepository = postRepository;
         this.postQueryRepository = postQueryRepository;
         this.postLikeRepository = postLikeRepository;
@@ -77,6 +80,7 @@ public class PostService {
         this.postEmotionService = postEmotionService;
         this.commentService = commentService;
         this.commentLikeRepository = commentLikeRepository;
+        this.profanityFilter = profanityFilter;
     }
 
     public Post getPostEntity(Long postId) {
@@ -88,11 +92,11 @@ public class PostService {
     public PostCreateResponse addPost(UUID userPublicId, PostCreateRequest request) {
         User user = userService.getUserEntity(userPublicId);
         BoardCategory category = resolveDefaultCategory();
-        String title = buildDefaultTitle(request.content());
+        String content = profanityFilter.mask(request.content());
+        String title = buildDefaultTitle(content);
         Post post =
                 postRepository.save(
-                        Post.create(
-                                user, category, title, request.content(), request.commentTone()));
+                        Post.create(user, category, title, content, request.commentTone()));
 
         AiAnalysisResponse analysis =
                 aiAnalysisService.analyze(new PostContent(post.getId(), post.getContent()));
@@ -214,8 +218,9 @@ public class PostService {
             throw new AppException(ErrorCode.FORBIDDEN);
         }
 
-        boolean contentChanged = !post.getContent().equals(request.content());
-        post.update(request.content(), request.commentTone());
+        String content = profanityFilter.mask(request.content());
+        boolean contentChanged = !post.getContent().equals(content);
+        post.update(content, request.commentTone());
 
         if (contentChanged) {
             AiAnalysisResponse analysis =
